@@ -1,0 +1,100 @@
+name: CI
+
+# 每次 push 到 main 或提 PR 都跑一遍：生成 Xcode 工程 + Debug 编译。
+# 目的是拦住「本地能编、CI 编不过」的提交，不做签名、不出包。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 编译验证
+    # 部署目标是 macOS 26.0，需要带 macOS 26+ SDK 的 Xcode（Xcode 26 或更高）。
+    # 如果这个镜像的默认 Xcode 不满足，下面的 SDK 检查会给出明确报错，
+    # 也可以在仓库 Settings → Actions → Variables 里设 XCODE_PATH 指定 Xcode.app 路径。
+    runs-on: macos-15
+
+    env:
+      XCODE_PATH: ${{ vars.XCODE_PATH }}
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Xcode
+        run: |
+          set -euo pipefail
+          if [ -n "${XCODE_PATH}" ]; then
+            echo "使用仓库变量指定的 Xcode：${XCODE_PATH}"
+            sudo xcode-select -s "${XCODE_PATH}"
+          fi
+          xcodebuild -version
+          # 无论成败都把可用 SDK 列表打出来，排查环境问题时先看这段。
+          xcodebuild -showsdks
+
+      - name: 校验 macOS SDK 版本
+        run: |
+          set -euo pipefail
+          # 部署目标是 macOS 26.0，SDK 太旧会在 xcodebuild 里报一堆看不懂的错，
+          # 所以提前一步失败并说明原因。
+          sdks="$(xcodebuild -showsdks | awk '/^macOS SDKs:/{f=1;next} /^$/{f=0} f {print $2}' | sort -u -V)"
+          echo "可用 macOS SDK："
+          echo "${sdks}"
+          if [ -z "${sdks}" ]; then
+            echo "::error::没有找到任何 macOS SDK。runner 上缺少 Xcode 命令行工具，请检查镜像，或在仓库变量里用 XCODE_PATH 指定 Xcode 26+ 的 Xcode.app。"
+            exit 1
+          fi
+          latest="$(echo "${sdks}" | tail -n 1)"
+          major="${latest%%.*}"
+          if [ "${major}" -lt 26 ]; then
+            echo "::error::部署目标是 macOS 26.0，但当前最高 macOS SDK 只有 ${latest}。请改用带 macOS 26+ SDK 的 runner / Xcode 26 及以上版本。"
+            exit 1
+          fi
+          echo "SDK 检查通过：${latest}"
+
+      - name: 安装 XcodeGen
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1 && ! brew list xcodegen >/dev/null 2>&1; then
+            echo "::notice::runner 上没有 xcodegen，开始安装……"
+            brew install xcodegen
+          fi
+          xcodegen --version
+
+      - name: 缓存 DerivedData
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData
+          # 简单固定 key + restore-keys 即可：本项目没有任何 SPM/CocoaPods 依赖，
+          # 缓存只是省掉重复编译，不参与正确性。
+          key: hexoman-deriveddata-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            hexoman-deriveddata-
+
+      - name: 生成 Xcode 工程
+        run: xcodegen generate
+
+      - name: Debug 编译
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project HexoMan.xcodeproj \
+            -scheme HexoMan \
+            -configuration Debug \
+            -derivedDataPath build/DerivedData \
+            build 2>&1 | tee build-debug.log
+
+      - name: 上传构建日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-debug-log
+          path: build-debug.log
+          if-no-files-found: ignore
+          retention-days: 7
