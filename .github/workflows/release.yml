@@ -15,7 +15,7 @@ jobs:
   release:
     name: 打包并发布
     # 部署目标是 macOS 26.0，需要带 macOS 26+ SDK 的 Xcode（Xcode 26 或更高）。
-    runs-on: macos-15
+    runs-on: macos-26
 
     env:
       XCODE_PATH: ${{ vars.XCODE_PATH }}
