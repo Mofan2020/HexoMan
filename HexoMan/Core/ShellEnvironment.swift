@@ -51,12 +51,31 @@ struct ShellEnvironment: Equatable {
     }
 
     /// 给界面看的 PATH 摘要。
+    ///
+    /// 只挑 3 条最相关的。实测真实 PATH 有 40+ 项，全拼进一行会把
+    /// DetailRow 挤成一条省略号，既不好看也看不出问题——用户真正要确认的
+    /// 只是「/opt/homebrew/bin 在不在」这一件事。
     var pathSummary: String {
         let entries = path.split(separator: ":").map(String.init)
-        let interesting = entries.filter { entry in
-            entry.contains("homebrew") || entry.contains(".nvm") || entry.contains("node") || entry.contains(".local")
+        // homebrew 最优先，因为它承载着需求点名要保证的 node
+        let priority = ["homebrew", ".nvm", "/.local", "node"]
+        var picked: [String] = []
+        for keyword in priority {
+            if let hit = entries.first(where: { $0.contains(keyword) }), picked.contains(hit) == false {
+                picked.append(hit)
+            }
+            if picked.count >= 3 { break }
         }
-        return interesting.isEmpty ? entries.prefix(3).joined(separator: " : ") : interesting.joined(separator: " : ")
+        if picked.isEmpty {
+            picked = Array(entries.prefix(3))
+        }
+        // 只留尾部两段：完整路径太长，而尾部两段足够区分
+        // `/opt/homebrew/bin` 和 `/usr/local/bin` 这类同名末级目录。
+        let shortened = picked.map { entry -> String in
+            let parts = entry.split(separator: "/")
+            return parts.count <= 2 ? entry : "…/" + parts.suffix(2).joined(separator: "/")
+        }
+        return shortened.joined(separator: " : ") + "（共 \(entries.count) 项）"
     }
 
     /// rc 文件的可读描述。

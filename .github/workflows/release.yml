@@ -80,9 +80,23 @@ jobs:
             exit 1
           fi
           # -y 保留符号链接和权限位，app 包里的软链被压坏会直接打不开。
-          zip -qry "HexoMan-${version}-macos.zip" "${app}"
-          echo "name=HexoMan-${version}-macos.zip" >> "$GITHUB_OUTPUT"
-          ls -lh "HexoMan-${version}-macos.zip"
+          #
+          # 关键：在 build/release 目录**内部**执行 zip，只给 "HexoMan.app"。
+          # 直接 `zip ... build/release/HexoMan.app` 会把完整相对路径一起存进包里，
+          # 用户解压后看到的是 build/release/HexoMan.app 三层嵌套，得自己往里钻。
+          # 这里用 pushd/popd 而不是 subshell，保证 cd 失败也会被 set -e 抓到。
+          zipname="HexoMan-${version}-macos.zip"
+          pushd "$(dirname "${app}")" >/dev/null
+          zip -qry "../../${zipname}" "HexoMan.app"
+          popd >/dev/null
+          # zip 偶尔会在磁盘满或权限异常时只打一部分甚至什么都不打，
+          # 这里当场验一次，别把空包传下去让下游报「找不到文件」。
+          if [ ! -s "${zipname}" ]; then
+            echo "::error::打包产物缺失或为空，请检查上面的 zip 输出。"
+            exit 1
+          fi
+          echo "name=${zipname}" >> "$GITHUB_OUTPUT"
+          ls -lh "${zipname}"
 
       - name: 生成更新日志
         id: changelog
@@ -142,7 +156,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HexoMan-${{ github.ref_name }}
-          path: HexoMan-${{ steps.package.outputs.name }}
+          # 直接用上一步的输出，不要在外面再加任何前缀。
+          # 之前写成 `HexoMan-${{ steps.package.outputs.name }}`，而输出本身已经是
+          # 完整的 `HexoMan-0.3.0-macos.zip`，拼出来变成 `HexoMan-HexoMan-0.3.0-macos.zip`，
+          # upload-artifact 直接报「找不到文件」，Release 也就没建出来。
+          path: ${{ steps.package.outputs.name }}
           if-no-files-found: error
           retention-days: 30
 

@@ -23,10 +23,15 @@ struct BuildView: View {
                 }
                 .padding(20)
             }
+            // 上面这一坨内容高度不固定（诊断信息会随环境变长变短），
+            // 所以必须给它一个下限；不给的话日志区的 maxHeight: .infinity
+            // 会把所有剩余空间吃掉，这一屏就被压成一条缝。
+            .frame(minHeight: 280, maxHeight: .infinity)
 
             Divider()
 
-            // 日志固定占下半屏，构建类命令跑几十秒时需要能一直盯着输出。
+            // 日志占一块固定比例的下方区域。给上下界而不是纯 .infinity，
+            // 这样窗口拉高时日志不会无限膨胀、拉矮时也不会把上面挤没。
             VStack(spacing: 0) {
                 if model.shell.lines.isEmpty {
                     Text("还没有命令输出")
@@ -38,7 +43,7 @@ struct BuildView: View {
 
                 LogConsole(runner: model.shell)
             }
-            .frame(minHeight: 220, maxHeight: .infinity)
+            .frame(minHeight: 180, idealHeight: 260, maxHeight: 340)
         }
     }
 
@@ -114,51 +119,78 @@ struct BuildView: View {
 
     /// zsh 配置读取开关 + 读到了哪些 rc 文件。
     ///
-    /// 单独一屏是因为这是「终端里好好的，HexoMan 里全找不到」的唯一开关。
-    /// 必须让用户看得见当前到底读了哪些文件、PATH 里有没有 homebrew。
+    /// 默认只显示一行状态，详细说明和路径输入收进折叠区。
+    /// 原因很实际：这些诊断信息对绝大多数用户是噪音，全部铺开会把这一屏撑得很长，
+    /// 而构建页真正要放的是「构建环境 + 操作按钮 + 日志」。
+    @State private var showShellDetail = false
+
     private var shellEnvironmentRow: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle(isOn: $model.usesShellEnvironment) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("读取 zsh 配置（Homebrew / nvm 必需）")
-                        .font(.callout)
-                    Text("""
-                    从 Dock 启动的图形程序不读 ~/.zshrc，brew 装的 node 因此不可见。
-                    打开这个开关，HexoMan 会用 zsh 加载你的 .zshenv / .zprofile / .zshrc，
-                    拿到和你终端里一样的 PATH。
-                    """)
-                    .font(.caption2)
+            HStack(spacing: 8) {
+                Toggle("读取 zsh 配置", isOn: $model.usesShellEnvironment)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+
+                Spacer(minLength: 8)
+
+                Text(model.usesShellEnvironment ? model.resolvedRCSummary : "已关闭")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        showShellDetail.toggle()
+                    }
+                } label: {
+                    Image(systemName: showShellDetail ? "chevron.down" : "chevron.right")
+                        .font(.caption)
                 }
+                .buttonStyle(.borderless)
+                .help(showShellDetail ? "收起" : "展开 zsh 配置详情")
             }
-            .toggleStyle(.switch)
-            .controlSize(.small)
 
-            if model.usesShellEnvironment {
-                HStack(spacing: 8) {
-                    TextField("rc 文件路径（留空自动找）", text: $model.customRCPath)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 11.5, design: .monospaced))
-
-                    Button("选择…") {
-                        if let url = NSWorkspaceBridge.chooseFile(prompt: "选择 zsh 配置文件") {
-                            model.customRCPath = url.path
-                        }
-                    }
-                }
-
-                if let problem = model.customRCPathProblem {
-                    Label(problem, systemImage: "exclamationmark.circle")
+            if showShellDetail {
+                if model.usesShellEnvironment {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("""
+                        从 Dock 启动的图形程序不读 ~/.zshrc，Homebrew 的环境变量因此完全不可见。
+                        打开这个开关，HexoMan 会用 zsh 加载你的 .zshenv / .zprofile / .zshrc，
+                        拿到和你终端里一样的 PATH。
+                        """)
                         .font(.caption2)
-                        .foregroundStyle(.orange)
-                } else {
-                    VStack(alignment: .leading, spacing: 3) {
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                        HStack(spacing: 8) {
+                            TextField("rc 文件路径（留空自动找）", text: $model.customRCPath)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.system(size: 11.5, design: .monospaced))
+
+                            Button("选择…") {
+                                if let url = NSWorkspaceBridge.chooseFile(prompt: "选择 zsh 配置文件") {
+                                    model.customRCPath = url.path
+                                }
+                            }
+                        }
+
+                        if let problem = model.customRCPathProblem {
+                            Label(problem, systemImage: "exclamationmark.circle")
+                                .font(.caption2)
+                                .foregroundStyle(.orange)
+                        }
+
                         DetailRow(label: "已读取", value: model.resolvedRCSummary, monospaced: true)
-                        DetailRow(label: "PATH 里的关键项", value: model.resolvedPathSummary, monospaced: true)
+                        DetailRow(label: "PATH 关键项", value: model.resolvedPathSummary, monospaced: true)
                     }
-                    .padding(9)
+                    .padding(10)
                     .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                } else {
+                    Text("关闭后 HexoMan 只用 app 启动时继承到的环境，通常只有系统四个目录，brew 装的 node 会不可见。")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
