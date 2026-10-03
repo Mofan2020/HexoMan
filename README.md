@@ -212,6 +212,25 @@ open HexoMan.xcodeproj     # 选中 HexoMan scheme 运行
 
 不联网、不上传任何内容到外部服务、没有账号体系、没有自动更新、没有崩溃上报、没有云同步。配置只落在本机的 `~/Library/Application Support/HexoMan/settings.json`。
 
+## 自定义内容是怎么注入的
+
+「加个 banner 要去哪改」是小白卡住频率最高的问题，答案通常是「不知道」。常见误区是去 `themes/landscape/layout/` 改模板——那在 `npm install` 时会被覆盖，升级主题就白改一次。
+
+HexoMan 的做法是自动在站点里生成一对文件：
+
+| 文件 | 谁维护 | 作用 |
+| --- | --- | --- |
+| `scripts/hexoman-inject.json` | 你（通过 HexoMan 界面） | 填的 HTML，分 head 和 body |
+| `scripts/hexoman-inject.js` | HexoMan | 注入逻辑，读 json 并插到每页 |
+
+注入走 Hexo 的 `_after_html_render` 钩子，在每页 `</head>` / `</body>` 前插入。相比改主题源码有三个好处：
+
+- 升级主题、重新 `npm install` 都不会丢
+- 不依赖主题支不支持某个注入目录，**换任何主题都通用**
+- 删掉这两个文件就等于彻底关掉这个功能，站点里没有任何残留
+
+> **实现上的一个坑**：`_after_html_render` 的入参在不同 Hexo 版本里不一样——Hexo 8.1.2 实测传的是**字符串**，而传 `{ path, content }` 对象的版本也存在。生成的脚本对两种形态都做了兼容，并且**任何分支都保证返回值非空**。这一条不是洁癖：早期按「对象」写导致 filter 返回 `undefined`，构建不报错、照常显示 `46 files generated`，但产物 HTML 全部变成 0 字节，整个站点被静默清空。
+
 ## 配置存放
 
 `~/Library/Application Support/HexoMan/settings.json`，包含：
@@ -239,6 +258,9 @@ HexoMan/
 │   ├── BlogPost.swift      文章模型与 source/_posts 下的文件读写
 │   ├── FrontMatter.swift   front-matter 解析与回写
 │   ├── ConfigFile.swift    _config*.yml 的列出与读写
+│   ├── SiteSettings.swift  常用配置项的可视化读写（保真，不动嵌套块）
+│   ├── CustomContent.swift head/body 自定义注入的配置与脚本
+│   ├── SnippetLibrary.swift 常见代码片段（banner/统计/CSS/JS）
 │   ├── GitService.swift    git status / log / commit / push / pull
 │   ├── HexoService.swift   hexo 可执行文件定位与命令组装
 │   ├── HexoCLIBootstrap.swift  创建站点时用用户的 npm 自举 hexo-cli
@@ -252,6 +274,7 @@ HexoMan/
     ├── ContentView.swift   侧边栏 + 内容区的分发
     ├── SiteManagerView / DashboardView / PostsView
     ├── PostEditorView / BuildView / ConfigView / GitView
+    ├── VisualConfigView  配置页的可视化那一半（表单 + 自定义内容）
     └── Components.swift    复用的卡片、标签、空状态、日志控制台
 ```
 

@@ -404,7 +404,95 @@ final class HexoManModel: ObservableObject {
     /// 放弃改动。
     func revertConfig(_ file: ConfigFile) {
         if let index = configFiles.firstIndex(where: { $0.id == file.id }) {
+            // 必须走 load 而不是直接改 contents —— load 会填上 subtitle，
+            // 直接用内存里那份的话放弃改动后左侧副标题会变空。
             configFiles[index] = ConfigStore.load(path: file.path)
+        }
+    }
+
+    // MARK: - 可视化配置
+
+    /// 站点主配置。找不到时返回 nil，界面上引导用户先建站。
+    var mainConfig: ConfigFile? {
+        configFiles.first { $0.name == "_config.yml" }
+    }
+
+    /// 读出所有常用配置项的当前值。
+    func siteSettingValues() -> [String: String] {
+        guard let config = mainConfig else { return [:] }
+        return SiteSettings.values(in: config.contents)
+    }
+
+    /// 某个键在当前站点里是不是多行块。界面上据此决定能不能编辑。
+    func isNestedSetting(_ key: String) -> Bool {
+        guard let config = mainConfig else { return false }
+        return SiteSettings.isNestedBlock(key: key, in: config.contents)
+    }
+
+    /// 写一个常用配置项并立即存盘。
+    ///
+    /// 直接落盘而不是走 draft，理由是这类字段都是「填了就生效」的低风险操作，
+    /// 让用户每改一个字都点一次保存反而更容易丢。
+    func updateSiteSetting(_ value: String, for key: String) {
+        guard let config = mainConfig else {
+            toast = Toast(text: "找不到 _config.yml", kind: .failure)
+            return
+        }
+
+        switch SiteSettings.setValue(value, for: key, in: config.contents) {
+        case .failure(let error):
+            toast = Toast(text: error.localizedDescription, kind: .failure)
+        case .success(let updated):
+            var next = config
+            next.contents = updated
+            saveConfig(ConfigStore.markSaved(next))
+        }
+    }
+
+    // MARK: - 自定义内容（banner / 统计 / CSS 放哪）
+
+    /// 站点当前的自定义注入内容。
+    var customContent: CustomContent {
+        guard let site = currentSite else { return CustomContent() }
+        return CustomContentStore.load(site: site)
+    }
+
+    /// 自定义注入是否已启用。
+    var isCustomContentInstalled: Bool {
+        guard let site = currentSite else { return false }
+        return CustomContentStore.isInstalled(site: site)
+    }
+
+    /// 保存自定义内容，并自动装好注入脚本。
+    func saveCustomContent(_ content: CustomContent) {
+        guard let site = currentSite else {
+            toast = Toast(text: "请先选择站点", kind: .failure)
+            return
+        }
+
+        do {
+            // 内容全空 = 用户清空了，等同于关掉。直接把文件删掉，
+            // 留着两个空文件只会让站点里多出看不懂的东西。
+            if content.isEmpty {
+                try CustomContentStore.remove(site: site)
+                toast = Toast(text: "已关闭自定义内容", kind: .info)
+            } else {
+                try CustomContentStore.save(content, site: site)
+                toast = Toast(text: "已保存，重新生成站点后生效", kind: .success)
+            }
+        } catch {
+            toast = Toast(text: "保存失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 关掉自定义内容，删掉注入文件。
+    func removeCustomContent() {
+        guard let site = currentSite else { return }
+        do {
+            try CustomContentStore.remove(site: site)
+            toast = Toast(text: "已删除注入文件，站点回到未改动状态", kind: .success)
+        } catch {
+            toast = Toast(text: "删除失败：\(error.localizedDescription)", kind: .failure)
         }
     }
 

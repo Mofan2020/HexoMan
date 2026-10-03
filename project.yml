@@ -36,7 +36,7 @@ targets:
         PRODUCT_NAME: HexoMan
         PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.hexoman
         INFOPLIST_FILE: HexoMan/Resources/Info.plist
-        MARKETING_VERSION: "0.3.0"
+        MARKETING_VERSION: "0.4.0"
         CURRENT_PROJECT_VERSION: "1"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

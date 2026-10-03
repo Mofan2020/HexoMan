@@ -2,7 +2,13 @@
 //  ConfigView.swift
 //  HexoMan
 //
-//  站点配置编辑：左边挑文件，右边改 YAML，带顶层键跳转和保存前校验。
+//  站点配置。分两个页签：
+//
+//  - 可视化：把 _config.yml 里真正需要人改的那些键做成中文表单，
+//    外加「自定义内容」——banner、统计代码、自定义 CSS 该往哪填就答在这里。
+//    这一页是给看不懂 YAML 的人用的。
+//  - 原始文件：左边挑文件，右边直接改 YAML，带顶层键跳转和保存前校验。
+//    这一页是给需要改完整配置的人用的。
 //
 
 import AppKit
@@ -20,48 +26,85 @@ struct ConfigView: View {
     @State private var jump: EditorJumpRequest?
     /// 保存前的告警，文案见 ConfigValidation。
     @State private var validationIssue: String?
+    /// 当前页签。默认停在可视化——绝大多数人只需要这一页。
+    @State private var tab: ConfigTab = .visual
+
+    enum ConfigTab: String, CaseIterable, Identifiable {
+        case visual = "可视化"
+        case raw = "原始文件"
+
+        var id: String { rawValue }
+    }
 
     var body: some View {
-        if model.configFiles.isEmpty {
-            EmptyHint(
-                systemImage: "gearshape",
-                title: "没有可编辑的配置文件",
-                message: "站点根目录下需要有 _config.yml。HexoMan 只编辑站点根目录里的 _config*.yml，主题目录下的配置不在这页处理。"
-            )
-        } else {
-            HSplitView {
-                fileList
-                    .frame(minWidth: 210, idealWidth: 240, maxWidth: 320)
+        VStack(spacing: 0) {
+            Picker("", selection: $tab) {
+                ForEach(ConfigTab.allCases) { item in
+                    Text(item.rawValue).tag(item)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 8)
 
-                editor
-                    .frame(minWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
+            Divider()
+
+            switch tab {
+            case .visual:
+                VisualConfigView()
+            case .raw:
+                rawEditor
             }
-            // 首次进入或列表刷新后，兜底选中第一个文件。
-            .onAppear(perform: ensureSelection)
-            // 只在切换选中项时同步；用户打字不会触发这里。
-            .onChange(of: selectedID) { _, _ in syncDraftFromModel() }
-            .onChange(of: model.configFiles) { _, _ in
-                // 站点切换后 configFiles 会整体换掉，旧选中项不再存在。
-                if let selectedID, model.configFiles.contains(where: { $0.id == selectedID }) == false {
-                    self.selectedID = model.configFiles.first?.id
+        }
+    }
+
+    // MARK: - 原始文件页
+
+    private var rawEditor: some View {
+        Group {
+            if model.configFiles.isEmpty {
+                EmptyHint(
+                    systemImage: "doc.text.magnifyingglass",
+                    title: "没有可编辑的配置文件",
+                    message: "站点根目录下需要有 _config.yml。HexoMan 只编辑站点根目录里的 _config*.yml，主题目录下的配置不在这页处理。"
+                )
+            } else {
+                HSplitView {
+                    fileList
+                        .frame(minWidth: 210, idealWidth: 240, maxWidth: 320)
+
+                    editor
+                        .frame(minWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
                 }
-                syncDraftFromModel(force: true)
-                ensureSelection()
+                // 首次进入或列表刷新后，兜底选中第一个文件。
+                .onAppear(perform: ensureSelection)
+                // 只在切换选中项时同步；用户打字不会触发这里。
+                .onChange(of: selectedID) { _, _ in syncDraftFromModel() }
+                .onChange(of: model.configFiles) { _, _ in
+                    // 站点切换后 configFiles 会整体换掉，旧选中项不再存在。
+                    if let selectedID, model.configFiles.contains(where: { $0.id == selectedID }) == false {
+                        self.selectedID = model.configFiles.first?.id
+                    }
+                    syncDraftFromModel(force: true)
+                    ensureSelection()
+                }
             }
-            .alert("保存前请确认", isPresented: Binding(
-                get: { validationIssue != nil },
-                set: { if $0 == false { validationIssue = nil } }
-            )) {
-                Button("仍然保存", role: .destructive) {
-                    validationIssue = nil
-                    saveDraft()
-                }
-                Button("返回修改", role: .cancel) {
-                    validationIssue = nil
-                }
-            } message: {
-                Text(validationIssue ?? "")
+        }
+        .alert("保存前请确认", isPresented: Binding(
+            get: { validationIssue != nil },
+            set: { if $0 == false { validationIssue = nil } }
+        )) {
+            Button("仍然保存", role: .destructive) {
+                validationIssue = nil
+                saveDraft()
             }
+            Button("返回修改", role: .cancel) {
+                validationIssue = nil
+            }
+        } message: {
+            Text(validationIssue ?? "")
         }
     }
 
