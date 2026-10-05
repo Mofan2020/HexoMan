@@ -170,7 +170,9 @@ enum PageStore {
         var results: [PageFile] = []
         let sourceRoot = (site.path as NSString).appendingPathComponent("source")
 
-        while let relative = enumerator.nextObject() as? String {
+        while let url = enumerator.nextObject() as? URL {
+            // 取相对于 source 目录的路径
+            let relative = url.path.replacingOccurrences(of: sourceRoot + "/", with: "")
             if let file = makePageFile(relative: relative, sourceRoot: sourceRoot) {
                 results.append(file)
             }
