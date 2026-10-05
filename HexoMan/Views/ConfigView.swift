@@ -26,11 +26,12 @@ struct ConfigView: View {
     @State private var jump: EditorJumpRequest?
     /// 保存前的告警，文案见 ConfigValidation。
     @State private var validationIssue: String?
-    /// 当前页签。默认停在可视化——绝大多数人只需要这一页。
+    /// 当前页签。
     @State private var tab: ConfigTab = .visual
 
     enum ConfigTab: String, CaseIterable, Identifiable {
         case visual = "可视化"
+        case schema = "结构化"
         case raw = "原始文件"
 
         var id: String { rawValue }
@@ -54,6 +55,8 @@ struct ConfigView: View {
             switch tab {
             case .visual:
                 VisualConfigView()
+            case .schema:
+                SchemaConfigView()
             case .raw:
                 rawEditor
             }

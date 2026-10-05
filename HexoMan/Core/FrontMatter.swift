@@ -93,18 +93,22 @@ struct FrontMatter: Equatable, Hashable {
 
     // MARK: - 标量转换
 
-    private func string(_ key: String) -> String? {
+    /// 取一个键的字符串值（去掉首尾空白，空串返回 nil）。
+    ///
+    /// 刻意不用 `private`：页面表单要拿 `layout`、`permalink` 这类字段的
+    /// 原始值来渲染控件，PageStore 也在用。
+    func string(_ key: String) -> String? {
         guard let raw = raw(key) else { return nil }
         let trimmed = raw.trimmingCharacters(in: .whitespaces)
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    private func bool(_ key: String) -> Bool {
+    func bool(_ key: String) -> Bool {
         guard let raw = raw(key)?.trimmingCharacters(in: .whitespaces).lowercased() else { return false }
         return raw == "true" || raw == "yes" || raw == "1"
     }
 
-    private func date(_ key: String) -> Date? {
+    func date(_ key: String) -> Date? {
         guard let raw = string(key) else { return nil }
         return Self.parseDate(raw)
     }
@@ -113,7 +117,7 @@ struct FrontMatter: Equatable, Hashable {
     ///
     /// 块状写法是 `hexo new` 的默认产物，也是绝大多数真实博客的写法，
     /// 只认内联会让标签/分类整片读不出来。
-    private func list(_ key: String) -> [String] {
+    func list(_ key: String) -> [String] {
         guard let entry = entries.first(where: { $0.key == key }) else { return [] }
 
         // 块状：解析时已把每项的 `- ` 前缀去掉、按行存好了

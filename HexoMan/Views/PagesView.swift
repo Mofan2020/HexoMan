@@ -1,26 +1,20 @@
 //
-//  PostsView.swift
+//  PagesView.swift
 //  HexoMan
 //
-//  文章列表：左列表 + 右详情。数据全部来自 HexoManModel，不直接碰文件系统。
+//  页面列表：管理 source/ 目录下的页面（非 _posts）。
+//  页面和文章的区别：页面不在 _posts 下、没有发布日期、可任意嵌套目录。
 //
 
 import SwiftUI
 
-struct PostsView: View {
-
+struct PagesView: View {
     @EnvironmentObject private var model: HexoManModel
 
-    /// 列表选中项。存的是 BlogPost.id，也就是文件绝对路径。
-    @State private var selectedPostID: String?
-    /// 新建文章对话框
-    @State private var showingNewPost = false
-    /// 正在编辑的文章，nil 表示没有打开编辑器
-    @State private var editingPost: BlogPost?
-    /// 删除二次确认
+    @State private var selectedPageID: String?
+    @State private var showingNewPage = false
+    @State private var editingPage: BlogPage?
     @State private var showingDeleteConfirm = false
-
-    // MARK: - 布局
 
     var body: some View {
         HSplitView {
@@ -29,18 +23,17 @@ struct PostsView: View {
             detailColumn
                 .frame(minWidth: 380, maxWidth: .infinity, maxHeight: .infinity)
         }
-        .sheet(isPresented: $showingNewPost) {
-            NewPostSheet()
+        .sheet(isPresented: $showingNewPage) {
+            NewPageSheet()
                 .environmentObject(model)
         }
-        .sheet(item: $editingPost) { post in
-            PostEditorView(post: post)
+        .sheet(item: $editingPage) { page in
+            PageEditorView(page: page)
                 .environmentObject(model)
         }
-        .onChange(of: model.posts.map(\.id)) { _, ids in
-            // 站点切换或删除后，清理掉已经失效的选中项
-            if let id = selectedPostID, !ids.contains(id) {
-                selectedPostID = nil
+        .onChange(of: model.pages.map(\.id)) { _, ids in
+            if let id = selectedPageID, !ids.contains(id) {
+                selectedPageID = nil
             }
         }
     }
@@ -53,7 +46,7 @@ struct PostsView: View {
 
             Divider()
 
-            postList
+            pageList
 
             Divider()
 
@@ -67,13 +60,13 @@ struct PostsView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
 
-                TextField("搜索标题、正文或标签", text: $model.postSearch)
+                TextField("搜索标题、路径或标签", text: $model.pageSearch)
                     .textFieldStyle(.plain)
                     .font(.callout)
 
-                if model.postSearch.isEmpty == false {
+                if model.pageSearch.isEmpty == false {
                     Button {
-                        model.postSearch = ""
+                        model.pageSearch = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
@@ -83,17 +76,17 @@ struct PostsView: View {
                 }
 
                 Button {
-                    showingNewPost = true
+                    showingNewPage = true
                 } label: {
-                    Label("新建", systemImage: "plus")
+                    Label("新建页面", systemImage: "plus")
                         .labelStyle(.titleAndIcon)
                         .font(.callout)
                 }
-                .help("新建文章")
+                .help("新建页面")
             }
 
-            Picker("", selection: $model.postFilter) {
-                ForEach(HexoManModel.PostFilter.allCases) { filter in
+            Picker("", selection: $model.pageFilter) {
+                ForEach(HexoManModel.PageFilter.allCases) { filter in
                     Text(filter.title).tag(filter)
                 }
             }
@@ -106,31 +99,30 @@ struct PostsView: View {
     }
 
     @ViewBuilder
-    private var postList: some View {
-        if model.posts.isEmpty {
+    private var pageList: some View {
+        if model.pages.isEmpty {
             EmptyHint(
                 systemImage: "doc.badge.plus",
-                title: "还没有文章",
-                message: "这个站点目前没有 Markdown 文章。点左上角「新建」写第一篇，或者直接用 `hexo new <标题>` 创建。"
+                title: "还没有页面",
+                message: "这个站点目前没有页面。点左上角「新建页面」创建首个页面，页面会放在 source/ 目录下。"
             )
-        } else if model.filteredPosts.isEmpty {
+        } else if model.filteredPages.isEmpty {
             EmptyHint(
                 systemImage: "line.3.horizontal.decrease.circle",
-                title: "没有匹配的文章",
-                message: "当前筛选「\(model.postFilter.title)」加搜索词「\(model.postSearch)」没有命中任何文章，换个条件试试。"
+                title: "没有匹配的页面",
+                message: "当前筛选加搜索词没有命中任何页面，换个条件试试。"
             )
         } else {
-            List(selection: $selectedPostID) {
-                ForEach(model.filteredPosts) { post in
-                    PostRow(post: post)
-                        .tag(post.id)
+            List(selection: $selectedPageID) {
+                ForEach(model.filteredPages) { page in
+                    PageRow(page: page)
+                        .tag(page.id)
                         .contextMenu {
-                            Button("编辑…") { editingPost = post }
-                            Button(post.isDraft ? "发布" : "转为草稿") { model.toggleDraft(post) }
-                            Button("在访达中显示") { PostStore.reveal(post) }
+                            Button("编辑…") { editingPage = page }
+                            Button("在访达中显示") { NSWorkspaceBridge.reveal(page.filePath) }
                             Divider()
                             Button("删除…", role: .destructive) {
-                                selectedPostID = post.id
+                                selectedPageID = page.id
                                 showingDeleteConfirm = true
                             }
                         }
@@ -143,12 +135,12 @@ struct PostsView: View {
 
     private var listFooter: some View {
         HStack(spacing: 8) {
-            Text("共 \(model.posts.count) 篇文章")
+            Text("共 \(model.pages.count) 个页面")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            if model.filteredPosts.count != model.posts.count {
-                Text("· 显示 \(model.filteredPosts.count) 篇")
+            if model.filteredPages.count != model.pages.count {
+                Text("· 显示 \(model.filteredPages.count) 个")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -172,30 +164,30 @@ struct PostsView: View {
 
     @ViewBuilder
     private var detailColumn: some View {
-        if let post = selectedPost {
-            detail(post)
+        if let page = selectedPage {
+            detail(page)
         } else {
             EmptyHint(
-                systemImage: "doc.text",
-                title: "选一篇文章",
-                message: "从左侧列表选择一篇，这里会显示标题、标签、摘要和可执行的操作。"
+                systemImage: "doc.plaintext",
+                title: "选一个页面",
+                message: "从左侧列表选择一个页面，这里会显示标题、布局、永久链接和可执行的操作。"
             )
         }
     }
 
-    private func detail(_ post: BlogPost) -> some View {
+    private func detail(_ page: BlogPage) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    header(post)
+                    header(page)
 
                     Divider()
 
-                    meta(post)
+                    meta(page)
 
                     Divider()
 
-                    preview(post)
+                    preview(page)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,16 +195,16 @@ struct PostsView: View {
 
             Divider()
 
-            actions(post)
+            actions(page)
         }
         .confirmationDialog(
-            "删除这篇文章？",
+            "删除这个页面？",
             isPresented: $showingDeleteConfirm,
             titleVisibility: .visible,
-            presenting: post
+            presenting: page
         ) { target in
             Button("移到废纸篓", role: .destructive) {
-                model.deletePost(target)
+                model.deletePage(target)
             }
             Button("取消", role: .cancel) {}
         } message: { target in
@@ -220,25 +212,21 @@ struct PostsView: View {
         }
     }
 
-    private func header(_ post: BlogPost) -> some View {
+    private func header(_ page: BlogPage) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(post.title)
+                Text(page.title)
                     .font(.system(size: 28, weight: .semibold))
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
-
-                if post.isDraft {
-                    Pill(text: "草稿", tint: .orange)
-                }
             }
 
-            Text(post.excerpt)
+            Text(page.excerpt)
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text(post.filePath)
+            Text(page.filePath)
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(.tertiary)
                 .textSelection(.enabled)
@@ -247,24 +235,24 @@ struct PostsView: View {
         }
     }
 
-    private func meta(_ post: BlogPost) -> some View {
+    private func meta(_ page: BlogPage) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            DetailRow(label: "日期", value: post.date.formatted(date: .abbreviated, time: .shortened))
-            DetailRow(label: "字数", value: "\(post.wordCount) 字")
-            DetailRow(label: "大小", value: ByteCountFormatter.string(fromByteCount: Int64(post.byteSize), countStyle: .file))
-            DetailRow(label: "slug", value: post.slug, monospaced: true)
-            DetailRow(label: "文件", value: post.filename, monospaced: true)
+            DetailRow(label: "布局", value: page.layout)
+            DetailRow(label: "永久链接", value: page.permalink, monospaced: true)
+            DetailRow(label: "字数", value: "\(page.wordCount) 字")
+            DetailRow(label: "大小", value: ByteCountFormatter.string(fromByteCount: Int64(page.byteSize), countStyle: .file))
+            DetailRow(label: "文件", value: page.filename, monospaced: true)
             DetailRow(
                 label: "最后修改",
-                value: post.modifiedAt.formatted(date: .abbreviated, time: .shortened)
+                value: page.modifiedAt.formatted(date: .abbreviated, time: .shortened)
             )
 
-            if post.tags.isEmpty == false {
-                pillRow(label: "标签", values: post.tags, tint: .accentColor)
+            if page.tags.isEmpty == false {
+                pillRow(label: "标签", values: page.tags, tint: .accentColor)
             }
 
-            if post.categories.isEmpty == false {
-                pillRow(label: "分类", values: post.categories, tint: .teal)
+            if page.categories.isEmpty == false {
+                pillRow(label: "分类", values: page.categories, tint: .teal)
             }
         }
     }
@@ -280,17 +268,17 @@ struct PostsView: View {
         }
     }
 
-    private func preview(_ post: BlogPost) -> some View {
+    private func preview(_ page: BlogPage) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("正文预览")
                 .font(.headline)
 
-            if post.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if page.body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 Text("（正文为空）")
                     .font(.callout)
                     .foregroundStyle(.tertiary)
             } else {
-                Text(post.body)
+                Text(page.body)
                     .font(.system(size: 12.5, design: .monospaced))
                     .foregroundStyle(.primary)
                     .textSelection(.enabled)
@@ -305,26 +293,17 @@ struct PostsView: View {
         }
     }
 
-    private func actions(_ post: BlogPost) -> some View {
+    private func actions(_ page: BlogPage) -> some View {
         HStack(spacing: 10) {
             Button {
-                editingPost = post
+                editingPage = page
             } label: {
                 Label("编辑…", systemImage: "square.and.pencil")
             }
             .keyboardShortcut("e", modifiers: .command)
 
             Button {
-                model.toggleDraft(post)
-            } label: {
-                Label(
-                    post.isDraft ? "发布" : "转为草稿",
-                    systemImage: post.isDraft ? "paperplane" : "tray.and.arrow.down"
-                )
-            }
-
-            Button {
-                PostStore.reveal(post)
+                NSWorkspaceBridge.reveal(page.filePath)
             } label: {
                 Label("在访达中显示", systemImage: "folder")
             }
@@ -343,41 +322,40 @@ struct PostsView: View {
 
     // MARK: - 辅助
 
-    private var selectedPost: BlogPost? {
-        guard let id = selectedPostID else { return nil }
-        return model.posts.first { $0.id == id }
+    private var selectedPage: BlogPage? {
+        guard let id = selectedPageID else { return nil }
+        return model.pages.first { $0.id == id }
     }
 }
 
 // MARK: - 列表行
 
-private struct PostRow: View {
-    let post: BlogPost
+private struct PageRow: View {
+    let page: BlogPage
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(post.title)
+            Text(page.title)
                 .font(.callout.weight(.medium))
                 .lineLimit(1)
                 .truncationMode(.tail)
 
             HStack(spacing: 6) {
-                Text(post.date.formatted(date: .abbreviated, time: .shortened))
+                Text(page.layout)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(.quaternary.opacity(0.5), in: Capsule())
 
-                ForEach(post.tags.prefix(3), id: \.self) { tag in
+                ForEach(page.tags.prefix(3), id: \.self) { tag in
                     Pill(text: tag)
                 }
 
-                if post.tags.count > 3 {
-                    Text("+\(post.tags.count - 3)")
+                if page.tags.count > 3 {
+                    Text("+\(page.tags.count - 3)")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
-                }
-
-                if post.isDraft {
-                    Pill(text: "草稿", tint: .orange)
                 }
             }
         }
@@ -385,42 +363,16 @@ private struct PostRow: View {
     }
 }
 
-/// 标签自动换行
-///
-/// 详情页里标签数量不定，用一个简单的换行布局排开。
-struct FlexibleTagLayout: View {
-    let values: [String]
-    let tint: Color
+// MARK: - 新建页面对话框
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(rows, id: \.self) { row in
-                HStack(spacing: 6) {
-                    ForEach(row, id: \.self) { value in
-                        Pill(text: value, tint: tint)
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-        }
-    }
-
-    /// 每行最多 4 个，剩下的另起一行。
-    private var rows: [[String]] {
-        stride(from: 0, to: values.count, by: 4).map {
-            Array(values[$0..<min($0 + 4, values.count)])
-        }
-    }
-}
-
-// MARK: - 新建文章对话框
-
-private struct NewPostSheet: View {
+private struct NewPageSheet: View {
 
     @EnvironmentObject private var model: HexoManModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var title = ""
+    @State private var layout = "page"
+    @State private var permalink = ""
     @State private var tagsText = ""
     @State private var categoriesText = ""
     @FocusState private var titleFocused: Bool
@@ -428,9 +380,9 @@ private struct NewPostSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("新建文章")
+                Text("新建页面")
                     .font(.headline)
-                Text("在 \(model.currentSite?.folderName ?? "当前站点") 的 source/_posts 下创建一个 Markdown 文件。")
+                Text("在 \(model.currentSite?.folderName ?? "当前站点") 的 source/ 目录下创建一个页面。页面没有发布日期，支持任意嵌套目录。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -446,9 +398,19 @@ private struct NewPostSheet: View {
                 TextField("标题（必填）", text: $title)
                     .focused($titleFocused)
 
-                TextField("标签，逗号分隔，例如 Swift, macOS", text: $tagsText)
+                Picker("布局", selection: $layout) {
+                    Text("page（默认页面）").tag("page")
+                    Text("post（文章布局）").tag("post")
+                    Text("layout（自定义）").tag("layout")
+                }
+                .frame(width: 300)
 
-                TextField("分类，逗号分隔，例如 技术", text: $categoriesText)
+                TextField("永久链接（可选，留空自动生成）", text: $permalink)
+                    .help("例如：/about/ 或 /contact/。留空则根据标题自动生成。")
+
+                TextField("标签，逗号分隔", text: $tagsText)
+
+                TextField("分类，逗号分隔", text: $categoriesText)
             }
             .formStyle(.grouped)
             .frame(width: 440)
@@ -456,7 +418,7 @@ private struct NewPostSheet: View {
             Divider()
 
             HStack {
-                Text("创建后会直接用编辑器写正文。")
+                Text("页面会直接创建在 source/ 目录下，支持子目录。")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
 
@@ -466,9 +428,11 @@ private struct NewPostSheet: View {
                     .keyboardShortcut(.cancelAction)
 
                 Button("创建") {
-                    model.createPost(
+                    model.createPage(
                         title: title,
                         body: "",
+                        layout: layout,
+                        permalink: permalink,
                         tags: split(tagsText),
                         categories: split(categoriesText)
                     )
@@ -484,7 +448,6 @@ private struct NewPostSheet: View {
         .onAppear { titleFocused = true }
     }
 
-    /// "a, b ,, c" → ["a", "b", "c"]
     private func split(_ text: String) -> [String] {
         text
             .split(separator: ",")

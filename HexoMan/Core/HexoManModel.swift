@@ -12,9 +12,13 @@ import SwiftUI
 enum SidebarItem: String, CaseIterable, Identifiable {
     case overview
     case posts
+    case pages
     case build
     case config
+    case theme
     case git
+    case backup
+    case diagnostics
     case sites
 
     var id: String { rawValue }
@@ -23,9 +27,13 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .overview: return "总览"
         case .posts: return "文章"
+        case .pages: return "页面"
         case .build: return "构建与预览"
         case .config: return "配置"
+        case .theme: return "主题"
         case .git: return "Git"
+        case .backup: return "备份"
+        case .diagnostics: return "诊断"
         case .sites: return "站点管理"
         }
     }
@@ -34,9 +42,13 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .overview: return "gauge.with.dots.needle.33percent"
         case .posts: return "doc.text"
+        case .pages: return "doc.plaintext"
         case .build: return "hammer"
         case .config: return "gearshape"
+        case .theme: return "paintbrush"
         case .git: return "arrow.triangle.branch"
+        case .backup: return "externaldrive"
+        case .diagnostics: return "stethoscope"
         case .sites: return "folder"
         }
     }
@@ -70,6 +82,7 @@ final class HexoManModel: ObservableObject {
     // MARK: - 内容
 
     @Published private(set) var posts: [BlogPost] = []
+    @Published private(set) var pages: [BlogPage] = []
     @Published private(set) var configFiles: [ConfigFile] = []
     @Published private(set) var gitStatus: GitStatus?
     @Published private(set) var commits: [GitCommit] = []
@@ -80,6 +93,8 @@ final class HexoManModel: ObservableObject {
     @Published var selection: SidebarItem = .overview
     @Published var postSearch = ""
     @Published var postFilter: PostFilter = .all
+    @Published var pageSearch = ""
+    @Published var pageFilter: PageFilter = .all
     @Published var serverPort: Int = AppSettings.defaultPort
     @Published var toast: Toast?
     @Published var isBusy = false
@@ -103,6 +118,24 @@ final class HexoManModel: ObservableObject {
             switch self {
             case .all: return "全部"
             case .published: return "已发布"
+            case .draft: return "草稿"
+            }
+        }
+    }
+
+    enum PageFilter: String, CaseIterable, Identifiable {
+        case all
+        case post
+        case page
+        case draft
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .all: return "全部"
+            case .post: return "文章"
+            case .page: return "页面"
             case .draft: return "草稿"
             }
         }
@@ -275,6 +308,7 @@ final class HexoManModel: ObservableObject {
             currentSiteMissing = true
             info = nil
             posts = []
+            pages = []
             configFiles = []
             return
         }
@@ -282,6 +316,18 @@ final class HexoManModel: ObservableObject {
         currentSiteMissing = false
         info = SiteProbe.inspect(site: site)
         posts = PostStore.load(site: site)
+        // Load pages (excluding posts)
+        let pageFiles = PageStore.pagesOnly(site: site)
+        pages = pageFiles.compactMap { pf in
+            let (front, body) = PageStore.load(pf)
+            return BlogPage(
+                filePath: pf.path,
+                front: front,
+                body: body,
+                modifiedAt: pf.modifiedAt ?? Date(),
+                byteSize: pf.size
+            )
+        }
         configFiles = ConfigStore.list(site: site)
         remotes = GitService.remotes(site: site)
 
@@ -307,6 +353,27 @@ final class HexoManModel: ObservableObject {
             post.title.lowercased().contains(keyword)
                 || post.body.lowercased().contains(keyword)
                 || post.tags.contains { $0.lowercased().contains(keyword) }
+        }
+    }
+
+    /// 经过搜索和筛选后的页面列表。
+    var filteredPages: [BlogPage] {
+        var result = pages
+
+        switch pageFilter {
+        case .all: break
+        case .post: result = result.filter { $0.layout == "post" }
+        case .page: result = result.filter { $0.layout == "page" }
+        case .draft: result = result.filter(\.isDraft)
+        }
+
+        let keyword = pageSearch.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !keyword.isEmpty else { return result }
+
+        return result.filter { page in
+            page.title.lowercased().contains(keyword)
+                || page.body.lowercased().contains(keyword)
+                || page.tags.contains { $0.lowercased().contains(keyword) }
         }
     }
 
@@ -385,7 +452,119 @@ final class HexoManModel: ObservableObject {
         }
     }
 
-    // MARK: - 配置
+    // MARK: - 页面
+
+    /// 新建页面。返回创建出来的页面，编辑器可以拿它直接进编辑态。
+    @discardableResult
+    func createPage(
+        title: String,
+        body: String = "",
+        layout: String = "page",
+        permalink: String = "",
+        tags: [String] = [],
+        categories: [String] = []
+    ) -> BlogPage? {
+        guard let site = currentSite else {
+            toast = Toast(text: "请先选择站点", kind: .failure)
+            return nil
+        }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            toast = Toast(text: "标题不能为空", kind: .failure)
+            return nil
+        }
+
+        do {
+            // Build slug from title
+            let slug = PageStore.sanitize(trimmed)
+            let page = try PageStore.create(
+                site: site,
+                slug: slug,
+                title: trimmed,
+                layout: layout,
+                extraFrontMatter: [
+                    "permalink": permalink.isEmpty ? "" : permalink,
+                    "tags": FrontMatter.renderList(tags),
+                    "categories": FrontMatter.renderList(categories)
+                ]
+            )
+            // Convert PageFile to BlogPage
+            let (front, bodyText) = PageStore.load(page)
+            let blogPage = BlogPage(
+                filePath: page.path,
+                front: front,
+                body: bodyText,
+                modifiedAt: page.modifiedAt ?? Date(),
+                byteSize: page.size
+            )
+            pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+            toast = Toast(text: "已创建 \((page.path as NSString).lastPathComponent)", kind: .success)
+            selection = .pages
+            return blogPage
+        } catch {
+            toast = Toast(text: "创建失败：\(error.localizedDescription)", kind: .failure)
+            return nil
+        }
+    }
+
+    /// 删除页面，文件进废纸篓。
+    func deletePage(_ page: BlogPage) {
+        // Need to find the PageFile
+        guard let site = currentSite else { return }
+        let pageFiles = PageStore.scan(site: site)
+        guard let pageFile = pageFiles.first(where: { $0.path == page.filePath }) else { return }
+
+        do {
+            try PageStore.delete(pageFile)
+            pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+            if let site = currentSite { info = SiteProbe.inspect(site: site) }
+            toast = Toast(text: "\(page.filename) 已移到废纸篓", kind: .success)
+        } catch {
+            toast = Toast(text: "删除失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 保存编辑器里的页面改动。
+    func savePage(_ page: BlogPage) {
+        guard let site = currentSite else { return }
+        let pageFiles = PageStore.scan(site: site)
+        guard let pageFile = pageFiles.first(where: { $0.path == page.filePath }) else { return }
+
+        do {
+            try PageStore.save(pageFile, front: page.front, body: page.body)
+            pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+            toast = Toast(text: "已保存", kind: .success)
+        } catch {
+            toast = Toast(text: "保存失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
 
     /// 保存某个配置文件。
     func saveConfig(_ file: ConfigFile) {
@@ -447,6 +626,36 @@ final class HexoManModel: ObservableObject {
             next.contents = updated
             saveConfig(ConfigStore.markSaved(next))
         }
+    }
+
+    // MARK: - 通用配置更新（供 SchemaConfigView 使用）
+
+    /// 更新任意配置文件的任意 YAML 路径。
+    /// - Parameters:
+    ///   - filePath: 配置文件的绝对路径
+    ///   - yamlPath: YAML 路径，如 `avatar.url` 或 `social[0].name`
+    ///   - value: 要写入的值（YAML 片段，如 `true`、`42`、`"text"` 或多行块）
+    func updateConfigAt(path filePath: String, yamlPath: String, value: String) {
+        guard let index = configFiles.firstIndex(where: { $0.path == filePath }) else {
+            showToast("找不到配置文件", kind: .failure)
+            return
+        }
+        var file = configFiles[index]
+
+        let result = YAMLPathEngine.shared.set(yamlPath, to: value, in: file.contents)
+        switch result {
+        case .success(let newContents):
+            file.contents = newContents
+            saveConfig(ConfigStore.markSaved(file))
+        case .failure(let error):
+            showToast("写入失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 读取任意配置文件的任意 YAML 路径的当前值。
+    func configValue(at filePath: String, path: String) -> String? {
+        guard let file = configFiles.first(where: { $0.path == filePath }) else { return nil }
+        return YAMLPathEngine.shared.get(path, in: file.contents)?.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     // MARK: - 自定义内容（banner / 统计 / CSS 放哪）

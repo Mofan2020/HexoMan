@@ -162,12 +162,20 @@ struct ContentView: View {
             siteRequired { DashboardView() }
         case .posts:
             siteRequired { PostsView() }
+        case .pages:
+            siteRequired { PagesView() }
         case .build:
             siteRequired { BuildView() }
         case .config:
             siteRequired { ConfigView() }
+        case .theme:
+            siteRequired { ThemeView() }
         case .git:
             siteRequired { GitView() }
+        case .backup:
+            siteRequired { BackupView() }
+        case .diagnostics:
+            siteRequired { DiagnosticsView() }
         }
     }
 
