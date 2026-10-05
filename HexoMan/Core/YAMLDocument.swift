@@ -601,8 +601,8 @@ struct YAMLDocument {
                 if working.indices.contains(line) { working[line] = text }
             case .insertAfter(let line, let indent, let newLines):
                 guard line >= 0, line < working.count else { continue }
-                let rendered = newLines.map { rendered($0, indent: indent) }
-                working.insert(contentsOf: rendered, at: line + 1)
+                let indentedLines = newLines.map { rendered($0, indent: indent) }
+                working.insert(contentsOf: indentedLines, at: line + 1)
             case .deleteRange(let range):
                 let lower = max(0, range.lowerBound)
                 let upper = min(working.count - 1, range.upperBound)
