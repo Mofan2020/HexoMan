@@ -50,35 +50,17 @@ enum BackupManager {
         let backupName = "\(siteName)-\(timeStr).zip"
         let backupURL = backupDirectory.appendingPathComponent(backupName)
 
-        // 收集要备份的文件
-        let includes = [
-            "source/",
-            "_config.yml",
-            "_config.*.yml",
-            "package.json",
-            "package-lock.json",
-            "yarn.lock",
-            "themes/",  // 只有用户手动放的主题
-            "scaffolds/"
-        ]
-
-        let excludes = [
-            "node_modules/",
-            "public/",
-            ".git/",
-            "*.log",
-            ".DS_Store"
-        ]
-
-        // 使用 zip 命令创建备份
+        // 使用 zip 递归压缩当前目录，排除不需要的目录/文件
+        // 这样避免 "nothing to select from" 错误：不显式指定包含模式，而是全量备份再排除
         let zipArgs = [
             "-r", backupURL.path,
+            ".",
             "-x", "*/node_modules/*",
             "-x", "*/public/*",
             "-x", "*/.git/*",
             "-x", "*/*.log",
             "-x", "*/.DS_Store"
-        ] + includes
+        ]
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
@@ -101,8 +83,21 @@ enum BackupManager {
         let attributes = try fm.attributesOfItem(atPath: backupURL.path)
         let size = attributes[.size] as? Int64 ?? 0
 
-        // 统计文件数（近似）
-        let fileCount = includes.count
+        // 统计文件数（近似）：解压列表数一下
+        let countProcess = Process()
+        countProcess.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+        countProcess.arguments = ["-l", backupURL.path]
+        let countPipe = Pipe()
+        countProcess.standardOutput = countPipe
+        try countProcess.run()
+        countProcess.waitUntilExit()
+        var fileCount = 0
+        if countProcess.terminationStatus == 0 {
+            let data = countPipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            // unzip -l 输出最后一行包含总文件数
+            fileCount = output.split(separator: "\n").last?.split(separator: " ").first.flatMap { Int($0) } ?? 0
+        }
 
         return BackupEntry(
             id: UUID(),
