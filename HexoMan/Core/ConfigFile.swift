@@ -86,7 +86,18 @@ enum ConfigStore {
 
     /// 写回磁盘。写成功后同步 baseline，避免「已保存」却还显示未保存。
     static func save(_ file: ConfigFile) throws {
+        // 确保目录存在
+        let directory = (file.path as NSString).deletingLastPathComponent
+        try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true, attributes: nil)
+        
+        // 写入文件
         try file.contents.write(to: URL(fileURLWithPath: file.path), atomically: true, encoding: .utf8)
+        
+        // 验证写入是否成功
+        let savedContent = try String(contentsOfFile: file.path, encoding: .utf8)
+        guard savedContent == file.contents else {
+            throw ConfigStoreError.writeVerificationFailed(file.path)
+        }
     }
 
     /// 存盘后把新内容设为基准，使 `isModified` 归零。
@@ -94,5 +105,16 @@ enum ConfigStore {
         var updated = file
         updated.originalContents = file.contents
         return updated
+    }
+
+    enum ConfigStoreError: LocalizedError {
+        case writeVerificationFailed(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .writeVerificationFailed(let path):
+                return "文件写入验证失败：\(path) 内容与预期不符"
+            }
+        }
     }
 }

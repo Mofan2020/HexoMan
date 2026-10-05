@@ -227,9 +227,20 @@ struct SchemaEntryView: View {
     private var controlView: some View {
         if !entry.isWritable {
             // 只读：列表、分组、块文本等
-            Text(readOnlyLabel)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(readOnlyLabel)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                
+                // 对于列表类型，提供编辑入口
+                if entry.childCount > 0 && readOnlyLabel.contains("列表") {
+                    Button("编辑列表项…") {
+                        editList()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
         } else {
             switch entry.kind {
             case .text, .url, .asset:
@@ -291,7 +302,11 @@ struct SchemaEntryView: View {
 
     private var readOnlyLabel: String {
         switch entry.kind {
-        case .readOnly(let reason): return reason
+        case .readOnly(let reason): 
+            if reason == "列表" && entry.childCount > 0 {
+                return "列表（\(entry.childCount) 项）——点击「编辑列表项」修改"
+            }
+            return reason
         default: return "只读"
         }
     }
@@ -327,5 +342,13 @@ struct SchemaEntryView: View {
         guard current != valueToCommit else { return }
         onCommit(entry.path.yamlDisplay, valueToCommit)
         pendingValue = ""
+    }
+    
+    // MARK: - 列表编辑（临时方案：引导去原始编辑器）
+    
+    @State private var showListEditor = false
+    
+    private func editList() {
+        model.showToast("列表编辑请使用「原始文件」页签，路径：\(entry.path.yamlDisplay)", kind: .info)
     }
 }

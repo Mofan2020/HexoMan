@@ -641,14 +641,23 @@ final class HexoManModel: ObservableObject {
             return
         }
         var file = configFiles[index]
-
+        
+        // 读取当前值用于对比
+        let oldValue = YAMLPathEngine.shared.get(yamlPath, in: file.contents) ?? ""
+        
         let result = YAMLPathEngine.shared.set(yamlPath, to: value, in: file.contents)
         switch result {
         case .success(let newContents):
+            // 验证内容确实发生了变化
+            if newContents == file.contents {
+                showToast("值未发生变化", kind: .info)
+                return
+            }
             file.contents = newContents
             saveConfig(ConfigStore.markSaved(file))
-        case .failure(let error):
-            showToast("写入失败：\(error.localizedDescription)", kind: .failure)
+            showToast("已保存：" + yamlPath, kind: .success)
+        case .failure(let err):
+            showToast("写入失败：" + err.localizedDescription, kind: .failure)
         }
     }
 
