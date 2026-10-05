@@ -10,6 +10,9 @@
 
 import SwiftUI
 
+
+
+
 struct SchemaConfigView: View {
     @EnvironmentObject private var model: HexoManModel
 
@@ -188,6 +191,7 @@ struct SchemaConfigView: View {
 // MARK: - 单个 Schema 条目的视图
 
 struct SchemaEntryView: View {
+
     let entry: ConfigField
     let filePath: String
     @ObservedObject var model: HexoManModel
@@ -221,6 +225,15 @@ struct SchemaEntryView: View {
         }
         .padding(14)
         .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .sheet(isPresented: $showListEditor) {
+            ListEditorSheet(
+                path: self.entry.path.yamlDisplay,
+                items: $listItems,
+                onSave: saveListItems,
+                model: model,
+                filePath: filePath
+            )
+        }
     }
 
     @ViewBuilder
@@ -344,11 +357,132 @@ struct SchemaEntryView: View {
         pendingValue = ""
     }
     
-    // MARK: - 列表编辑（临时方案：引导去原始编辑器）
+    // MARK: - 列表编辑
     
     @State private var showListEditor = false
+    @State private var listItems: [ListItem] = []
+    
+    private var isListField: Bool {
+        entry.childCount > 0 && readOnlyLabel.contains("列表")
+    }
     
     private func editList() {
-        model.showToast("列表编辑请使用「原始文件」页签，路径：\(entry.path.yamlDisplay)", kind: .info)
+        loadListItems()
+        showListEditor = true
     }
+    
+    private func loadListItems() {
+        let path = entry.path.yamlDisplay
+        let text = model.configFiles.first(where: { $0.path == filePath })?.contents ?? ""
+        let count = YAMLPathEngine.shared.listCount(path, in: text)
+        
+        var items: [ListItem] = []
+        for i in 0..<count {
+            // Try to get name/title/name field for display
+            let name = YAMLPathEngine.shared.listItemValue(entry.path.yamlDisplay, index: i, field: "name", in: model.configFiles.first(where: { $0.path == filePath })?.contents ?? "") 
+                ?? YAMLPathEngine.shared.listItemValue(entry.path.yamlDisplay, index: i, field: "title", in: model.configFiles.first(where: { $0.path == filePath })?.contents ?? "")
+                ?? YAMLPathEngine.shared.listItemValue(entry.path.yamlDisplay, index: i, field: "text", in: model.configFiles.first(where: { $0.path == filePath })?.contents ?? "")
+                ?? "第 \(i + 1) 项"
+            
+            // Get all fields for this item
+            var fields: [ListItemField] = []
+            let text = model.configFiles.first(where: { $0.path == filePath })?.contents ?? ""
+            let doc = YAMLDocument(text: text)
+            if let sequence = doc.node(at: YAMLPath(dottedPath: entry.path.yamlDisplay)),
+               let items = sequence.items,
+               i < items.count,
+               let fields_dict = items[i].value.entries {
+                for field in fields_dict {
+                    if let scalar = field.node.scalar {
+                        fields.append(ListItemField(key: field.key, value: scalar.value))
+                    }
+                }
+            }
+            
+            items.append(ListItem(index: i, displayName: name, fields: fields))
+        }
+        
+        listItems = items
+        showListEditor = true
+    }
+    
+    private func saveListItems() {
+        // 将编辑后的列表项写回 YAML
+        let path = entry.path.yamlDisplay
+        let text = model.configFiles.first(where: { $0.path == filePath })?.contents ?? ""
+        
+        // 删除旧列表项
+        var currentText = text
+        for i in (0..<listItems.count).reversed() {
+            let itemPath = path + "[\(i)]"
+            let result = YAMLPathEngine.shared.set(itemPath, to: "", in: currentText)
+            if case .success(let newText) = result {
+                currentText = newText
+            }
+        }
+        
+        // 重新添加编辑后的项
+        for item in listItems {
+            // 构建列表项的 YAML
+            var itemYAML = "- "
+            for (idx, field) in item.fields.enumerated() {
+                if idx > 0 {
+                    itemYAML += "\n  "
+                }
+                itemYAML += "\(field.key): \(field.value)"
+            }
+            
+            let result = YAMLPathEngine.shared.set(entry.path.yamlDisplay, to: itemYAML, in: currentText)
+            if case .success(let newText) = result {
+                currentText = newText
+            }
+        }
+        
+        // 写回文件
+        if let file = model.configFiles.first(where: { $0.path == filePath }) {
+            var fileCopy = file
+            fileCopy.contents = currentText
+            model.saveConfig(ConfigStore.markSaved(fileCopy))
+        }
+}
+
+
+
+
+
+
+
+
+
+
+
+// MARK: - 列表编辑 Sheet
+
+
+
+
+
+
+// MARK: - 列表编辑 Sheet
+
+
+
+
+
+
+// MARK: - 列表编辑 Sheet
+
+
+
+
+
+
+
+
+
+
+// MARK: - 列表编辑 Sheet
+
+
+
 }

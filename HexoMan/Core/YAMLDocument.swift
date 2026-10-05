@@ -1192,4 +1192,23 @@ final class YAMLPathEngine {
         let yamlPath = YAMLPath(dottedPath: path)
         return doc.set(value, at: yamlPath).map { $0.text }
     }
+
+    /// 读取列表项数。路径不存在或不是序列返回 0。
+    func listCount(_ path: String, in text: String) -> Int {
+        let doc = YAMLDocument(text: text)
+        return doc.count(at: YAMLPath(dottedPath: path))
+    }
+
+    /// 读取列表第 index 项的某个字段值。
+    func listItemValue(_ path: String, index: Int, field: String, in text: String) -> String? {
+        let doc = YAMLDocument(text: text)
+        return doc.itemValue(index, field: field, at: YAMLPath(dottedPath: path))
+    }
+
+    /// 读取列表所有项的某个字段值。
+    func listItemValues(_ path: String, field: String, in text: String) -> [String] {
+        let doc = YAMLDocument(text: text)
+        let count = doc.count(at: YAMLPath(dottedPath: path))
+        return (0..<count).compactMap { doc.itemValue($0, field: field, at: YAMLPath(dottedPath: path)) }
+    }
 }
