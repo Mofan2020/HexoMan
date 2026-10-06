@@ -17,15 +17,42 @@ struct FrontMatterEntry: Equatable, Hashable {
     /// 必须单独记一个标志：用户手写 `tags:\n  - A` 和内联的 `tags: [A]` 语义相同，
     /// 但保存时都应该保持他原来的样子，不能趁编辑顺手把格式洗掉。
     var isBlockList: Bool
+    /// **原样保留**的缩进块（嵌套映射、列表套列表这类）。
+    ///
+    /// ## 为什么必须有这个字段
+    ///
+    /// 解析缩进块时如果只认「每行都以 `- ` 开头」，碰到这种 front-matter 就会崩：
+    ///
+    ///     girls:
+    ///       - name: 阿蕾奇诺      ← 收进来
+    ///         from: 原神            ← 不是 - 开头，于是循环在这里中断
+    ///         reason: "父亲！！！"
+    ///       - name: 哥伦比娅        ← 后面全部再也读不到
+    ///         ...
+    ///
+    /// 后果是**保存即删数据**：60 个条目解析出来只剩 1 个，
+    /// 用户只是改了页面标题，保存一下就只剩一个人物了。
+    ///
+    /// 所以这里对拿不准的缩进块一律**整块原样存下来**，
+    /// 写回去时逐字节还原。保真优先于「解析得多聪明」。
+    var verbatimBlock: String?
 
-    init(key: String, rawValue: String, isBlockList: Bool = false) {
+    init(key: String, rawValue: String, isBlockList: Bool = false, verbatimBlock: String? = nil) {
         self.key = key
         self.rawValue = rawValue
         self.isBlockList = isBlockList
+        self.verbatimBlock = verbatimBlock
     }
+
+    /// 是不是一个「不是简单标量列表」的复杂块。
+    var isComplexBlock: Bool { verbatimBlock != nil }
 
     /// 按原文渲染这一行（块状列表会展开成多行）。
     var rendered: String {
+        // 复杂块逐字节还原，一个空格都不动
+        if let verbatimBlock {
+            return "\(key):\n\(verbatimBlock)"
+        }
         if isBlockList {
             let items = rawValue.components(separatedBy: "\n")
                 .filter { !$0.isEmpty }
@@ -55,8 +82,26 @@ struct FrontMatter: Equatable, Hashable {
     mutating func set(_ key: String, _ value: String) {
         if let index = entries.firstIndex(where: { $0.key == key }) {
             entries[index].rawValue = value
+            entries[index].isBlockList = false
+            // 改成标量之后，原来那块嵌套结构就没了，必须清掉，
+            // 否则 rendered 会优先吐 verbatimBlock，把这次修改吃掉。
+            entries[index].verbatimBlock = nil
         } else {
             entries.append(FrontMatterEntry(key: key, rawValue: value))
+        }
+    }
+
+    /// 整块替换一个复杂缩进块的内容（`girls:` 这类列表套映射）。
+    mutating func setBlock(_ key: String, _ block: String) {
+        let trimmed = block.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let index = entries.firstIndex(where: { $0.key == key }) {
+            if trimmed.isEmpty {
+                entries[index] = FrontMatterEntry(key: key, rawValue: "")
+            } else {
+                entries[index] = FrontMatterEntry(key: key, rawValue: "", verbatimBlock: block)
+            }
+        } else if trimmed.isEmpty == false {
+            entries.append(FrontMatterEntry(key: key, rawValue: "", verbatimBlock: block))
         }
     }
 
@@ -226,8 +271,8 @@ enum FrontMatterCodec {
         while index < closingIndex {
             let line = lines[index]
 
-            // 缩进行只可能是上一个键的块状列表，已经在上面消费掉了。
-            // 走到这里的缩进内容一律忽略（YAML 的嵌套 map 之类，HexoMan 不关心）。
+            // 只处理第一列的键。缩进行由上一个键的块整体消费（见下），
+            // 走到这里的缩进内容说明上面的块没被正确接管——跳过，绝不当成新键。
             guard let first = line.first, first != " ", first != "\t", first != "#" else {
                 index += 1
                 continue
@@ -244,30 +289,61 @@ enum FrontMatterCodec {
                 continue
             }
 
-            // `tags:` 后面跟一串 `  - 项` 就是块状列表。
-            // 这里主动吞掉这些缩进行，而不是像原来那样直接跳过——
-            // 跳过会让所有用块状写法的文章丢掉标签和分类。
+            // 收集这个键下面**全部**缩进行，而不是遇到非 `-` 行就停。
+            //
+            // 原实现在第一个不以 `-` 开头的缩进行处 break，
+            // 于是 `girls:` 这种「列表套映射」的块只读进第一项的 name，
+            // 其余几十项连同 from/reason 全部丢失——保存即删数据。
             if value.isEmpty {
-                var items: [String] = []
+                var blockLines: [String] = []
                 var lookahead = index + 1
 
                 while lookahead < closingIndex {
                     let candidate = lines[lookahead]
-                    let trimmed = candidate.trimmingCharacters(in: .whitespaces)
+                    let isBlank = candidate.trimmingCharacters(in: .whitespaces).isEmpty
                     let isIndented = candidate.first == " " || candidate.first == "\t"
-
-                    guard isIndented, trimmed.hasPrefix("-") else { break }
-                    // 去掉 `- ` 前缀；`- 项目` 和 `-项目` 都认
-                    let item = String(trimmed.dropFirst())
-                        .trimmingCharacters(in: .whitespaces)
-                    if item.isEmpty == false { items.append(item) }
+                    // 空行属于块的一部分（块状列表里常有），但不能越过后面的新键
+                    if isBlank {
+                        blockLines.append(candidate)
+                        lookahead += 1
+                        continue
+                    }
+                    guard isIndented else { break }
+                    blockLines.append(candidate)
                     lookahead += 1
                 }
 
-                if items.isEmpty == false {
-                    entries.append(
-                        FrontMatterEntry(key: key, rawValue: items.joined(separator: "\n"), isBlockList: true)
-                    )
+                // 去掉块尾部的空行，避免把下一个键和这个块在文本上粘连
+                while blockLines.last?.trimmingCharacters(in: .whitespaces).isEmpty == true {
+                    blockLines.removeLast()
+                }
+
+                if blockLines.isEmpty == false {
+                    let meaningful = blockLines.filter { $0.trimmingCharacters(in: .whitespaces).isEmpty == false }
+
+                    // 全部都是「缩进 - 纯文本项」→ 这才是可以当列表编辑的简单块
+                    let simpleItems = meaningful.allSatisfy { line in
+                        let trimmed = line.trimmingCharacters(in: .whitespaces)
+                        guard trimmed.hasPrefix("-") else { return false }
+                        let item = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespaces)
+                        return item.isEmpty == false && item.contains(": ") == false
+                    }
+
+                    if simpleItems {
+                        let items = meaningful.map { line -> String in
+                            let trimmed = line.trimmingCharacters(in: .whitespaces)
+                            return String(trimmed.dropFirst()).trimmingCharacters(in: .whitespaces)
+                        }
+                        entries.append(
+                            FrontMatterEntry(key: key, rawValue: items.joined(separator: "\n"), isBlockList: true)
+                        )
+                    } else {
+                        // 嵌套映射、列表套映射……原样保存，写回时逐字节还原
+                        entries.append(
+                            FrontMatterEntry(key: key, rawValue: "", verbatimBlock: blockLines.joined(separator: "\n"))
+                        )
+                    }
+
                     index = lookahead
                     continue
                 }

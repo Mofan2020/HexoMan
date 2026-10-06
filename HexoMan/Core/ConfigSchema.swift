@@ -62,16 +62,42 @@ struct ConfigField: Identifiable {
     var kind: Kind
     /// 分组
     var group: String
-    /// 当前值（标量才���）
+    /// 当前值（标量才有）
     var value: String?
     /// 这个路径下挂着的子项数量，用于折叠区标题
     var childCount: Int = 0
     /// 是否在 schema 里有已知说明
     var isKnown: Bool = false
+    /// 详细填写文档。为 nil 时界面只显示上面那句 hint。
+    var doc: ConfigDoc?
 
     var isWritable: Bool {
         if case .readOnly = kind { return false }
         return true
+    }
+}
+
+// MARK: - 候选项补全
+
+extension ConfigField {
+
+    /// 把「当前值」补进候选项列表里。
+    ///
+    /// 这是下拉框能保存的前提。SwiftUI 的 Picker 在 selection 找不到对应 tag 时
+    /// 会**显示成空白**，而且用户点选新值后能否落盘取决于外部逻辑——
+    /// 于是就出现「界面上明明选了，配置文件里没变」。
+    ///
+    /// 真实触发过好几次：
+    /// - `language: zh-CN`，而候选表里只有 `zh` / `zh-TW` / `en` → 空白、且存不进去
+    /// - `timezone: Asia/Changhai` 之外的自定义时区 → 同上
+    /// - 换主题后出现的自定义枚举值
+    ///
+    /// 补进去之后：当前值照样能显示和保留，用户也能改选成别的值。
+    /// 用户没主动改过时，它只是一个只读性质的回显项，不会被写回。
+    static func mergedOptions(_ options: [Option], current: String?) -> [Option] {
+        guard let current, !current.isEmpty else { return options }
+        if options.contains(where: { $0.value == current }) { return options }
+        return options + [Option(value: current, label: "\(current)（当前值，不在推荐列表中）")]
     }
 }
 
@@ -311,10 +337,11 @@ enum ConfigSchema {
     ) {
         let key = entry.key
         let known = ConfigKnowledge.lookup(key)
+        let doc = ConfigDocs.flatDoc(key)
 
         // 标量：直接给控件
         if let scalar = entry.node.scalar {
-            let kind = inferKind(key: key, scalar: scalar, known: known)
+            let kind = inferKind(key: key, scalar: scalar, known: known, doc: doc)
             result.append(ConfigField(
                 path: path,
                 label: known?.label ?? humanize(key),
@@ -322,7 +349,8 @@ enum ConfigSchema {
                 kind: kind,
                 group: group(of: key),
                 value: scalar.value,
-                isKnown: known != nil
+                isKnown: known != nil,
+                doc: doc ?? ConfigDocs.genericDoc(for: kind, value: scalar.value)
             ))
             return
         }
@@ -337,7 +365,8 @@ enum ConfigSchema {
                 group: group(of: key),
                 value: nil,
                 childCount: entry.node.items?.count ?? 0,
-                isKnown: known != nil
+                isKnown: known != nil,
+                doc: doc
             ))
             return
         }
@@ -352,29 +381,45 @@ enum ConfigSchema {
             group: group(of: key),
             value: nil,
             childCount: children.count,
-            isKnown: known != nil
+            isKnown: known != nil,
+            doc: doc
         ))
 
-        // 子项**不看**已知键表。
+        // 子项**不看**顶层已知键表。
         //
         // 为什么要区分：`url` 在顶层是「站点网址」，在 avatar 下面是「头像文件」；
-        // `language` 在顶层是站点语言，在 creative_commons 下面是「许可证种类」。
+        // `language` 在顶层是站点语言，在 creative_commons 下面是「许可证语言」。
         // 拿同一份说明套所有层级，就会出现「头像的地址项写着站点网址」这种
         // 明显不对的标签——小白看到会以为填错了地方。
-        // 所以嵌套子项一律按**值形状**自动推断，标签用通用译名。
+        //
+        // 所以嵌套子项按这个顺序找说明：
+        // 1. 「父键.子键」的专属文档（ConfigDocs.nested）——最具体，
+        //    也是 `creative_commons.license` 这种枚举值能被解释清楚的关键。
+        // 2. 与上下文无关的通用键（nestedKeyHint）。
+        // 3. 按值形状兜底的格式说明。
         for child in children {
             if child.node.scalar == nil { continue }   // 再深一层就不收了
             let childPath = path + [.key(child.key)]
+            let childDoc = ConfigDocs.nestedDoc(parent: key, child: child.key)
             let childKnown = nestedKeyHint(child.key)
+            let childKind = inferKind(
+                key: child.key,
+                scalar: child.node.scalar!,
+                known: childKnown,
+                doc: childDoc
+            )
             result.append(ConfigField(
                 path: childPath,
+                // 标签保持短，长解释交给 doc 渲染。
+                // 拿 summary（一整句话）当标签会把表单撑成一片文字。
                 label: childKnown?.label ?? humanize(child.key),
                 hint: childKnown?.hint ?? "",
-                kind: inferKind(key: child.key, scalar: child.node.scalar!, known: childKnown),
+                kind: childKind,
                 group: known?.label ?? humanize(key),
                 value: child.node.scalar?.value,
                 childCount: 0,
-                isKnown: childKnown != nil
+                isKnown: childKnown != nil || childDoc != nil,
+                doc: childDoc ?? ConfigDocs.genericDoc(for: childKind, value: child.node.scalar?.value)
             ))
         }
     }
@@ -443,7 +488,19 @@ enum ConfigSchema {
     // MARK: 推断
 
     /// 从键名、已知说明和值的实际形状推断控件类型。
-    static func inferKind(key: String, scalar: YAMLScalar?, known: ConfigKnowledge.Entry?) -> ConfigField.Kind {
+    ///
+    /// - Parameter doc: 「父键.子键」或顶层键的详细文档。**文档里的候选值优先**
+    ///   于自动推断——`creative_commons.license` 的值 `by-nc-sa` 看起来就是普通文本，
+    ///   但文档知道它是枚举，所以必须给下拉，而不是让新手去背这串东西。
+    static func inferKind(
+        key: String,
+        scalar: YAMLScalar?,
+        known: ConfigKnowledge.Entry?,
+        doc: ConfigDoc? = nil
+    ) -> ConfigField.Kind {
+        if let options = doc?.options, !options.isEmpty {
+            return .choice(options)
+        }
         if known?.control != nil, let options = known?.options, !options.isEmpty {
             return .choice(options)
         }

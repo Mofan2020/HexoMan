@@ -26,6 +26,15 @@ struct AppSettings: Codable {
     var usesShellEnvironment: Bool = true
     /// 用户手动指定的 zsh rc 文件路径。空表示自动按 $ZDOTDIR → $HOME 找 .zshenv/.zprofile/.zshrc。
     var customRCPath: String = ""
+    /// 是否自动把站点配置里的公共项同步到主题配置。
+    ///
+    /// 默认为 true。头像、favicon、标题这类值在 `_config.yml` 和
+    /// `_config.<主题>.yml` 里各写一份是 Hexo 生态的常态，
+    /// 而**主题通常优先读自己那份**——于是用户改了站点配置的头像却发现没反应，
+    /// 反复怀疑是不是自己操作错了。默认同步掉这个坑。
+    ///
+    /// 关掉后两个文件各管各的，适合故意让主题配置覆盖站点配置的场景。
+    var syncsThemeConfig: Bool = true
 
     static let defaultPort = 4000
 }

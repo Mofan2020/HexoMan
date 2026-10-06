@@ -68,8 +68,14 @@ struct SiteField: Identifiable {
     }
 
     /// 常用语言选项。Hexo 本身不校验 lang，主题会用它决定界面语言。
+    ///
+    /// 注意 `zh-CN` 必须在列表里：Hexo 官方的 `_config.yml` 默认值就是 `zh-CN`，
+    /// 而 `hexo new` 生成的站点也都带这个值。少了它的话，
+    /// 新建的站点打开「站点语言」就是一个空白下拉，而且选了也存不进去
+    /// （SwiftUI 的 Picker 找不到对应 tag 时无法提交）。
     static let languages: [(value: String, label: String)] = [
-        ("zh", "简体中文"), ("zh-TW", "繁體中文"), ("en", "English"),
+        ("zh-CN", "简体中文"), ("zh", "简体中文（部分主题用这个）"),
+        ("zh-TW", "繁體中文"), ("en", "English"),
         ("ja", "日本語"), ("ko", "한국어"), ("ru", "Русский")
     ]
 }
@@ -85,9 +91,9 @@ enum SiteSettings {
         SiteField("description", "站点描述", "一句话介绍这个站，搜索引擎会把它当摘要。", group: .basic),
         SiteField("author", "作者名", "文章作者署名和「关于」页显示的名字。", group: .basic),
         SiteField("url", "站点网址", "必须是最终对外的完整地址，结尾的斜杠可省。例：https://example.com。社交链接、RSS 都靠它拼出来。", group: .basic),
-        SiteField("language", "站点语言", "决定站点使用哪种界面语言。", group: .basic,
+        SiteField("language", "站点语言", "决定界面语言，只影响导航和按钮这些文案，不影响文章内容。", group: .basic,
                   kind: .choice(SiteField.languages)),
-        SiteField("timezone", "时区", "影响文章日期的显示，例：Asia/Shanghai。", group: .basic),
+        SiteField("timezone", "时区", "影响文章日期显示，例：Asia/Shanghai。", group: .basic),
 
         // 外观
         SiteField("theme", "主题", "站点用的主题包名，例：landscape。装新主题请到「站点管理 → 主题」。", group: .appearance),

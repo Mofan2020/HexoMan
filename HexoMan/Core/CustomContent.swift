@@ -173,3 +173,118 @@ enum CustomContentStore {
 
     """
 }
+
+// MARK: - 识别站点里已有的注入脚本
+
+/// 站点 `scripts/` 目录下一个**会往生成结果里插东西**的脚本。
+///
+/// 为什么需要识别：
+///
+/// Hexo 会自动加载站点根目录 `scripts/` 下的所有 js，所以用户（或者教程、AI）
+/// 完全可能自己放一个 `banner.js` 之类的注入脚本。这种脚本完全有效，
+/// 但 HexoMan 原先只认自己那两个文件名（hexoman-inject.json/.js），
+/// 于是会出现**界面说「未启用」、站点上横幅其实天天在显示**的错位——
+/// 用户会以为自己配错了，实际上是工具没看见。
+///
+/// 识别出来之后至少能：如实告诉用户「你已经有注入脚本了」，
+/// 指出它在插什么、插到哪，避免再配一份导致同一段内容出现两次。
+struct DetectedInjectScript: Identifiable {
+
+    var id: String { path }
+
+    /// 绝对路径
+    var path: String
+    /// 文件名
+    var fileName: String
+    /// 注册的 Hexo 钩子名，例如 `_after_html_render`
+    var hooks: [String]
+    /// 插入的位置，例如 `</body>`
+    var insertsInto: [String]
+    /// 脚本里引用的外部资源（src/href），用来告诉用户「它加载的是什么东西」
+    var externalSources: [String]
+    /// 是否是 HexoMan 自己生成的那个
+    var isManagedByHexoMan: Bool
+
+    /// 一句话概括。
+    var summary: String {
+        if hooks.isEmpty { return "未识别到 Hexo 钩子" }
+        var parts = [hooks.joined(separator: ", ")]
+        if insertsInto.isEmpty == false {
+            parts.append("插入到 \(insertsInto.joined(separator: "、")) 前")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// 外部资源的展示名。
+    var sourceDescription: String {
+        if externalSources.isEmpty { return "没有引用外部资源" }
+        return externalSources.joined(separator: "\n")
+    }
+}
+
+extension CustomContentStore {
+
+    /// 扫描站点的 `scripts/` 目录，找出所有注入脚本（含 HexoMan 自己的）。
+    ///
+    /// 只认这几种「真的会改生成结果」的形式：
+    /// - `hexo.extend.filter.register('<hook>', …)`
+    /// - 注册时把内容插到 `</head>` / `</body>` / `</html>` 前面
+    ///
+    /// 刻意不做完整 JS 解析——站点里的脚本是用户自己写的，
+    /// 宁可漏报也不要给出一堆误报把界面搞脏。
+    static func detectedInjectScripts(site: HexoSite) -> [DetectedInjectScript] {
+
+        let scriptsDir = URL(fileURLWithPath: (site.path as NSString).appendingPathComponent("scripts"))
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(
+            at: scriptsDir,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        ) else { return [] }
+
+        var result: [DetectedInjectScript] = []
+
+        for case let fileURL as URL in enumerator {
+            let relative = fileURL.path.replacingOccurrences(of: scriptsDir.path + "/", with: "")
+            guard relative.lowercased().hasSuffix(".js") else { continue }
+
+            let fullPath = fileURL.path
+            // 太大的文件不扫，免得为了一个 2MB 的库文件去跑一堆正则
+            guard let attributes = try? fm.attributesOfItem(atPath: fullPath),
+                  let size = attributes[.size] as? Int, size < 512 * 1024,
+                  let text = try? String(contentsOfFile: fullPath, encoding: .utf8)
+            else { continue }
+
+            let hooks = matches(pattern: "hexo\\.extend\\.filter\\.register\\s*\\(\\s*['\"]([^'\"]+)['\"]", in: text)
+            let inserts = ["</head>", "</body>", "</html>"].filter { text.contains($0) }
+
+            // 只有「注册了钩子」或「提到了插入位置」才算是注入脚本。
+            // scripts/ 里经常还放着别的工具脚本，不能一律当成注入。
+            guard hooks.isEmpty == false || inserts.isEmpty == false else { continue }
+
+            let sources = matches(pattern: "(?:src|href)\\s*=\\s*['\"]([^'\"]+)['\"]", in: text)
+                + matches(pattern: "['\"](https?://[^'\"]+?\\.js)['\"]", in: text)
+
+            result.append(DetectedInjectScript(
+                path: fullPath,
+                fileName: (relative as NSString).lastPathComponent,
+                hooks: Array(Set(hooks)).sorted(),
+                insertsInto: inserts,
+                externalSources: Array(Set(sources)).sorted(),
+                isManagedByHexoMan: (relative as NSString).lastPathComponent == scriptFileName
+            ))
+        }
+
+        return result.sorted { $0.fileName < $1.fileName }
+    }
+
+    /// 用正则抓第一个捕获组里所有命中的内容。
+    private static func matches(pattern: String, in text: String) -> [String] {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        return regex.matches(in: text, range: range).compactMap { match in
+            guard let capture = Range(match.range(at: 1), in: text) else { return nil }
+            return String(text[capture])
+        }
+    }
+}

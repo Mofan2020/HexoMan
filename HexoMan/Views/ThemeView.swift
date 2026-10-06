@@ -297,69 +297,106 @@ struct ThemeConfigView: View {
     let theme: InstalledTheme
 
     @State private var configContent: String = ""
-    @State private var isEditing = false
     @State private var hasConfig = false
+    @State private var tab: Tab = .visual
+
+    enum Tab: String, CaseIterable, Identifiable {
+        case visual = "可视化编辑"
+        case raw = "原始文件"
+
+        var id: String { rawValue }
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("配置 \(theme.name)")
-                        .font(.headline)
-                    Text(theme.packageName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button("完成") { dismiss() }
-                    .buttonStyle(.borderedProminent)
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            header
+            Divider()
 
             if !hasConfig {
-                VStack(spacing: 16) {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.tertiary)
-                    Text("该主题还没有专属配置文件")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                    Text("点击下方按钮，HexoMan 会复制主题自带的示例配置（如果有）或创建一个空配置模板。")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 300)
-
-                    Button {
-                        createConfig()
-                    } label: {
-                        Label("生成配置文件", systemImage: "doc.badge.plus")
+                emptyState
+            } else {
+                // 页签而不是左右分栏。
+                //
+                // 原来用 HSplitView 把可视化表单和原始文件并排放，结果两半都被挤成
+                // 几百像素宽——原始文件那侧一行放不下几个字符，滚动条横着来回拉，
+                // 「右边原始文件看不全」就是这么来的。主题配置（_config.yun.yml）
+                // 本来就上百行，并排谁也读不了。页签一次只显示一份，各自都是全宽。
+                Picker("", selection: $tab) {
+                    ForEach(Tab.allCases) { item in
+                        Text(item.rawValue).tag(item)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                Group {
+                    switch tab {
+                    case .visual:
+                        SchemaThemeConfigView(
+                            theme: theme,
+                            configContent: $configContent,
+                            onSave: saveConfig
+                        )
+                    case .raw:
+                        ThemeRawConfigView(
+                            content: $configContent,
+                            onSave: saveConfig
+                        )
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                HSplitView {
-                    // 左侧：结构化编辑（基于 Schema）
-                    SchemaThemeConfigView(
-                        theme: theme,
-                        configContent: $configContent,
-                        onSave: saveConfig
-                    )
-                    .frame(minWidth: 350)
-
-                    // 右侧：原始文件编辑
-                    ThemeRawConfigView(
-                        content: $configContent,
-                        onSave: saveConfig
-                    )
-                    .frame(minWidth: 400)
-                }
             }
         }
         .padding(20)
-        .frame(minWidth: 700, minHeight: 500)
+        .frame(minWidth: 720, idealWidth: 860, minHeight: 520, idealHeight: 620)
         .onAppear(perform: loadConfig)
+    }
+
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("配置 \(theme.name)")
+                    .font(.headline)
+                HStack(spacing: 6) {
+                    Text(theme.packageName)
+                    if hasConfig {
+                        Text("·")
+                        Text(theme.configFileName)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("完成") { dismiss() }
+                .keyboardShortcut(.cancelAction)
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundStyle(.tertiary)
+            Text("该主题还没有专属配置文件")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+            Text("点击下方按钮，HexoMan 会复制主题自带的示例配置（如果有）或创建一个空配置模板。")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 320)
+
+            Button {
+                createConfig()
+            } label: {
+                Label("生成配置文件", systemImage: "doc.badge.plus")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func loadConfig() {
@@ -377,6 +414,8 @@ struct ThemeConfigView: View {
             let content = try ThemeManager.createSiteConfig(site: site, for: theme)
             configContent = content
             hasConfig = true
+            // 刚生成的是一份模板，直接进原始文件页比进空表单更直观
+            tab = .raw
         } catch {
             model.toast = Toast(text: "生成失败：\(error.localizedDescription)", kind: .failure)
         }
@@ -388,7 +427,7 @@ struct ThemeConfigView: View {
         do {
             try configContent.write(toFile: path, atomically: true, encoding: .utf8)
             hasConfig = true
-            model.toast = Toast(text: "配置已保存", kind: .success)
+            model.toast = Toast(text: "配置已保存，重新生成站点后生效", kind: .success)
         } catch {
             model.toast = Toast(text: "保存失败：\(error.localizedDescription)", kind: .failure)
         }
@@ -407,17 +446,23 @@ struct SchemaThemeConfigView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("结构化编辑", systemImage: "slider.horizontal.3")
-                .font(.headline)
+            HStack {
+                Label("可视化编辑", systemImage: "slider.horizontal.3")
+                    .font(.headline)
+                Spacer()
+            }
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     if schemaFields.isEmpty {
-                        Text("暂无可识别的配置项")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(20)
+                        Text("""
+                        这份配置里没有推断出可编辑的项——通常是因为它整块都是列表或嵌套结构。
+                        切到「原始文件」页直接编辑。
+                        """)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(20)
                     } else {
                         ForEach(schemaFields) { field in
                             if field.isWritable {
@@ -441,11 +486,19 @@ struct SchemaThemeConfigView: View {
             .background(.quaternary.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .onAppear { inferSchema() }
+        // 在「原始文件」页改过内容之后，可视化页要跟着重新推断，
+        // 否则字段值和说明都停留在打开窗口那一刻的快照——
+// 尤其 choice 类型，旧值不在候选里就会显示成空白（跟之前语言存不进去同一个病根）。
+        .onChange(of: configContent) { _, _ in inferSchema() }
     }
 
     private func inferSchema() {
         let doc = YAMLDocument(text: configContent)
         schemaFields = ConfigSchema.fields(in: doc)
+        // 内容整体被外部改过时，暂存值已经不可信了，清掉让它回到磁盘/内存的真实值
+        pendingValues = pendingValues.filter { key, _ in
+            schemaFields.contains { $0.path.yamlDisplay == key }
+        }
     }
 
     private func updateConfig(_ path: String, _ value: String) {
@@ -476,7 +529,11 @@ struct ThemeConfigFieldView: View {
 
             controlView
 
-            if !field.hint.isEmpty {
+            // 「怎么填」文档。和站点配置页、结构化页用同一个组件，
+            // 保证同一个键在三个页面上给出的说明完全一致。
+            if let doc = field.doc, doc.isEmpty == false {
+                ConfigHelpView(doc: doc)
+            } else if !field.hint.isEmpty {
                 Text(field.hint)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
@@ -528,13 +585,15 @@ struct ThemeConfigFieldView: View {
                 .focused($isFocused)
 
         case .choice(let options):
+            // 补上当前值，否则自定义枚举值（换主题、改过配置留下的）
+            // 会让下拉显示成空白，且无法保存
             Picker("", selection: $value) {
-                ForEach(options, id: \.value) { opt in
+                ForEach(ConfigField.mergedOptions(options, current: value)) { opt in
                     Text(opt.label).tag(opt.value)
                 }
             }
             .labelsHidden()
-            .frame(maxWidth: 300)
+            .frame(maxWidth: 320)
             .onChange(of: value) { _, new in
                 onCommit(new)
             }
@@ -553,14 +612,18 @@ struct ThemeRawConfigView: View {
     @Binding var content: String
     let onSave: () -> Void
 
-    @State private var draft = ""
+    @State private var draft: String = ""
     @State private var showSaveAlert = false
+    @State private var didLoad = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label("原始文件", systemImage: "doc.text")
                     .font(.headline)
+                Text(themeFileNameHint)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.tertiary)
                 Spacer()
                 Button {
                     draft = content
@@ -570,6 +633,9 @@ struct ThemeRawConfigView: View {
                 .disabled(!isModified)
                 Button {
                     onSave()
+                    // 保存成功后 content 已由外部更新，同步草稿，
+                    // 否则「保存」按钮会一直亮着，像是还没存上。
+                    draft = content
                 } label: {
                     Label("保存", systemImage: "square.and.arrow.down")
                 }
@@ -589,6 +655,20 @@ struct ThemeRawConfigView: View {
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .onAppear {
+            // 关键：草稿必须先从实际内容初始化。
+            // 原实现里 draft 是空串且从不赋值，于是编辑器一打开是**全空**，
+            // 同时 isModified（draft != content）为 true、「保存」是亮的——
+            // 用户看到空文件很可能直接点保存，就把整个主题配置覆盖成空了。
+            guard didLoad == false else { return }
+            didLoad = true
+            draft = content
+        }
+    }
+
+    private var themeFileNameHint: String {
+        let lines = draft.components(separatedBy: .newlines).count
+        return "\(lines) 行"
     }
 
     private var isModified: Bool {

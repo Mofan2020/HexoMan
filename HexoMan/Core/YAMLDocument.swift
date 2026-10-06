@@ -413,8 +413,18 @@ struct YAMLDocument {
         }
 
         if parent.isScalar, parent.scalar?.isNull == true, parentPath.count == 1, isKey(last) {
-            // `social:` 后面空着，补值
-            return rewriteScalarLine(parent, line: parent.line, value: value, hint: hint, keepQuote: nil)
+            // `avatar:` 裸着一行、底下什么都没有，现在要给它的**子键**赋值。
+            //
+            // 原实现在这里去改父键自己那一行，写出来是 `avatar: /images/a.png`——
+            // 结构完全错了：值落在了父键上，而不是 `avatar.url`。
+            // 而且它走的 rewriteScalarLine 在空壳节点上会因为取不到值列区间而
+            // 触发 String index out of bounds，直接把 app 打崩。
+            //
+            // 正确做法是按子键插入一行，缩进比父键多一档。
+            guard let key = keyName(of: last) else { return .failure(.pathNotFound(parentPath)) }
+            let indent = childIndent(of: parent)
+            let newLine = String(repeating: " ", count: indent) + "\(key): \(YAMLFormat.encode(value, hint: hint))"
+            return apply([.insertAfter(parent.line, indent: indent, [newLine])])
         }
 
         return .failure(.isNotMapping(parentPath))

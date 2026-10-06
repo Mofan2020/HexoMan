@@ -176,7 +176,9 @@ struct PagesView: View {
     }
 
     private func detail(_ page: BlogPage) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let hasStructured = page.front.entries.contains { $0.isComplexBlock }
+
+        return VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header(page)
@@ -184,6 +186,15 @@ struct PagesView: View {
                     Divider()
 
                     meta(page)
+
+                    if hasStructured {
+                        Divider()
+                        structuredData(page)
+                    }
+
+                    Divider()
+
+                    assets(page)
 
                     Divider()
 
@@ -291,6 +302,157 @@ struct PagesView: View {
                     )
             }
         }
+    }
+
+    // MARK: - 关联资源
+
+    /// 页面挂着的本地 css / js / 图片。
+    ///
+    /// 现代 Hexo 页面的内容大多不在正文里，而是靠 front-matter + 外部脚本渲染，
+    /// 所以光看「正文两行」会以为页面是空的。关联资源一栏把这件事摊开。
+    private func assets(_ page: BlogPage) -> some View {
+        let assets = PageAssetScanner.scan(site: model.currentSite!, page: page)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Label("关联资源", systemImage: "square.on.square")
+                    .font(.headline)
+                Text("只列本地文件；在线的 CDN 资源不关联")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            if assets.isEmpty {
+                Text("这个页面没有引用本地的 CSS / JS / 图片。")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(assets.enumerated()), id: \.element.id) { index, asset in
+                        if index > 0 { Divider().padding(.vertical, 1) }
+                        assetRow(asset)
+                    }
+                }
+                .padding(12)
+                .background(
+                    Color(nsColor: .textBackgroundColor),
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                )
+            }
+        }
+    }
+
+    private func assetRow(_ asset: PageAsset) -> some View {
+        let missing = asset.origin == .missing
+        return HStack(spacing: 9) {
+            Image(systemName: missing ? "exclamationmark.triangle.fill" : asset.kind.symbolName)
+                .font(.system(size: 12))
+                .foregroundStyle(missing ? .orange : .secondary)
+                .frame(width: 16)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(asset.sitePath)
+                    .font(.system(size: 11.5, design: .monospaced))
+                    .foregroundStyle(missing ? .orange : .primary)
+                    .textSelection(.enabled)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+
+                Text(missing
+                     ? "页面引用了它，但 source 下找不到这个文件——路径可能写错了"
+                     : "\(asset.relativePath) · \(asset.sizeDescription)")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer(minLength: 8)
+
+            Pill(text: asset.kind.label, tint: missing ? .orange : .secondary)
+            Pill(text: asset.originLabel, tint: missing ? .orange : .accentColor)
+
+            if missing == false {
+                Button {
+                    NSWorkspaceBridge.reveal(asset.sourcePath)
+                } label: {
+                    Image(systemName: "folder")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("在访达中显示")
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - 结构化数据
+
+    /// front-matter 里那些「不是简单标量」的块。
+    ///
+    /// 比如 `girls:` 下面挂着 53 条 `{name, from, reason}`——
+    /// 这些就是页面真正的内容。不显示出来的话，用户只会看到
+    /// 「正文两行、什么都没有」。
+    private func structuredData(_ page: BlogPage) -> some View {
+        let blocks = page.front.entries.filter { $0.isComplexBlock }
+
+        return Group {
+            if blocks.isEmpty == false {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("结构化数据", systemImage: "square.stack.3d.up")
+                        .font(.headline)
+
+                    Text("这些是写在页面头部、但不直接显示在正文里的数据——页面实际渲染出来的内容就是由它们生成的。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    ForEach(blocks, id: \.key) { entry in
+                        blockCard(entry)
+                    }
+                }
+            }
+        }
+    }
+
+    private func blockCard(_ entry: FrontMatterEntry) -> some View {
+        let block = entry.verbatimBlock ?? ""
+        let items = block.components(separatedBy: .newlines)
+            .filter { $0.trimmingCharacters(in: .whitespaces).isEmpty == false }
+
+        // 有 `- xxx:` 开头就是「列表套映射」，数一下有多少条
+        let itemCount = items.filter { $0.trimmingCharacters(in: .whitespaces).hasPrefix("- ") }.count
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(entry.key)
+                    .font(.system(size: 12, design: .monospaced))
+                    .fontWeight(.semibold)
+                if itemCount > 0 {
+                    Pill(text: "\(itemCount) 条", tint: .accentColor)
+                }
+                Spacer(minLength: 8)
+                Button("打开文件") {
+                    if let page = selectedPage {
+                        NSWorkspaceBridge.reveal(page.filePath)
+                    }
+                }
+                .controlSize(.small)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                Text(block)
+                    .font(.system(size: 10.5, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .padding(.vertical, 2)
+            }
+            .frame(maxHeight: 190)
+            .padding(10)
+            .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+        }
+        .padding(12)
+        .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func actions(_ page: BlogPage) -> some View {

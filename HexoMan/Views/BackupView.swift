@@ -15,15 +15,27 @@ struct BackupView: View {
     @State private var isCreating = false
     @State private var showError: String?
 
+    /// 备份范围的预检结果。用户点按钮前就能看到「会打包多少、会跳过什么」，
+    /// 而不是对着一个转圈等它慢慢把 node_modules 走一遍。
+    @State private var plan: BackupManager.Plan?
+
+    /// 是否包含 .git / public 这类体积大但可重建的内容。
+    @State private var includeLarge = false
+
+    private var activePolicy: BackupManager.Policy {
+        includeLarge ? .full : .default
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             headerSection
+            planSection
 
             if backups.isEmpty && !isLoading {
                 EmptyHint(
                     systemImage: "externaldrive.badge.plus",
                     title: "还没有备份",
-                    message: "点击右上角「新建备份」创建第一个备份。备份包含 source/、配置文件、package.json 等核心文件，不包含 node_modules/ 和 public/ 等可重建目录。"
+                    message: "点击右上角「新建备份」创建第一个备份。备份包含 source/、配置文件、package.json 等核心文件；node_modules/、public/、.git/ 这些能重新生成的内容默认不打包。"
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -31,7 +43,15 @@ struct BackupView: View {
             }
         }
         .padding(20)
-        .onAppear(perform: loadBackups)
+        .onAppear {
+            loadBackups()
+            refreshPlan()
+        }
+        .onChange(of: model.currentSite?.path) { _, _ in
+            loadBackups()
+            refreshPlan()
+        }
+        .onChange(of: includeLarge) { _, _ in refreshPlan() }
         .alert("操作失败", isPresented: Binding(
             get: { showError != nil },
             set: { if !$0 { showError = nil } }
@@ -40,6 +60,53 @@ struct BackupView: View {
         } message: {
             Text(showError ?? "")
         }
+    }
+
+    /// 备份范围说明 + 范围切换。
+    private var planSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Label("备份范围", systemImage: "checklist")
+                    .font(.callout.weight(.medium))
+
+                if let plan {
+                    Text("将打包 \(plan.includedCount) 个文件 · 约 \(plan.includedDescription)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                    if plan.excludedCount > 0 {
+                        Text("跳过 \(plan.excludedCount) 项")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .monospacedDigit()
+                    }
+                } else {
+                    Text("正在统计…")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+
+                Spacer(minLength: 8)
+
+                Toggle(isOn: $includeLarge) {
+                    Text("包含 .git / public 等大目录")
+                        .font(.caption)
+                }
+                .toggleStyle(.checkbox)
+                .help("默认不打包。这些目录通常几十上百 MB，而且能通过 git clone 和 hexo generate 重新得到。勾上后备份会明显变慢、变大。")
+            }
+
+            Text("""
+            默认包含：source/ 文章与页面、_config*.yml 配置、package.json、主题与模板、脚本。
+            默认排除：node_modules/（依赖，npm i 可重建）、public/（生成产物）、.git/（版本历史）、\
+            .wrangler/、*.log、.DS_Store。
+            """)
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(12)
+        .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
     private var headerSection: some View {
@@ -101,13 +168,29 @@ struct BackupView: View {
         isLoading = false
     }
 
+    /// 重新统计将要打包的范围。站点或开关变化时都跑一次。
+    private func refreshPlan() {
+        guard let site = model.currentSite else {
+            plan = nil
+            return
+        }
+        Task {
+            let result = await BackupManager.plan(for: site, policy: activePolicy)
+            plan = result
+        }
+    }
+
     private func createBackup() async {
         guard let site = model.currentSite else { return }
         isCreating = true
         do {
-            let entry = try await BackupManager.createBackup(for: site)
+            let entry = try await BackupManager.createBackup(for: site, policy: activePolicy)
             backups.insert(entry, at: 0)
-            model.toast = Toast(text: "备份已创建", kind: .success)
+            model.toast = Toast(
+                text: "备份已创建：\(entry.fileCount) 个文件 · \(entry.formattedSize)",
+                kind: .success
+            )
+            refreshPlan()
         } catch {
             showError = error.localizedDescription
         }

@@ -42,6 +42,8 @@ struct VisualConfigView: View {
                     )
                     .frame(minHeight: 240)
                 } else {
+                    syncSection
+                    beginnersGuide
                     settingsSection
                     customContentSection
                 }
@@ -60,7 +62,208 @@ struct VisualConfigView: View {
         }
     }
 
-    // MARK: - 常用配置
+    // MARK: - 新手先看这段
+
+/// 开头的三句话说明。
+///
+/// 这一页是整个工具里最容易让人无从下手的地方：满屏不认识的名词，
+/// 于是只能退回去改 YAML——而那正是我们想避免的。
+/// 先把「这些名词大概是什么」和「哪个该先填」讲清楚，后面每一项才读得懂。
+private var beginnersGuide: some View {
+    VStack(alignment: .leading, spacing: 10) {
+        Label("第一次用？先看这三句", systemImage: "lightbulb")
+            .font(.subheadline.weight(.semibold))
+
+        guideRow(
+            "1",
+            "这里改的是「站点设置」，不是写文章。",
+            "填完点保存，再去「构建与预览」跑一次生成，站点才会变。写文章在「文章」那一页。"
+        )
+        guideRow(
+            "2",
+            "不认识的名词，点它下面的「怎么填？」。",
+            "每个配置项都带详细说明：这个值是干什么的、该填什么格式、常见错怎么填。"
+        )
+        guideRow(
+            "3",
+            "不知道该填什么就先别动，默认值通常能用。",
+            "唯一建议现在就填的是「站点标题」和「站点网址」——它们决定站点对外的样子和所有链接。"
+        )
+    }
+    .padding(14)
+    .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+}
+
+private func guideRow(_ number: String, _ title: String, _ detail: String) -> some View {
+    HStack(alignment: .top, spacing: 9) {
+        Text(number)
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.white)
+            .frame(width: 17, height: 17)
+            .background(Color.accentColor, in: Circle())
+
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.callout)
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        Spacer(minLength: 0)
+    }
+}
+
+// MARK: - 站点配置 ↔ 主题配置
+
+/// 同步状态与开关。
+///
+/// 存在的理由：Hexo 站点有两份配置，**主题那份同名键优先**。
+/// 用户在这里（站点配置）改头像却没反应，是因为主题配置里还有一份旧值——
+/// 不说清楚的话，用户只会反复检查自己有没有保存成功。
+private var syncSection: some View {
+    let differences = model.configSyncDifferences
+    let themeOnly = model.themeOnlyEntries
+
+    return VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Label("与主题配置同步", systemImage: "arrow.triangle.2.circlepath")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            Toggle("自动同步", isOn: Binding(
+                get: { model.syncsThemeConfig },
+                set: { model.syncsThemeConfig = $0 }
+            ))
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .help("""
+            头像、标题、网址这类值在 _config.yml 和主题配置里各有一份，
+            而主题会优先用它自己那份。开着开关，在这里改这些值会同时写进主题配置。
+            关掉之后两个文件各管各的。
+            """)
+        }
+        .padding(.bottom, 8)
+
+        Text("""
+        Hexo 站点有两份配置：`_config.yml`（站点配置）和 `_config.<主题>.yml`（主题配置）。\
+        **同名的主题配置优先**，所以只改站点配置，头像、标题这类往往不会生效。
+        开启自动同步后，这里改这些值会一并写入主题配置。
+        """)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+        if model.syncsThemeConfig {
+            if differences.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                    Text(themeOnly.isEmpty
+                         ? "站点配置和主题配置目前是一致的"
+                         : "两边没有冲突")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 6)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("有 \(differences.count) 项两边不一致（以站点配置为准）：")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+
+                    ForEach(differences) { difference in
+                        HStack(alignment: .top, spacing: 6) {
+                            Text(difference.label)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 84, alignment: .leading)
+                            Text(difference.siteDisplay)
+                                .font(.system(size: 10.5, design: .monospaced))
+                                .foregroundStyle(.green)
+                                .lineLimit(1)
+                            Image(systemName: "arrow.left")
+                                .font(.system(size: 8))
+                                .foregroundStyle(.tertiary)
+                            Text(difference.themeDisplay)
+                                .font(.system(size: 10.5, design: .monospaced))
+                                .foregroundStyle(.orange)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                    }
+
+                    Button {
+                        model.syncThemeConfigToSite()
+                    } label: {
+                        Label("一键把主题配置同步成站点配置的样子", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .controlSize(.small)
+                    .padding(.top, 2)
+                }
+                .padding(10)
+                .background(.orange.opacity(0.07), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .padding(.top, 6)
+            }
+
+            // 只配在主题那一侧的项。这是**正常状态**，不是错误：
+            // 很多人就是把头像直接写在 _config.yun.yml 里的。
+            // 提示它是为了让用户自己决定要不要搬回站点配置——
+            // 搬过去的好处是以后换主题，头像不会丢。
+            if themeOnly.isEmpty == false {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("有 \(themeOnly.count) 项你只配在了主题配置里：")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Text("这些值主题会用上，**不会不生效**。要不要搬进站点配置由你决定——搬过去的好处是以后换主题不会丢。")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    ForEach(themeOnly) { entry in
+                        HStack(alignment: .center, spacing: 6) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(entry.label)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text(entry.value)
+                                    .font(.system(size: 10.5, design: .monospaced))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                Text(entry.siteState.description)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            Spacer(minLength: 8)
+                            Button("搬到站点配置") {
+                                model.pullThemeValueToSite(key: entry.key)
+                            }
+                            .controlSize(.small)
+                        }
+                    }
+
+                    Button {
+                        model.pullAllThemeValuesToSite()
+                    } label: {
+                        Label("全部搬到站点配置", systemImage: "arrow.down.doc")
+                    }
+                    .controlSize(.small)
+                    .padding(.top, 2)
+                }
+                .padding(10)
+                .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .padding(.top, 6)
+            }
+        }
+    }
+    .padding(14)
+    .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+}
+
+// MARK: - 常用配置
 
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -121,10 +324,15 @@ struct VisualConfigView: View {
                 control(for: field)
             }
 
-            Text(field.hint)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .fixedSize(horizontal: false, vertical: true)
+            // 「怎么填」的详细文档。有就显示，没有就退回原来那行 hint。
+            if let doc = ConfigDocs.flatDoc(field.key) {
+                ConfigHelpView(doc: doc)
+            } else {
+                Text(field.hint)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(.vertical, 6)
     }
@@ -146,20 +354,18 @@ struct VisualConfigView: View {
                 .onSubmit { commitPending(field.key) }
 
         case .choice(let options):
-            Picker("", selection: textBinding(field)) {
-                ForEach(options, id: \.value) { option in
+            // 候选项要补上「当前值」。站点里常见的 language: zh-CN 并不在
+            // 手写候选表里，不补的话 Picker 会显示成空白——空白选中态是没法保存的。
+            Picker("", selection: choiceBinding(field)) {
+                ForEach(ConfigField.mergedOptions(
+                    options.map { .init(value: $0.value, label: $0.label) },
+                    current: model.siteSettingValues()[field.key]
+                )) { option in
                     Text(option.label).tag(option.value)
                 }
             }
             .labelsHidden()
-            .frame(maxWidth: 260)
-            .onChange(of: model.siteSettingValues()[field.key]) { _, new in
-                // Picker 是立即生效的，没有失焦概念，这里直接提交
-                if new != pending[field.key] {
-                    pending[field.key] = new
-                    commitPending(field.key)
-                }
-            }
+            .frame(maxWidth: 320)
 
         case .text:
             TextField("留空表示不设置", text: textBinding(field))
@@ -210,6 +416,28 @@ struct VisualConfigView: View {
         )
     }
 
+    /// 下拉框的绑定：**选中即写盘**。
+    ///
+    /// 这里原来走的是「先存进 `pending`，再靠 `.onChange` 观察
+    /// `model.siteSettingValues()` 来提交」——而那个值只有在提交之后才会变，
+    /// 于是 onChange 永远不触发，「站点语言」选了等于没选。
+    ///
+    /// 下拉本身没有「失焦」这个时机（用户点完就去点别处了，
+    /// 焦点可能落在同页面别的输入框上），所以正确做法就是选中就存，
+    /// 跟开关一样。这类字段都是低风险的枚举值，不存在写到一半的风险。
+    private func choiceBinding(_ field: SiteField) -> Binding<String> {
+        let key = field.key
+        return Binding(
+            get: { model.siteSettingValues()[key] ?? "" },
+            set: { newValue in
+                // 清掉可能残留的草稿，避免之后失焦提交时用旧值覆盖回来
+                pending[key] = nil
+                guard newValue != model.siteSettingValues()[key] else { return }
+                model.updateSiteSetting(newValue, for: key)
+            }
+        )
+    }
+
     // MARK: - 自定义内容
 
     private var customContentSection: some View {
@@ -218,10 +446,16 @@ struct VisualConfigView: View {
                 Label("自定义内容", systemImage: "wand.and.stars")
                     .font(.headline)
                 Spacer()
+                // 状态徽标要说真话：站里已经有注入在跑时，
+                // 光看 HexoMan 自己那两个文件会显示「未启用」，但横幅其实天天在显示。
                 if model.isCustomContentInstalled {
                     Text("已启用")
                         .font(.caption2)
                         .foregroundStyle(.green)
+                } else if model.hasAnyInjectScript {
+                    Text("已有其他注入脚本")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
                 } else {
                     Text("未启用")
                         .font(.caption2)
@@ -236,6 +470,11 @@ struct VisualConfigView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
+
+            // 站点里已有的注入脚本。放在最前面，用户必须先知道这件事
+            ForEach(model.foreignInjectScripts) { script in
+                foreignScriptCard(script)
+            }
 
             ForEach(Snippet.Target.allCases) { target in
                 injectionEditor(target)
@@ -269,7 +508,81 @@ struct VisualConfigView: View {
         }
     }
 
-    private func injectionEditor(_ target: Snippet.Target) -> some View {
+    // MARK: - 已有的注入脚本
+
+/// 站点 `scripts/` 里用户自己写的注入脚本。
+///
+/// 这一块的存在理由是「如实告知」：这类脚本完全有效、也该保留，
+/// 但用户经常不知道它在跑，于是要么以为工具坏了，要么在下面再配一份，
+/// 结果同一段内容在页面上出现两次。
+private func foreignScriptCard(_ script: DetectedInjectScript) -> some View {
+    VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 11))
+                .foregroundStyle(.orange)
+            Text("检测到站点里已有注入脚本")
+                .font(.subheadline.weight(.semibold))
+            Spacer(minLength: 8)
+            Button {
+                NSWorkspaceBridge.reveal(script.path)
+            } label: {
+                Label("在访达中显示", systemImage: "folder")
+            }
+            .controlSize(.small)
+        }
+
+        Text("""
+        下面这个脚本已经在往生成好的页面里插东西了。它不是 HexoMan 生成的，\
+        但同样有效——**先别在下面重复填一遍**，否则同一段内容会出现两遍。
+        """)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+
+        VStack(alignment: .leading, spacing: 4) {
+            infoRow("文件", script.path)
+            infoRow("钩子", script.hooks.isEmpty ? "未识别" : script.hooks.joined(separator: ", "))
+            if script.insertsInto.isEmpty == false {
+                infoRow("插入位置", script.insertsInto.joined(separator: "、") + " 之前")
+            }
+            if script.externalSources.isEmpty == false {
+                infoRow("引用资源", script.sourceDescription)
+            }
+        }
+        .padding(9)
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+        Button("重新检测") {
+            model.refreshAll()
+        }
+        .controlSize(.small)
+        .help("你刚刚改了 scripts/ 目录时点一下")
+    }
+    .padding(12)
+    .background(.orange.opacity(0.07), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    .overlay {
+        RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .strokeBorder(.orange.opacity(0.35))
+    }
+}
+
+private func infoRow(_ title: String, _ value: String) -> some View {
+    HStack(alignment: .top, spacing: 8) {
+        Text(title)
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+            .frame(width: 56, alignment: .leading)
+        Text(value)
+            .font(.system(size: 10.5, design: .monospaced))
+            .foregroundStyle(.secondary)
+            .textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+        Spacer(minLength: 0)
+    }
+}
+
+private func injectionEditor(_ target: Snippet.Target) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(target == .head ? "插在 </head> 前" : "插在 </body> 前")

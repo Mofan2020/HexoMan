@@ -198,6 +198,8 @@ struct SchemaEntryView: View {
     let onCommit: (String, String) -> Void
 
     @State private var pendingValue: String = ""
+    /// 用户是否动过这个字段。用来区分「暂存值为空」和「用户主动清空」。
+    @State private var hasPending = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -215,8 +217,10 @@ struct SchemaEntryView: View {
             // 控件
             controlView
 
-            // 说明
-            if !entry.hint.isEmpty {
+            // 说明：有详细文档就用可展开的文档，没有就退回原来那行 hint
+            if let doc = entry.doc, doc.isEmpty == false {
+                ConfigHelpView(doc: doc)
+            } else if !entry.hint.isEmpty {
                 Text(entry.hint)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
@@ -292,12 +296,14 @@ struct SchemaEntryView: View {
 
             case .choice(let options):
                 Picker("", selection: textBinding) {
-                    ForEach(options, id: \.value) { opt in
+                    // 补当前值：候选表里没有的值（如自定义时区、
+                    // 换主题留下的自定义枚举）否则显示成空白且存不进去
+                    ForEach(ConfigField.mergedOptions(options, current: entry.value)) { opt in
                         Text(opt.label).tag(opt.value)
                     }
                 }
                 .labelsHidden()
-                .frame(maxWidth: 300)
+                .frame(maxWidth: 320)
                 .onChange(of: textBinding.wrappedValue) { _, new in
                     if new != pendingValue {
                         pendingValue = new
@@ -328,8 +334,15 @@ struct SchemaEntryView: View {
 
     private var textBinding: Binding<String> {
         Binding(
-            get: { pendingValue.isEmpty ? (model.configValue(at: filePath, path: entry.path.yamlDisplay) ?? entry.value ?? "") : pendingValue },
-            set: { pendingValue = $0 }
+            get: { hasPending ? pendingValue : (model.configValue(at: filePath, path: entry.path.yamlDisplay) ?? entry.value ?? "") },
+            set: {
+                pendingValue = $0
+                // 靠 pendingValue.isEmpty 判断「用户没动过」是错的：
+                // 用户把某个值**清空**时，get 会立刻回退到磁盘上的旧值，
+                // 于是这个字段永远清不掉，下拉框也点不回空。
+                // 必须单独记一个「动过」的标记。
+                hasPending = true
+            }
         )
     }
 
@@ -342,8 +355,11 @@ struct SchemaEntryView: View {
 
     private var intBinding: Binding<String> {
         Binding(
-            get: { pendingValue.isEmpty ? (model.configValue(at: filePath, path: entry.path.yamlDisplay) ?? entry.value ?? "") : pendingValue },
-            set: { pendingValue = $0.filter { $0.isNumber || $0 == "-" } }
+            get: { hasPending ? pendingValue : (model.configValue(at: filePath, path: entry.path.yamlDisplay) ?? entry.value ?? "") },
+            set: {
+                pendingValue = String($0.filter { $0.isNumber || $0 == "-" })
+                hasPending = true
+            }
         )
     }
 
@@ -352,8 +368,12 @@ struct SchemaEntryView: View {
     private func commit(_ value: String? = nil) {
         let valueToCommit = value ?? pendingValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let current = model.configValue(at: filePath, path: entry.path.yamlDisplay) ?? entry.value ?? ""
-        guard current != valueToCommit else { return }
+        guard current != valueToCommit else {
+            hasPending = false
+            return
+        }
         onCommit(entry.path.yamlDisplay, valueToCommit)
+        hasPending = false
         pendingValue = ""
     }
     

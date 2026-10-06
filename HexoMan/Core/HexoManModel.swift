@@ -102,6 +102,12 @@ final class HexoManModel: ObservableObject {
     /// 命令输出。独立成一个对象，这样日志刷新不会带动整个界面重绘。
     let shell = ShellRunner()
 
+    /// 站点 `scripts/` 里所有会改生成结果的脚本（**含用户自己写的**）。
+    ///
+    /// 缓存在这里而不是每次 body 求值时现扫——
+    /// 那是一次真实的目录遍历，放在视图刷新链里会明显卡顿。
+    @Published private(set) var detectedInjectScripts: [DetectedInjectScript] = []
+
     /// 预览服务句柄，非空表示正在跑。
     @Published private(set) var serverJobID: String?
 
@@ -184,6 +190,18 @@ final class HexoManModel: ObservableObject {
         }
     }
 
+    /// 是否把站点配置里的公共项自动同步到主题配置。
+    ///
+    /// 默认为开。见 `AppSettings.syncsThemeConfig` 的说明：
+    /// 主题配置同名键优先级更高，不同步就会出现「改了站点配置却没反应」。
+    @Published var syncsThemeConfig: Bool = true {
+        didSet {
+            guard syncsThemeConfig != oldValue else { return }
+            settings.syncsThemeConfig = syncsThemeConfig
+            SettingsStore.save(settings)
+        }
+    }
+
     /// rc 文件问题的提示文案，没有问题返回 nil。
     var customRCPathProblem: String? {
         let trimmed = customRCPath.trimmingCharacters(in: .whitespaces)
@@ -214,6 +232,7 @@ final class HexoManModel: ObservableObject {
         // 直接赋值不走 didSet（避免 init 期间触发体检任务）。
         usesShellEnvironment = settings.usesShellEnvironment
         customRCPath = settings.customRCPath
+        syncsThemeConfig = settings.syncsThemeConfig
         shell.usesShellEnvironment = usesShellEnvironment
         shell.customRCPath = customRCPath
 
@@ -330,6 +349,7 @@ final class HexoManModel: ObservableObject {
         }
         configFiles = ConfigStore.list(site: site)
         remotes = GitService.remotes(site: site)
+        detectedInjectScripts = CustomContentStore.detectedInjectScripts(site: site)
 
         Task { await refreshGit() }
     }
@@ -625,6 +645,139 @@ final class HexoManModel: ObservableObject {
             var next = config
             next.contents = updated
             saveConfig(ConfigStore.markSaved(next))
+            // 主题配置里同名键优先级更高，不跟着改的话用户会看到「保存了但没反应」
+            syncValueToThemeConfigs(value, for: key)
+        }
+    }
+
+    // MARK: - 站点配置 ↔ 主题配置 同步
+
+    /// 主题配置文件（`_config.<主题>.yml`）。没有就返回 nil。
+    private var themeConfigFile: ConfigFile? {
+        configFiles.first { $0.name != "_config.yml" }
+    }
+
+    /// 当前站点配置与主题配置之间「该同步但还没同步」的项。
+    var configSyncDifferences: [ConfigSync.Difference] {
+        guard syncsThemeConfig,
+              let site = mainConfig,
+              let theme = themeConfigFile
+        else { return [] }
+        return ConfigSync.differences(siteConfig: site.contents, themeConfig: theme.contents)
+    }
+
+    /// 只在主题配置里配了、站点配置里没有的公共项（比如头像）。
+    ///
+    /// 这种**不能自动抹平**：用户很可能就是故意配在主题那一侧的，
+    /// 按「站点配置是权威源」去清掉等于让他的头像当场消失。
+    /// 所以只如实列出来，并提供「搬到站点配置」的动作——
+    /// 搬过去的好处是以后换主题这些值不会丢。
+    var themeOnlyEntries: [ConfigSync.ThemeOnlyEntry] {
+        guard let site = mainConfig, let theme = themeConfigFile else { return [] }
+        return ConfigSync.themeOnlyEntries(siteConfig: site.contents, themeConfig: theme.contents)
+    }
+
+    /// 把主题配置里的某一项搬进站点配置。
+    func pullThemeValueToSite(key: String) {
+        guard let site = mainConfig, let theme = themeConfigFile,
+              let value = YAMLPathEngine.shared.get(key, in: theme.contents)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+              value.isEmpty == false,
+              let updated = ConfigSync.applyToSite(key, value: value, in: site.contents),
+              let index = configFiles.firstIndex(where: { $0.id == site.id })
+        else { return }
+
+        configFiles[index].contents = updated
+        do {
+            try ConfigStore.save(configFiles[index])
+            configFiles[index] = ConfigStore.markSaved(configFiles[index])
+            toast = Toast(text: "已把 \(ConfigSync.label(for: key) ?? key) 复制到站点配置，换主题也不会丢了", kind: .success)
+        } catch {
+            toast = Toast(text: "写入失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 把「只在主题配置里配了」的项全部搬进站点配置。
+    func pullAllThemeValuesToSite() {
+        guard let site = mainConfig else { return }
+        let entries = themeOnlyEntries
+        guard entries.isEmpty == false else {
+            toast = Toast(text: "没有需要搬过来的项", kind: .info)
+            return
+        }
+
+        var updated = site.contents
+        var moved: [String] = []
+        for entry in entries {
+            if let result = ConfigSync.applyToSite(entry.key, value: entry.value, in: updated) {
+                updated = result
+                moved.append(entry.label)
+            }
+        }
+
+        guard moved.isEmpty == false,
+              let index = configFiles.firstIndex(where: { $0.id == site.id })
+        else { return }
+
+        configFiles[index].contents = updated
+        do {
+            try ConfigStore.save(configFiles[index])
+            configFiles[index] = ConfigStore.markSaved(configFiles[index])
+            toast = Toast(text: "已搬 \(moved.count) 项到站点配置：\(moved.joined(separator: "、"))", kind: .success)
+        } catch {
+            toast = Toast(text: "写入失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 把一个值同步到所有主题配置文件。开关关掉时什么都不做。
+    @discardableResult
+    private func syncValueToThemeConfigs(_ value: String, for key: String) -> [String] {
+        guard syncsThemeConfig, ConfigSync.isSyncable(key) else { return [] }
+
+        var syncedLabels: [String] = []
+
+        for index in configFiles.indices where configFiles[index].name != "_config.yml" {
+            guard let updated = ConfigSync.applyToTheme(key, value: value, in: configFiles[index].contents)
+            else { continue }
+
+            configFiles[index].contents = updated
+            do {
+                try ConfigStore.save(configFiles[index])
+                configFiles[index] = ConfigStore.markSaved(configFiles[index])
+                syncedLabels.append(ConfigSync.label(for: key) ?? key)
+            } catch {
+                toast = Toast(text: "同步到主题配置失败：\(error.localizedDescription)", kind: .failure)
+            }
+        }
+
+        return syncedLabels
+    }
+
+    /// 一键把主题配置对齐到站点配置。
+    func syncThemeConfigToSite() {
+        guard let site = mainConfig, let theme = themeConfigFile else {
+            toast = Toast(text: "没有找到主题配置文件", kind: .failure)
+            return
+        }
+
+        let (updated, changed) = ConfigSync.syncAll(
+            siteConfig: site.contents,
+            themeConfig: theme.contents
+        )
+
+        guard changed.isEmpty == false else {
+            toast = Toast(text: "两份配置已经一致了", kind: .info)
+            return
+        }
+
+        guard let index = configFiles.firstIndex(where: { $0.id == theme.id }) else { return }
+        configFiles[index].contents = updated
+        do {
+            try ConfigStore.save(configFiles[index])
+            configFiles[index] = ConfigStore.markSaved(configFiles[index])
+            toast = Toast(text: "已同步 \(changed.count) 项到主题配置：\(changed.joined(separator: "、"))", kind: .success)
+        } catch {
+            toast = Toast(text: "同步失败：\(error.localizedDescription)", kind: .failure)
         }
     }
 
@@ -655,6 +808,15 @@ final class HexoManModel: ObservableObject {
             }
             file.contents = newContents
             saveConfig(ConfigStore.markSaved(file))
+
+            // 只有改**站点配置**时才往主题配置同步。
+            // 反向同步会造成死循环式互相覆盖：用户明想改主题那一侧，
+            // 结果被站点配置按回去，永远改不动。
+            let isMainConfig = file.name == "_config.yml"
+            if isMainConfig {
+                syncValueToThemeConfigs(value, for: yamlPath)
+            }
+
             showToast("已保存：" + yamlPath, kind: .success)
         case .failure(let err):
             showToast("写入失败：" + err.localizedDescription, kind: .failure)
@@ -681,6 +843,19 @@ final class HexoManModel: ObservableObject {
         return CustomContentStore.isInstalled(site: site)
     }
 
+    /// 用户自己写的注入脚本（不含 HexoMan 生成的那个）。
+    ///
+    /// 界面上必须如实显示它们：只认自己的文件名的话，用户会看到「未启用」，
+    /// 但站点上横幅其实一直在显示——这种错位比没有这个功能更让人困惑。
+    var foreignInjectScripts: [DetectedInjectScript] {
+        detectedInjectScripts.filter { $0.isManagedByHexoMan == false }
+    }
+
+    /// 站点里是否**已经有**注入在生效（不管是谁写的）。
+    var hasAnyInjectScript: Bool {
+        detectedInjectScripts.isEmpty == false
+    }
+
     /// 保存自定义内容，并自动装好注入脚本。
     func saveCustomContent(_ content: CustomContent) {
         guard let site = currentSite else {
@@ -693,10 +868,21 @@ final class HexoManModel: ObservableObject {
             // 留着两个空文件只会让站点里多出看不懂的东西。
             if content.isEmpty {
                 try CustomContentStore.remove(site: site)
+                detectedInjectScripts = CustomContentStore.detectedInjectScripts(site: site)
                 toast = Toast(text: "已关闭自定义内容", kind: .info)
             } else {
                 try CustomContentStore.save(content, site: site)
-                toast = Toast(text: "已保存，重新生成站点后生效", kind: .success)
+                detectedInjectScripts = CustomContentStore.detectedInjectScripts(site: site)
+                // 两个注入脚本会各插一遍，同一段内容在页面上出现两次。
+                // 不拦着，但必须说清楚——用户多半不知道 scripts/ 里的东西还在跑。
+                if foreignInjectScripts.isEmpty == false {
+                    toast = Toast(
+                        text: "已保存。注意：站点里还有 \(foreignInjectScripts.count) 个自写注入脚本（\(foreignInjectScripts.map(\.fileName).joined(separator: "、"))）也在生效，可能造成内容重复。",
+                        kind: .info
+                    )
+                } else {
+                    toast = Toast(text: "已保存，重新生成站点后生效", kind: .success)
+                }
             }
         } catch {
             toast = Toast(text: "保存失败：\(error.localizedDescription)", kind: .failure)
