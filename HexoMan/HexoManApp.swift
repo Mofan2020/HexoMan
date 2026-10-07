@@ -21,10 +21,11 @@ struct HexoManApp: App {
         .defaultSize(width: 1180, height: 760)
         .commands {
             CommandGroup(after: .newItem) {
+                // ⌘N 留给系统自带的「新建窗口」，这里用 ⌘⌥N 避免两个动作抢同一个键。
                 Button("新建文章") {
                     model.selection = .posts
                 }
-                .keyboardShortcut("n", modifiers: .command)
+                .keyboardShortcut("n", modifiers: [.command, .option])
                 .disabled(model.currentSite == nil)
 
                 Button("添加站点…") {
@@ -64,17 +65,26 @@ struct HexoManApp: App {
                 .disabled(!model.isServerRunning)
             }
 
-            // 侧边栏之外再给一套键盘入口。⌘1…⌘6 直达各页面，
+            // 侧边栏之外再给一套键盘入口。⌘1…⌘9 直达各页面，
             // 这样即使侧边栏的点击链路出问题，也还有路可走。
             CommandMenu("转到") {
                 ForEach(Array(SidebarItem.allCases.enumerated()), id: \.element) { index, item in
-                    Button(item.title) {
-                        model.selection = item
+                    // 只给能映射到单个数字键的项编号，也就是 ⌘1…⌘9。
+                    //
+                    // 这里不能图省事直接对每项都拼字符串：SidebarItem 一共 10 项，
+                    // 第 10 项算出来是 "10"，而 Character("10") 会直接 fatal error
+                    // （一个 Character 只允许一个字形簇），整个进程 SIGTRAP。
+                    // 表现是界面上所有按钮突然全没了，看起来像布局崩了，其实是 app 挂了。
+                    // 站点管理正好排在第 10 项，所以它不参与编号。
+                    if index < 9 {
+                        Button(item.title) {
+                            model.selection = item
+                        }
+                        .keyboardShortcut(
+                            KeyEquivalent(Character("\(index + 1)")),
+                            modifiers: .command
+                        )
                     }
-                    .keyboardShortcut(
-                        KeyEquivalent(Character("\(index + 1)")),
-                        modifiers: .command
-                    )
                 }
             }
         }
