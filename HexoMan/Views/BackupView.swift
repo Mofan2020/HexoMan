@@ -27,20 +27,30 @@ struct BackupView: View {
     }
 
     var body: some View {
+        // 上半部放头部 + 备份范围说明，下半部放「列表或空状态」。
+        // 早先把它们平铺到同一个 VStack，让 EmptyHint 的 `.frame(maxHeight: .infinity)`
+        // 把整个高度抢走，导致首次进入时「站点备份」标题与「新建备份」按钮被挤出可见区。
+        // 这里拆成两块：标题+按钮永远在顶部，下面这块独立决定要不要显示空状态。
         VStack(alignment: .leading, spacing: 16) {
             headerSection
             planSection
 
-            if backups.isEmpty && !isLoading {
-                EmptyHint(
-                    systemImage: "externaldrive.badge.plus",
-                    title: "还没有备份",
-                    message: "点击右上角「新建备份」创建第一个备份。备份包含 source/、配置文件、package.json 等核心文件；node_modules/、public/、.git/ 这些能重新生成的内容默认不打包。"
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                backupList
+            Group {
+                if isLoading {
+                    ProgressView("加载备份列表…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if backups.isEmpty {
+                    EmptyHint(
+                        systemImage: "externaldrive.badge.plus",
+                        title: "还没有备份",
+                        message: "点击右上角「新建备份」创建第一个备份。备份包含 source/、配置文件、package.json 等核心文件；node_modules/、public/、.git/ 这些能重新生成的内容默认不打包。"
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    backupList
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(20)
         .onAppear {
@@ -144,18 +154,12 @@ struct BackupView: View {
     private var backupList: some View {
         ScrollView {
             LazyVStack(spacing: 10) {
-                if isLoading {
-                    ProgressView("加载备份列表…")
-                        .frame(maxWidth: .infinity)
-                        .padding(40)
-                } else {
-                    ForEach(backups) { backup in
-                        BackupRow(
-                            backup: backup,
-                            onRestore: { restoreBackup(backup) },
-                            onDelete: { deleteBackup(backup) }
-                        )
-                    }
+                ForEach(backups) { backup in
+                    BackupRow(
+                        backup: backup,
+                        onRestore: { restoreBackup(backup) },
+                        onDelete: { deleteBackup(backup) }
+                    )
                 }
             }
         }

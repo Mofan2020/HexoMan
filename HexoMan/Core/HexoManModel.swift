@@ -1038,6 +1038,58 @@ final class HexoManModel: ObservableObject {
             : Toast(text: "拉取失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
     }
 
+    /// 暂存单个文件后刷新状态。
+    func gitStage(path: String) async {
+        guard let site = currentSite else { return }
+        isBusy = true
+        let result = await GitService.add(site: site, path: path, runner: shell)
+        isBusy = false
+        await refreshGit()
+
+        if !result.success {
+            toast = Toast(text: "暂存失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
+        }
+    }
+
+    /// 取消暂存单个文件后刷新状态。
+    func gitUnstage(path: String) async {
+        guard let site = currentSite else { return }
+        isBusy = true
+        let result = await GitService.unstage(site: site, path: path, runner: shell)
+        isBusy = false
+        await refreshGit()
+
+        if !result.success {
+            toast = Toast(text: "取消暂存失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
+        }
+    }
+
+    /// 对单文件跑 `git difftool <path>`。
+    ///
+    /// 先看站点是否配置过 `diff.tool`：配置了就跑 difftool 让 GUI 工具接管；
+    /// 没配就在访达中定位到那个文件，让用户拿自己的编辑器（VSCode/Xcode 等）对比。
+    /// 即便站点不是 git 仓库也允许——`difftool` 内部会兜底返回 nil。
+    func gitDifftool(path: String) async {
+        guard let site = currentSite else { return }
+        isBusy = true
+        let result = await GitService.difftool(site: site, path: path, runner: shell)
+        isBusy = false
+
+        if let result, !result.success {
+            toast = Toast(text: "对比失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
+            return
+        }
+
+        // 没配置 diff.tool：把文件本身交给系统处理。
+        // 路径可能是「source/_posts/foo.md」这样的相对路径，要拼到站点目录下。
+        let absolute = NSWorkspaceBridge.absolutePath(sitePath: site.path, relative: path)
+        if FileManager.default.fileExists(atPath: absolute) {
+            NSWorkspaceBridge.openFile(absolute)
+        } else {
+            NSWorkspaceBridge.openFolder(site.path)
+        }
+    }
+
     // MARK: - 工具链体检
 
     /// 探测 node / npm / npx / hexo / git，并在构建页展示诊断结论。

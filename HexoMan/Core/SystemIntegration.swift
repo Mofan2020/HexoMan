@@ -15,6 +15,19 @@ enum NSWorkspaceBridge {
         NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
     }
 
+    /// 用默认程序打开文件。
+    static func openFile(_ path: String) {
+        NSWorkspace.shared.open(URL(fileURLWithPath: path))
+    }
+
+    /// 把「站点内的相对路径」拼成绝对路径。站点不存在或路径脱离站点时返回输入本身，
+    /// 让上游决定要不要做兜底（比如降级到 openFolder）。
+    static func absolutePath(sitePath: String, relative: String) -> String {
+        guard !sitePath.isEmpty, !relative.isEmpty else { return relative }
+        let url = URL(fileURLWithPath: sitePath).appendingPathComponent(relative)
+        return url.standardizedFileURL.path
+    }
+
     /// 打开站点目录。
     static func openFolder(_ path: String) {
         NSWorkspace.shared.open(URL(fileURLWithPath: path))
