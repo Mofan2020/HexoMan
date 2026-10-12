@@ -37,9 +37,10 @@ struct ThemeView: View {
             Task { await loadThemes() }
         }
         .sheet(isPresented: $showInstallSheet) {
-            InstallThemeSheet(onInstall: { name in
-                Task { await installTheme(name) }
+            ThemeBrowserSheet(onComplete: { result in
+                Task { await refreshAfterInstall(result) }
             })
+            .environmentObject(model)
         }
         .sheet(item: $selectedThemeForConfig) { theme in
             ThemeConfigView(theme: theme)
@@ -128,14 +129,17 @@ struct ThemeView: View {
         }
     }
 
-    private func installTheme(_ name: String) async {
-        guard model.currentSite != nil else { return }
-        let success = await model.applyTheme(named: name)
-        if success {
-            await loadThemes()
-        } else {
-            model.toast = Toast(text: "安装失败", kind: .failure)
+    /// 装主题后整体刷新。
+    ///
+    /// ThemeBrowserSheet 自己完成「调 applyTheme + 弹迁移 sheet」，
+    /// 回调到这里时主题已经装好、配置已经切好。我们只需要刷新列表 + 当前主题元数据。
+    private func refreshAfterInstall(_ result: ThemeInstallResult) async {
+        guard result.installed else {
+            model.toast = Toast(text: "主题安装失败", kind: .failure)
+            return
         }
+        await loadThemes()
+        model.refreshAll()
     }
 }
 
@@ -214,93 +218,6 @@ struct ThemeRow: View {
         )
     }
 
-}
-
-// MARK: - 安装主题 Sheet
-
-struct InstallThemeSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let onInstall: (String) -> Void
-
-    @State private var selectedTheme: ThemeCatalog.Item?
-    @State private var customName = ""
-    @State private var mode: InstallMode = .catalog
-
-    enum InstallMode: String, CaseIterable, Identifiable {
-        case catalog
-        case custom
-
-        var id: String { rawValue }
-
-        /// Picker 上显示的本地化字符串。走 xcstrings。
-        var titleKey: LocalizedStringKey {
-            switch self {
-            case .catalog: return "installSheet.tab.catalog"
-            case .custom: return "installSheet.tab.custom"
-            }
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("installSheet.heading")
-                .font(.headline)
-
-            Picker("", selection: $mode) {
-                ForEach(InstallMode.allCases) { m in
-                    Text(m.titleKey).tag(m)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-
-            if mode == .catalog {
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(ThemeCatalog.items) { item in
-                            ThemeCatalogRow(item: item, isSelected: selectedTheme?.name == item.name) {
-                                selectedTheme = item
-                            }
-                        }
-                    }
-                }
-                .frame(maxHeight: 300)
-            } else {
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("installSheet.customPlaceholder", text: $customName)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.callout, design: .monospaced))
-                    Text("installSheet.customHelp")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-
-            HStack {
-                Spacer()
-                Button("installSheet.cancel") { dismiss() }
-                Button {
-                    let name: String
-                    if mode == .catalog, let selected = selectedTheme {
-                        name = selected.packageName
-                    } else {
-                        name = customName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    }
-                    guard !name.isEmpty else { return }
-                    onInstall(name)
-                    dismiss()
-                } label: {
-                    Text("installSheet.install")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(
-                    mode == .catalog ? selectedTheme == nil : customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                )
-            }
-        }
-        .padding(20)
-        .frame(width: 500)
-    }
 }
 
 // MARK: - 主题配置视图

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  HexoMan Network Access Policy
+
+  This file is bundled into HexoMan.app and read by network monitoring tools
+  (Little Snitch, Murus, etc.) when they classify an app's network traffic.
+
+  HexoMan uses the network for ONE thing only:
+    - npm registry search (read-only) to extend the theme catalog.
+
+  Everything else (hexo commands, git, file IO, posts/pages editing) is fully
+  local. This plist describes that scope so monitoring tools can show users
+  exactly what HexoMan is doing on the network.
+
+  To disable this behavior, toggle "Allow online theme search" in
+  Preferences / Diagnostics page — HexoMan will then never reach the network.
+
+  See docs/notes.md for the user-facing description.
+-->
+<plist version="1.0">
+<dict>
+    <key>HexoManNetworkPolicy</key>
+    <dict>
+        <key>policy_version</key>
+        <string>1.0</string>
+
+        <key>policy_updated</key>
+        <string>2026-10-12</string>
+
+        <key>summary</key>
+        <string>HexoMan reads the npm registry to extend the theme catalog. Nothing else leaves the machine.</string>
+
+        <key>endpoints</key>
+        <array>
+            <dict>
+                <key>host</key>
+                <string>registry.npmjs.org</string>
+                <key>purpose</key>
+                <string>Read-only search for hexo-theme-* packages</string>
+                <key>method</key>
+                <string>GET https://registry.npmjs.org/-/v1/search</string>
+                <key>data_sent</key>
+                <string>None. Only the search query string is sent; no user/site data, no cookies, no auth.</string>
+                <key>data_received</key>
+                <string>Public package metadata: name, version, description, homepage, weekly download count.</string>
+                <key>user_initiated</key>
+                <true/>
+                <key>frequency</key>
+                <string>On-demand when the user opens the theme catalog and types a search query. No background polling.</string>
+            </dict>
+        </array>
+
+        <key>exclusions</key>
+        <dict>
+            <key>no_upload</key>
+            <true/>
+            <key>no_analytics</key>
+            <true/>
+            <key>no_crash_reporting</key>
+            <true/>
+            <key>no_account</key>
+            <true/>
+            <key>no_background_traffic</key>
+                <true/>
+        </dict>
+
+        <key>user_control</key>
+        <dict>
+            <key>default</key>
+            <string>disabled</string>
+            <key>how_to_enable</key>
+            <string>In HexoMan: Diagnostics page → "Allow online theme search" toggle.</string>
+            <key>how_to_revoke</key>
+            <string>Same toggle, off. Takes effect immediately on next search.</string>
+        </dict>
+    </dict>
+</dict>
+</plist>

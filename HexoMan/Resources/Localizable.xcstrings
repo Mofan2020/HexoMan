@@ -1423,6 +1423,636 @@
           }
         }
       }
+    },
+    "themeView.browser.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题市场"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme Market"
+          }
+        }
+      }
+    },
+    "themeView.browser.subtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浏览 HexoMan 精选和 npm 上所有 hexo-theme-* 包，一键安装并预览。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse curated themes and all hexo-theme-* packages on npm, install and preview in one click."
+          }
+        }
+      }
+    },
+    "themeView.browser.allowOnline": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许联网"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Online"
+          }
+        }
+      }
+    },
+    "themeView.browser.done": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "themeView.browser.installed": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已安装"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed"
+          }
+        }
+      }
+    },
+    "themeView.browser.market": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题市场"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Market"
+          }
+        }
+      }
+    },
+    "themeView.browser.preview": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
+    },
+    "themeView.browser.installedEmptyTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有已安装主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No themes installed"
+          }
+        }
+      }
+    },
+    "themeView.browser.installedEmptyMessage": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从中间的市场选一个，或在右侧用 npm 包名安装。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick one from the market in the middle, or enter an npm package name on the right."
+          }
+        }
+      }
+    },
+    "themeView.browser.loading": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加载中…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading…"
+          }
+        }
+      }
+    },
+    "themeView.browser.searchPlaceholder": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索主题（hexo、yun、fluid…）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search themes (hexo, yun, fluid…)"
+          }
+        }
+      }
+    },
+    "themeView.browser.detailEmptyTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选一个主题查看详情"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a theme to view details"
+          }
+        }
+      }
+    },
+    "themeView.browser.detailEmptyMessage": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左侧是已安装主题，中间是市场，右侧显示你选中的主题预览。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left: installed. Middle: market. Right: preview of the selected theme."
+          }
+        }
+      }
+    },
+    "themeView.browser.author": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作者：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Author: %@"
+          }
+        }
+      }
+    },
+    "themeView.browser.previewSection": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "官方 demo 预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Official demo preview"
+          }
+        }
+      }
+    },
+    "themeView.browser.noPreview": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有官网链接，跳过预览。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No homepage URL available, skipping preview."
+          }
+        }
+      }
+    },
+    "themeView.browser.openInBrowser": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Safari 中打开"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Safari"
+          }
+        }
+      }
+    },
+    "themeView.browser.installButton": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装此主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install this theme"
+          }
+        }
+      }
+    },
+    "themeView.browser.installing": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装中…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing…"
+          }
+        }
+      }
+    },
+    "themeView.browser.installHint": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会用 npm 装包并切换当前主题。装完后会自动跑一次跨主题迁移（公共项搬运）。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "npm install + switch the current theme. After install, runs a cross-theme migration for shared keys."
+          }
+        }
+      }
+    },
+    "consentSheet.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网络访问说明"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network Access Disclosure"
+          }
+        }
+      }
+    },
+    "consentSheet.subtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 想访问互联网来扩充主题市场"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan wants to access the internet to extend the theme market"
+          }
+        }
+      }
+    },
+    "consentSheet.body": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 仅访问 npm registry（registry.npmjs.org）来搜索 hexo-theme-* 主题包，全程只读、不上传、不传 Cookie，也不传站点信息。其他所有功能（命令执行、Git、文件读写）都完全离线。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan only accesses the npm registry (registry.npmjs.org) to search for hexo-theme-* packages. Read-only, no uploads, no cookies, no site info shared. Everything else (shell, git, file IO) stays offline."
+          }
+        }
+      }
+    },
+    "consentSheet.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主机：registry.npmjs.org"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host: registry.npmjs.org"
+          }
+        }
+      }
+    },
+    "consentSheet.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数据流向：仅 GET 包元数据（名称、版本、描述、官网、下载量）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data flow: GET package metadata only (name, version, description, homepage, downloads)"
+          }
+        }
+      }
+    },
+    "consentSheet.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发时机：用户打开主题市场并搜索时；无后台轮询"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When: when you open the theme market and search; no background polling"
+          }
+        }
+      }
+    },
+    "consentSheet.bullet4": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭路径：诊断页 →「允许联网补全主题库」开关"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to disable: Diagnostics page → \"Allow online theme search\" toggle"
+          }
+        }
+      }
+    },
+    "consentSheet.dontAskAgain": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不再询问"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't ask again"
+          }
+        }
+      }
+    },
+    "consentSheet.deny": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时不用"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        }
+      }
+    },
+    "consentSheet.allow": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同意并打开"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        }
+      }
+    },
+    "migrationSheet.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "迁移公共项"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Migrate shared keys"
+          }
+        }
+      }
+    },
+    "migrationSheet.subtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从 %@ 到 %@：下列公共项在两边都有，可以把当前值搬到新主题。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From %@ to %@: the shared keys below exist in both. Carry over current values."
+          }
+        }
+      }
+    },
+    "migrationSheet.note": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只勾你确认新主题也支持这些选项的项。错误地搬进去会让新主题加载失败。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only check items you know the new theme supports. Misapplying values can break the new theme."
+          }
+        }
+      }
+    },
+    "migrationSheet.skip": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳过"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "migrationSheet.apply": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用所选"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply Selected"
+          }
+        }
+      }
     }
   }
 }

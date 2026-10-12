@@ -220,6 +220,36 @@ final class HexoManModel: ObservableObject {
     /// 当前生效的 Locale，供 ContentView 注入 `.environment(\.locale, ...)`。
     var locale: Locale { language.locale }
 
+    /// 是否允许主题市场联网补全。
+    ///
+    /// 默认关（见 AppSettings.onlineThemeSearch 注释）。
+    /// 用户首次进主题市场时弹首次同意 sheet；同意后这里置为 true。
+    /// 关掉时主题市场退化为只显示离线精选 + 已安装列表。
+    @Published var onlineThemeSearch: Bool = false {
+        didSet {
+            guard onlineThemeSearch != oldValue else { return }
+            settings.onlineThemeSearch = onlineThemeSearch
+            SettingsStore.save(settings)
+        }
+    }
+
+    /// 「不再询问联网同意弹窗」勾选项。
+    @Published var dontAskOnlineConsent: Bool = false {
+        didSet {
+            guard dontAskOnlineConsent != oldValue else { return }
+            settings.dontAskOnlineConsent = dontAskOnlineConsent
+            SettingsStore.save(settings)
+        }
+    }
+
+    /// 给 ThemeRegistry 用的统一 settings 视图。
+    var onlineThemeSearchSettings: OnlineThemeSearchSettings {
+        OnlineThemeSearchSettings(
+            enabled: onlineThemeSearch,
+            dontAskAgain: dontAskOnlineConsent
+        )
+    }
+
     /// rc 文件问题的提示文案，没有问题返回 nil。
     var customRCPathProblem: String? {
         let trimmed = customRCPath.trimmingCharacters(in: .whitespaces)
@@ -257,6 +287,10 @@ final class HexoManModel: ObservableObject {
         // 语言档。load() 已用默认值容错旧 settings.json；这里再走
         // AppLanguage.resolve() 防御历史调试残留（zh_CN 之类）。
         language = AppLanguage.resolve(settings.language)
+
+        // 联网补全开关。同上：旧 settings.json 缺字段时 init 走 decoder 默认值。
+        onlineThemeSearch = settings.onlineThemeSearch
+        dontAskOnlineConsent = settings.dontAskOnlineConsent
 
         // 恢复上次站点。目录可能已经被删掉或改名，这时候不该崩。
         if let path = settings.lastSitePath, let match = sites.first(where: { $0.path == path }) {
@@ -1294,43 +1328,72 @@ final class HexoManModel: ObservableObject {
     /// 给当前站点套上主题：装 `hexo-theme-<name>` 包并改写 `_config.yml` 的 `theme`。
     ///
     /// 单独提供而不是并进 createSite，是为了让「先建站、后挑主题」这种顺序也能用。
-    func applyTheme(named rawName: String) async -> Bool {
-        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+    ///
+    /// `rawName` 接受三种形式：
+    /// - `"yun"` → 装 `hexo-theme-yun`
+    /// - `"hexo-theme-yun"` → 去重前缀，**不**会拼出 `hexo-theme-hexo-theme-yun`
+    /// - `"@scope/hexo-theme-yun"` → scoped 包也兼容
+    ///
+    /// 装完后返回「需要迁移到新主题的项」（公共项迁移 + 主题独有项迁移），
+    /// 由 UI 决定下一步怎么呈现（自动跑 / 列出给用户 / 跳过）。
+    func applyTheme(named rawName: String) async -> ThemeInstallResult {
+        let name = ThemeManager.normalizePackageName(rawName)
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_./"))
         guard name.isEmpty == false, name.rangeOfCharacter(from: allowed.inverted) == nil else {
-            toast = Toast(text: "主题名只能包含字母、数字、- 和 _", kind: .failure)
-            return false
+            toast = Toast(text: "主题名只能包含字母、数字、-、_、/ 和 .", kind: .failure)
+            return ThemeInstallResult(installed: false, packageName: name, migration: nil)
         }
         guard let site = currentSite else {
             toast = Toast(text: "请先选择站点", kind: .failure)
-            return false
+            return ThemeInstallResult(installed: false, packageName: name, migration: nil)
         }
 
         isBusy = true
         defer { isBusy = false }
 
-        // 先装包再改配置：配置指向一个装不上的主题，站点会直接构建报错。
+        // 装包。`ThemeManager.fullPackageName(rawName)` 已经把 yun / hexo-theme-yun /
+        // @scope/hexo-theme-yun 都归一成 npm 包名。
+        let fullPackage = ThemeManager.fullPackageName(name)
         let installResult = await shell.run(
-            "npm install hexo-theme-\(name)",
+            "npm install \(fullPackage)",
             executable: "npm",
-            arguments: ["install", "hexo-theme-\(name)", "--no-audit", "--no-fund", "--loglevel", "warn"],
+            arguments: ["install", fullPackage, "--no-audit", "--no-fund", "--loglevel", "warn"],
             workingDirectory: site.path
         )
         guard installResult.success else {
-            toast = Toast(text: "主题 \(name) 安装失败：\(installResult.errorSummary ?? "见日志")", kind: .failure)
-            return false
+            toast = Toast(
+                text: "主题 \(ThemeManager.shortName(from: fullPackage)) 安装失败：\(installResult.errorSummary ?? "见日志")",
+                kind: .failure
+            )
+            return ThemeInstallResult(installed: false, packageName: fullPackage, migration: nil)
         }
+
+        // 从全名反推主题短名（去掉 hexo-theme- 前缀，留 scoped 的 scope 部分）。
+        let shortName = ThemeManager.shortName(from: fullPackage)
 
         do {
-            try writeTheme(named: name, into: site.configFile)
+            try writeTheme(named: shortName, into: site.configFile)
         } catch {
             toast = Toast(text: "写入 theme 失败：\(error.localizedDescription)", kind: .failure)
-            return false
+            return ThemeInstallResult(installed: false, packageName: fullPackage, migration: nil)
         }
 
+        // 跑跨主题迁移（如果原主题配置和样板里都有同名 key，把当前值搬过去）。
+        // 这里**不**自动写入到新主题的 _config.yml 里——可能新主题根本不支持那个 key。
+        // 把结果返回给 UI，让用户决定要不要逐项迁移。
+        let migration = computeThemeMigration(site: site, newThemeShortName: shortName)
         refreshAll()
-        toast = Toast(text: "已切换到主题 \(name)", kind: .success)
-        return true
+
+        if let migration, migration.hasItems {
+            toast = Toast(
+                text: "已切换到主题 \(shortName)。下面列出了可以搬到新主题的旧值，请确认。",
+                kind: .success
+            )
+        } else {
+            toast = Toast(text: "已切换到主题 \(shortName)", kind: .success)
+        }
+
+        return ThemeInstallResult(installed: true, packageName: fullPackage, migration: migration)
     }
 
     /// 只改 `_config.yml` 里的顶层 `theme:` 一行。读不到文件就原样建一个。
@@ -1360,4 +1423,83 @@ final class HexoManModel: ObservableObject {
 
         try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
     }
+
+    /// 装主题时跑跨主题迁移评估。
+    ///
+    /// 如果站点当前用主题 A，新装主题 B：
+    /// - A 的 `_config.<A>.yml` 里有些键是「公共项」——hexo 通用配置（站点标题、
+    ///   头像、社交链接等），可能新主题 B 也支持。
+    /// - 也可能 B 自带的 sample 里也有这些键，那应该把 A 里的当前值搬过去。
+    ///
+    /// 这里只**计算**要搬什么，不真正写入。新主题可能完全没那些选项，
+    /// 让用户在 UI 里逐项决定。
+    private func computeThemeMigration(site: HexoSite, newThemeShortName: String) -> ThemeMigrationPlan? {
+        let oldThemeName = info?.theme ?? ""
+        guard oldThemeName.isEmpty == false,
+              oldThemeName != newThemeShortName
+        else { return nil }
+
+        // 找出旧主题配置 + 新主题示例配置。
+        let oldConfigName = "_config.\(oldThemeName).yml"
+        let newSampleName = "\(newThemeShortName)/_config.yml"
+        let root = URL(fileURLWithPath: site.path)
+        let modules = root.appendingPathComponent("node_modules/hexo-theme-\(newThemeShortName)")
+
+        let oldConfigURL = root.appendingPathComponent(oldConfigName)
+        let newSampleURL = modules.appendingPathComponent("_config.yml")
+
+        guard let oldText = try? String(contentsOf: oldConfigURL, encoding: .utf8),
+              let newText = try? String(contentsOf: newSampleURL, encoding: .utf8)
+        else { return nil }
+
+        // 只搬 ConfigSync 认得的同步项（avatar / favicon / title 等）。
+        // 这里复用现有 ConfigSync 逻辑：同 key 且都在旧主题和新主题 sample 里出现。
+        // syncAll 返回 (updatedConfig, changedKeys)。我们只要 changedKeys，
+        // updatedConfig 不在这里写——交给后续 UI 让用户确认。
+        let (_, changedKeys) = ConfigSync.syncAll(siteConfig: oldText, themeConfig: newText)
+
+        guard changedKeys.isEmpty == false else { return nil }
+
+        let entries = changedKeys.map { key in
+            ThemeMigrationEntry(
+                key: key,
+                label: ConfigSync.label(for: key) ?? key,
+                currentValue: YAMLPathEngine.shared.get(key, in: oldText) ?? ""
+            )
+        }
+
+        return ThemeMigrationPlan(
+            fromTheme: oldThemeName,
+            toTheme: newThemeShortName,
+            entries: entries
+        )
+    }
+}
+
+// MARK: - 主题安装结果
+
+/// `applyTheme` 的返回。`migration` 非空表示有可以搬过去的公共项，
+/// UI 用它来展示「要不要把这些值搬到新主题」的清单。
+struct ThemeInstallResult {
+    var installed: Bool
+    /// 实际装的 npm 包名（可能是 `hexo-theme-yun` 或 `@scope/hexo-theme-yun`）。
+    var packageName: String
+    var migration: ThemeMigrationPlan?
+}
+
+/// 跨主题迁移计划。一份「老主题→新主题」的公共项搬运清单。
+struct ThemeMigrationPlan {
+    var fromTheme: String
+    var toTheme: String
+    var entries: [ThemeMigrationEntry]
+
+    var hasItems: Bool { entries.isEmpty == false }
+}
+
+/// 单条迁移项。`currentValue` 是从旧主题配置抽出来的当前值。
+struct ThemeMigrationEntry: Identifiable {
+    var id: String { key }
+    var key: String
+    var label: String
+    var currentValue: String
 }

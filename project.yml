@@ -35,7 +35,13 @@ targets:
           # Localizable.xcstrings 是资源文件，Xcode 自动处理，不参与编译。
           # 显式排除防止 XcodeGen 把它当 Swift 文件。
           - "Resources/Localizable.xcstrings"
+          # NetworkAccessPolicy.plist 同上：被 Xcode 当资源打入 bundle
+          # (Contents/Resources/)，不让 c 编译器看见。
+          - "Resources/NetworkAccessPolicy.plist"
       - path: HexoMan/Resources/Localizable.xcstrings
+        buildPhase: resources
+        type: file
+      - path: HexoMan/Resources/NetworkAccessPolicy.plist
         buildPhase: resources
         type: file
     settings:

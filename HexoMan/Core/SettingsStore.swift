@@ -45,6 +45,17 @@ struct AppSettings: Codable {
     /// 所以即便旧 settings.json 没这个字段也能跑（见 SettingsStore.load）。
     var language: String = AppLanguage.system.rawValue
 
+    /// 是否允许 HexoMan 在主题市场里联网补全（调 npm registry 拉包元数据）。
+    ///
+    /// 默认 false——开箱即用是离线模式，避免用户没注意就被联出去。
+    /// 用户首次进主题市场时会看到「网络访问说明」sheet，
+    /// 同意后才打开此项。详情见 ThemeRegistry.swift 的注释。
+    var onlineThemeSearch: Bool = false
+
+    /// 用户是否勾了「不再询问联网同意弹窗」。
+    /// 勾了就别再弹——开关仍能在设置项里改回。
+    var dontAskOnlineConsent: Bool = false
+
     static let defaultPort = 4000
 }
 

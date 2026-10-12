@@ -81,6 +81,50 @@ struct ThemeCatalog {
 /// 主题相关操作。
 enum ThemeManager {
 
+    // MARK: - 包名归一化
+
+    /// 把用户输入归一到「主题短名」形式（去前缀去 scope）。
+    /// - `"yun"` → `"yun"`
+    /// - `"hexo-theme-yun"` → `"yun"`
+    /// - `"@scope/hexo-theme-yun"` → `"yun"`（scoped 包的 theme 部分）
+    /// - `"   yun   "` → `"yun"`
+    static func normalizePackageName(_ raw: String) -> String {
+        var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        // @scope/hexo-theme-foo → foo
+        if name.hasPrefix("@"), let slash = name.firstIndex(of: "/") {
+            name = String(name[name.index(after: slash)...])
+        }
+        if name.hasPrefix("hexo-theme-") {
+            name = String(name.dropFirst("hexo-theme-".count))
+        }
+        return name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// 主题短名 → npm 装包用全名（加 hexo-theme- 前缀）。
+    /// - `"yun"` → `"hexo-theme-yun"`
+    /// - `"@scope/hexo-theme-yun"`（已经传进来一个全名）→ 原样返回
+    /// 接受 normalize 之后的输出，确保不会重复加前缀。
+    static func fullPackageName(_ normalizedShortName: String) -> String {
+        // 已经包含 hexo-theme-（调用者没 normalize）或带 @scope 直接返回。
+        if normalizedShortName.hasPrefix("@") { return normalizedShortName }
+        if normalizedShortName.hasPrefix("hexo-theme-") { return normalizedShortName }
+        return "hexo-theme-\(normalizedShortName)"
+    }
+
+    /// 反向：从全名（装包用）抽出主题短名。
+    /// - `"hexo-theme-yun"` → `"yun"`
+    /// - `"@scope/hexo-theme-yun"` → `"yun"`（scoped 包）
+    static func shortName(from fullName: String) -> String {
+        var name = fullName
+        if name.hasPrefix("@"), let slash = name.firstIndex(of: "/") {
+            name = String(name[name.index(after: slash)...])
+        }
+        if name.hasPrefix("hexo-theme-") {
+            name = String(name.dropFirst("hexo-theme-".count))
+        }
+        return name
+    }
+
     /// 扫描站点里已安装的所有主题。
     ///
     /// 扫 `node_modules/hexo-theme-*`，而不是 `themes/`——
