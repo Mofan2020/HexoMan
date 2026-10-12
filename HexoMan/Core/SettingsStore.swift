@@ -36,6 +36,15 @@ struct AppSettings: Codable {
     /// 关掉后两个文件各管各的，适合故意让主题配置覆盖站点配置的场景。
     var syncsThemeConfig: Bool = true
 
+    /// UI 语言档。`"system"` / `"zh-Hans"` / `"en"` / `"ja"`。
+    ///
+    /// 默认 `"system"`——开箱即用跟系统走，避免新装用户看到一个"语言设置"弹窗。
+    /// 用户主动切到某语言后会落到 `settings.json`，下次启动继续生效。
+    ///
+    /// 字段缺失时 `SettingsStore.load()` 走 decoder 的自动兼容返回默认，
+    /// 所以即便旧 settings.json 没这个字段也能跑（见 SettingsStore.load）。
+    var language: String = AppLanguage.system.rawValue
+
     static let defaultPort = 4000
 }
 

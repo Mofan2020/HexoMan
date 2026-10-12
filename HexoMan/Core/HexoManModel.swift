@@ -23,18 +23,18 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
-        case .overview: return "总览"
-        case .posts: return "文章"
-        case .pages: return "页面"
-        case .build: return "构建与预览"
-        case .config: return "配置"
-        case .theme: return "主题"
-        case .git: return "Git"
-        case .backup: return "备份"
-        case .diagnostics: return "诊断"
-        case .sites: return "站点管理"
+        case .overview: return "sidebar.overview"
+        case .posts: return "sidebar.posts"
+        case .pages: return "sidebar.pages"
+        case .build: return "sidebar.build"
+        case .config: return "sidebar.config"
+        case .theme: return "sidebar.theme"
+        case .git: return "sidebar.git"
+        case .backup: return "sidebar.backup"
+        case .diagnostics: return "sidebar.diagnostics"
+        case .sites: return "sidebar.sites"
         }
     }
 
@@ -202,6 +202,24 @@ final class HexoManModel: ObservableObject {
         }
     }
 
+    /// UI 语言档。改动立刻落盘，并触发全局重渲染（locale 已变）。
+    ///
+    /// 落到 settings.json 后下次启动会沿用——见 `AppSettings.language`。
+    @Published var language: AppLanguage = .system {
+        didSet {
+            guard language != oldValue else { return }
+            settings.language = language.rawValue
+            SettingsStore.save(settings)
+            // SwiftUI 的 `.environment(\.locale, ...)` 是 side-channel，
+            // 只对未来 body 评估生效；已有视图不会自己重渲染。
+            // ContentView 上挂的 `.id(...)` 靠这里 signal 来触发撕掉重建。
+            objectWillChange.send()
+        }
+    }
+
+    /// 当前生效的 Locale，供 ContentView 注入 `.environment(\.locale, ...)`。
+    var locale: Locale { language.locale }
+
     /// rc 文件问题的提示文案，没有问题返回 nil。
     var customRCPathProblem: String? {
         let trimmed = customRCPath.trimmingCharacters(in: .whitespaces)
@@ -235,6 +253,10 @@ final class HexoManModel: ObservableObject {
         syncsThemeConfig = settings.syncsThemeConfig
         shell.usesShellEnvironment = usesShellEnvironment
         shell.customRCPath = customRCPath
+
+        // 语言档。load() 已用默认值容错旧 settings.json；这里再走
+        // AppLanguage.resolve() 防御历史调试残留（zh_CN 之类）。
+        language = AppLanguage.resolve(settings.language)
 
         // 恢复上次站点。目录可能已经被删掉或改名，这时候不该崩。
         if let path = settings.lastSitePath, let match = sites.first(where: { $0.path == path }) {

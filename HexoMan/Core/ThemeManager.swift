@@ -14,6 +14,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 /// 一个已安装的主题。
 struct InstalledTheme: Identifiable, Hashable {
@@ -49,7 +50,10 @@ struct ThemeCatalog {
     struct Item: Identifiable {
         var name: String
         var packageName: String
-        var summary: String
+        /// 本地化字符串 key（指向 xcstrings 里的 theme.<key>.summary）。
+        /// 选用 LocalizedStringKey 而不是直接给 String，是为了让主题目录页
+        /// 切语言时和侧边栏、菜单一起刷新（PR1 阶段）。
+        var summary: LocalizedStringKey
         var author: String
         /// 官网/仓库
         var homepage: String
@@ -57,16 +61,16 @@ struct ThemeCatalog {
     }
 
     static let items: [Item] = [
-        .init(name: "yun", packageName: "hexo-theme-yun", summary: "现代化三栏主题，亮暗双模式，配色可调，中文文档完善", author: "yunyoujun", homepage: "https://yun.yunyoujun.cn"),
-        .init(name: "landscape", packageName: "hexo-theme-landscape", summary: "Hexo 官方默认主题，四栏布局，稳��不出错", author: "hexo", homepage: "https://hexo.io/themes/"),
-        .init(name: "next", packageName: "hexo-theme-next", summary: "功能最全的主题，集成站内搜索、动态背景、多说等", author: "theme-next", homepage: "https://theme-next.org"),
-        .init(name: "Fluid", packageName: "hexo-theme-fluid", summary: " fluid 风格，首页大图瀑布流，适合图片多的站", author: "fluid-dev", homepage: "https://fluid-dev.github.io"),
-        .init(name: "Matery", packageName: "hexo-theme-matery", summary: "Material 风格，分类标签齐全，适合技术博客", author: "Tuigug", homepage: "https://theme.matery.ink"),
-        .init(name: "whiskers", packageName: "hexo-theme-whiskers", summary: "简洁清爽，时间线布局", author: "porridge", homepage: "https://github.com/porridge/hexo-theme-whiskers"),
-        .init(name: "volantis", packageName: "hexo-theme-volantis", summary: "功能丰富，社交插件多，社区活跃", author: "Etheme", homepage: "https://volantis.theme-best.com"),
-        .init(name: "reimu", packageName: "hexo-theme-reimu", summary: "二次元风格，首页角色立绘", author: "TRSS", homepage: "https://github.com/TRSS-Yukari/reimu"),
-        .init(name: "solitude", packageName: "hexo-theme-solitude", summary: "简洁的卡片式布局", author: "solitude", homepage: "https://github.com/valor-x"),
-        .init(name: "Anima", packageName: "hexo-theme-anima", summary: "暗色为主，动画细腻", author: "anima", homepage: "https://github.com/anima-theme/anima")
+        .init(name: "yun", packageName: "hexo-theme-yun", summary: "theme.yun.summary", author: "yunyoujun", homepage: "https://yun.yunyoujun.cn"),
+        .init(name: "landscape", packageName: "hexo-theme-landscape", summary: "theme.landscape.summary", author: "hexo", homepage: "https://hexo.io/themes/"),
+        .init(name: "next", packageName: "hexo-theme-next", summary: "theme.next.summary", author: "theme-next", homepage: "https://theme-next.org"),
+        .init(name: "Fluid", packageName: "hexo-theme-fluid", summary: "theme.fluid.summary", author: "fluid-dev", homepage: "https://fluid-dev.github.io"),
+        .init(name: "Matery", packageName: "hexo-theme-matery", summary: "theme.matery.summary", author: "Tuigug", homepage: "https://theme.matery.ink"),
+        .init(name: "whiskers", packageName: "hexo-theme-whiskers", summary: "theme.whiskers.summary", author: "porridge", homepage: "https://github.com/porridge/hexo-theme-whiskers"),
+        .init(name: "volantis", packageName: "hexo-theme-volantis", summary: "theme.volantis.summary", author: "Etheme", homepage: "https://volantis.theme-best.com"),
+        .init(name: "reimu", packageName: "hexo-theme-reimu", summary: "theme.reimu.summary", author: "TRSS", homepage: "https://github.com/TRSS-Yukari/reimu"),
+        .init(name: "solitude", packageName: "hexo-theme-solitude", summary: "theme.solitude.summary", author: "solitude", homepage: "https://github.com/valor-x"),
+        .init(name: "Anima", packageName: "hexo-theme-anima", summary: "theme.anima.summary", author: "anima", homepage: "https://github.com/anima-theme/anima")
     ]
 
     static func find(_ name: String) -> Item? {

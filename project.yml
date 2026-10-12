@@ -31,6 +31,13 @@ targets:
     platform: macOS
     sources:
       - path: HexoMan
+        excludes:
+          # Localizable.xcstrings 是资源文件，Xcode 自动处理，不参与编译。
+          # 显式排除防止 XcodeGen 把它当 Swift 文件。
+          - "Resources/Localizable.xcstrings"
+      - path: HexoMan/Resources/Localizable.xcstrings
+        buildPhase: resources
+        type: file
     settings:
       base:
         PRODUCT_NAME: HexoMan
@@ -42,3 +49,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        # 本地化基础设施（PR1 引入）。
+        # knownRegions 列在 INFOPLIST_KEY_CFBundleLocalizations，
+        # 告诉 NSBundle 哪些 .lproj / .xcstrings 会被打包。
+        # .environment(\.locale, ...) 靠这些资源在运行时找当前语言。
+        INFOPLIST_KEY_CFBundleLocalizations: ["en", "zh-Hans", "ja"]
