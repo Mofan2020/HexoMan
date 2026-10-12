@@ -64,6 +64,35 @@
 - 下方日志控制台显示 git 命令的真实输出
 - 站点不是 Git 仓库时，给出 `git init` 命令并可一键复制到剪贴板
 
+### 主题
+
+- 浏览官方主题库（含 HexoMan 精选和 npm 上所有 hexo-theme-* 包），一键预览官方站点（WKWebView 嵌入）+ 安装
+- 装主题时自动跑跨主题迁移——把当前主题里的 avatar/favicon 等公共项搬到新主题（前提是新主题也支持），不让用户改完一个主题就丢一堆配置
+- 包名归一化：yun、hexo-theme-yun、@scope/hexo-theme-yun 三种输入都正确装，不会拼出 hexo-theme-hexo-theme-yun
+- 异常时显示具体错误原因，不再只是「见日志」
+- 错误诊断：哪些项可以自动修复、哪些需要用户手动处理，逐项提示
+
+### 页面管理
+
+- 单选 / 多选模式切换
+- 排序下拉：最近修改 / 最早修改 / 标题升降序 / 文件名 / 字数从多到少
+- 多选批量操作：批量加标签 / 批量改布局 / 批量删
+- 详情区显示完整 front-matter 表（键 / 值 / 类型）+ 「引用此页的文章」section（路径/permalink/共享标签三种匹配）
+- 资源识别（CSS / JS / 图片）继续保留
+
+### 多语言
+
+- 顶部菜单「语言」可切：跟随系统 / 中文（简体）/ English / 日本語
+- 切换立即生效（Apple 原生 `.environment(\.locale, ...)` + `.id` 强制重渲染）
+- 用 Xcode 15 Strings Catalog（`.xcstrings`）管理翻译
+- 目前覆盖 zh-Hans + en，ja 文案后续单独 PR
+
+### 环境文档
+
+- 左侧栏「环境」页：Node.js / nvm / Git / Hexo / Shell / 疑难排查 / 隐私 八章内置文档
+- 每节带可一键复制到剪贴板的命令（brew install node、`xcode-select --install` 等）
+- BuildView 顶部在 Node 缺失时显示红色横条 + 跳转按钮
+
 ## 系统要求
 
 | 项目 | 要求 |
