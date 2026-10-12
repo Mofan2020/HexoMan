@@ -14,7 +14,7 @@ import SwiftUI
 /// 自己画而不用 `Label` + `.listStyle(.sidebar)`，是因为要精确控制选中态高亮，
 /// 并且保证「点击 → 赋值」这条路径不经过任何隐式选中机制。
 struct SidebarButton: View {
-    var title: String
+    var title: LocalizedStringKey
     var systemImage: String
     var badge: Int = 0
     var isActive: Bool = false
@@ -191,12 +191,28 @@ struct DetailRow: View {
 
 // MARK: - 小标签
 
+/// 小标签（胶囊样式）。
+///
+/// 提供两个 init：传字符串字面量时编译器选 LocalizedStringKey 重载
+/// （走 xcstrings），传运行时 String（如 git 分支名）选 String 重载
+/// （不本地化，直接显示）。
 struct Pill: View {
-    var text: String
-    var tint: Color = .accentColor
+    private let resolvedText: Text
+
+    init(text: LocalizedStringKey, tint: Color = .accentColor) {
+        self.resolvedText = Text(text)
+        self.tint = tint
+    }
+
+    init(text: String, tint: Color = .accentColor) {
+        self.resolvedText = Text(text)
+        self.tint = tint
+    }
+
+    private var tint: Color
 
     var body: some View {
-        Text(text)
+        resolvedText
             .font(.caption2)
             .padding(.horizontal, 7)
             .padding(.vertical, 2.5)
@@ -209,8 +225,8 @@ struct Pill: View {
 
 struct EmptyHint: View {
     var systemImage: String
-    var title: String
-    var message: String
+    var title: LocalizedStringKey
+    var message: LocalizedStringKey
 
     var body: some View {
         VStack(spacing: 10) {

@@ -55,13 +55,43 @@
 ### Git
 
 - 仓库状态：当前分支、领先/落后提交数、上游分支、`git status` 摘要
-- 变更文件按「已暂存 / 已修改 / 未跟踪」分组，点击可在访达中打开站点目录
+- 变更文件按「已暂存 / 已修改 / 未跟踪」分组，每行末尾加 `[+/− 暂存]` 与 `[对比]` 按钮，单文件 stage、unstage、调 difftool
+- 未配 `diff.tool` 时「对比」会改用系统默认编辑器（Xcode/VSCode 等）打开文件本身
 - 提交信息 + 「提交全部改动」（`git add -A` 后提交，含未跟踪文件）
 - 拉取（`git pull --rebase`）、推送（没有待推送提交时按钮禁用）
 - 远端列表
 - 提交历史列表（短 hash、标题、作者、日期）
 - 下方日志控制台显示 git 命令的真实输出
 - 站点不是 Git 仓库时，给出 `git init` 命令并可一键复制到剪贴板
+
+### 主题
+
+- 浏览官方主题库（含 HexoMan 精选和 npm 上所有 hexo-theme-* 包），一键预览官方站点（WKWebView 嵌入）+ 安装
+- 装主题时自动跑跨主题迁移——把当前主题里的 avatar/favicon 等公共项搬到新主题（前提是新主题也支持），不让用户改完一个主题就丢一堆配置
+- 包名归一化：yun、hexo-theme-yun、@scope/hexo-theme-yun 三种输入都正确装，不会拼出 hexo-theme-hexo-theme-yun
+- 异常时显示具体错误原因，不再只是「见日志」
+- 错误诊断：哪些项可以自动修复、哪些需要用户手动处理，逐项提示
+
+### 页面管理
+
+- 单选 / 多选模式切换
+- 排序下拉：最近修改 / 最早修改 / 标题升降序 / 文件名 / 字数从多到少
+- 多选批量操作：批量加标签 / 批量改布局 / 批量删
+- 详情区显示完整 front-matter 表（键 / 值 / 类型）+ 「引用此页的文章」section（路径/permalink/共享标签三种匹配）
+- 资源识别（CSS / JS / 图片）继续保留
+
+### 多语言
+
+- 顶部菜单「语言」可切：跟随系统 / 中文（简体）/ English / 日本語
+- 切换立即生效（Apple 原生 `.environment(\.locale, ...)` + `.id` 强制重渲染）
+- 用 Xcode 15 Strings Catalog（`.xcstrings`）管理翻译
+- 目前覆盖 zh-Hans + en，ja 文案后续单独 PR
+
+### 环境文档
+
+- 左侧栏「环境」页：Node.js / nvm / Git / Hexo / Shell / 疑难排查 / 隐私 八章内置文档
+- 每节带可一键复制到剪贴板的命令（brew install node、`xcode-select --install` 等）
+- BuildView 顶部在 Node 缺失时显示红色横条 + 跳转按钮
 
 ## 系统要求
 

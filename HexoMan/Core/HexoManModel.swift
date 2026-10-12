@@ -20,21 +20,23 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case backup
     case diagnostics
     case sites
+    case environment
 
     var id: String { rawValue }
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
-        case .overview: return "总览"
-        case .posts: return "文章"
-        case .pages: return "页面"
-        case .build: return "构建与预览"
-        case .config: return "配置"
-        case .theme: return "主题"
-        case .git: return "Git"
-        case .backup: return "备份"
-        case .diagnostics: return "诊断"
-        case .sites: return "站点管理"
+        case .overview: return "sidebar.overview"
+        case .posts: return "sidebar.posts"
+        case .pages: return "sidebar.pages"
+        case .build: return "sidebar.build"
+        case .config: return "sidebar.config"
+        case .theme: return "sidebar.theme"
+        case .git: return "sidebar.git"
+        case .backup: return "sidebar.backup"
+        case .diagnostics: return "sidebar.diagnostics"
+        case .sites: return "sidebar.sites"
+        case .environment: return "sidebar.environment"
         }
     }
 
@@ -50,6 +52,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .backup: return "externaldrive"
         case .diagnostics: return "stethoscope"
         case .sites: return "folder"
+        case .environment: return "terminal"
         }
     }
 }
@@ -202,6 +205,54 @@ final class HexoManModel: ObservableObject {
         }
     }
 
+    /// UI 语言档。改动立刻落盘，并触发全局重渲染（locale 已变）。
+    ///
+    /// 落到 settings.json 后下次启动会沿用——见 `AppSettings.language`。
+    @Published var language: AppLanguage = .system {
+        didSet {
+            guard language != oldValue else { return }
+            settings.language = language.rawValue
+            SettingsStore.save(settings)
+            // SwiftUI 的 `.environment(\.locale, ...)` 是 side-channel，
+            // 只对未来 body 评估生效；已有视图不会自己重渲染。
+            // ContentView 上挂的 `.id(...)` 靠这里 signal 来触发撕掉重建。
+            objectWillChange.send()
+        }
+    }
+
+    /// 当前生效的 Locale，供 ContentView 注入 `.environment(\.locale, ...)`。
+    var locale: Locale { language.locale }
+
+    /// 是否允许主题市场联网补全。
+    ///
+    /// 默认关（见 AppSettings.onlineThemeSearch 注释）。
+    /// 用户首次进主题市场时弹首次同意 sheet；同意后这里置为 true。
+    /// 关掉时主题市场退化为只显示离线精选 + 已安装列表。
+    @Published var onlineThemeSearch: Bool = false {
+        didSet {
+            guard onlineThemeSearch != oldValue else { return }
+            settings.onlineThemeSearch = onlineThemeSearch
+            SettingsStore.save(settings)
+        }
+    }
+
+    /// 「不再询问联网同意弹窗」勾选项。
+    @Published var dontAskOnlineConsent: Bool = false {
+        didSet {
+            guard dontAskOnlineConsent != oldValue else { return }
+            settings.dontAskOnlineConsent = dontAskOnlineConsent
+            SettingsStore.save(settings)
+        }
+    }
+
+    /// 给 ThemeRegistry 用的统一 settings 视图。
+    var onlineThemeSearchSettings: OnlineThemeSearchSettings {
+        OnlineThemeSearchSettings(
+            enabled: onlineThemeSearch,
+            dontAskAgain: dontAskOnlineConsent
+        )
+    }
+
     /// rc 文件问题的提示文案，没有问题返回 nil。
     var customRCPathProblem: String? {
         let trimmed = customRCPath.trimmingCharacters(in: .whitespaces)
@@ -235,6 +286,14 @@ final class HexoManModel: ObservableObject {
         syncsThemeConfig = settings.syncsThemeConfig
         shell.usesShellEnvironment = usesShellEnvironment
         shell.customRCPath = customRCPath
+
+        // 语言档。load() 已用默认值容错旧 settings.json；这里再走
+        // AppLanguage.resolve() 防御历史调试残留（zh_CN 之类）。
+        language = AppLanguage.resolve(settings.language)
+
+        // 联网补全开关。同上：旧 settings.json 缺字段时 init 走 decoder 默认值。
+        onlineThemeSearch = settings.onlineThemeSearch
+        dontAskOnlineConsent = settings.dontAskOnlineConsent
 
         // 恢复上次站点。目录可能已经被删掉或改名，这时候不该崩。
         if let path = settings.lastSitePath, let match = sites.first(where: { $0.path == path }) {
@@ -377,6 +436,11 @@ final class HexoManModel: ObservableObject {
     }
 
     /// 经过搜索和筛选后的页面列表。
+    ///
+    /// 同时考虑：
+    /// - `pageFilter`（全部/文章/页面/草稿）
+    /// - `pageSearch`（标题/正文/标签）
+    /// - `pageSort`（按修改时间/标题/文件名/字数）
     var filteredPages: [BlogPage] {
         var result = pages
 
@@ -388,14 +452,57 @@ final class HexoManModel: ObservableObject {
         }
 
         let keyword = pageSearch.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !keyword.isEmpty else { return result }
+        if keyword.isEmpty == false {
+            result = result.filter { page in
+                page.title.lowercased().contains(keyword)
+                    || page.body.lowercased().contains(keyword)
+                    || page.tags.contains { $0.lowercased().contains(keyword) }
+            }
+        }
 
-        return result.filter { page in
-            page.title.lowercased().contains(keyword)
-                || page.body.lowercased().contains(keyword)
-                || page.tags.contains { $0.lowercased().contains(keyword) }
+        // 排序。展示顺序是用户的「查看顺序」，不落盘前导 step 或 front-matter。
+        switch pageSort {
+        case .modifiedDesc:
+            result.sort { $0.modifiedAt > $1.modifiedAt }
+        case .modifiedAsc:
+            result.sort { $0.modifiedAt < $1.modifiedAt }
+        case .titleAsc:
+            result.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .titleDesc:
+            result.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedDescending }
+        case .fileNameAsc:
+            result.sort { $0.filename.localizedStandardCompare($1.filename) == .orderedAscending }
+        case .wordCountDesc:
+            result.sort { $0.wordCount > $1.wordCount }
+        }
+
+        return result
+    }
+
+    /// 页面排序选项。
+    enum PageSort: String, CaseIterable, Identifiable {
+        case modifiedDesc
+        case modifiedAsc
+        case titleAsc
+        case titleDesc
+        case fileNameAsc
+        case wordCountDesc
+
+        var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .modifiedDesc: return "pages.sort.modifiedDesc"
+            case .modifiedAsc: return "pages.sort.modifiedAsc"
+            case .titleAsc: return "pages.sort.titleAsc"
+            case .titleDesc: return "pages.sort.titleDesc"
+            case .fileNameAsc: return "pages.sort.fileNameAsc"
+            case .wordCountDesc: return "pages.sort.wordCountDesc"
+            }
         }
     }
+
+    @Published var pageSort: PageSort = .modifiedDesc
 
     /// 新建文章。返回创建出来的文章，编辑器可以拿它直接进编辑态。
     @discardableResult
@@ -559,6 +666,130 @@ final class HexoManModel: ObservableObject {
             toast = Toast(text: "\(page.filename) 已移到废纸篓", kind: .success)
         } catch {
             toast = Toast(text: "删除失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 批量删除页面。所有文件一并进废纸篓，单一 toast 报告结果。
+    func deletePages(_ targets: [BlogPage]) {
+        guard currentSite != nil, targets.isEmpty == false else { return }
+        var succeeded = 0
+        var failed: [String] = []
+
+        for page in targets {
+            guard let site = currentSite else { return }
+            let pageFiles = PageStore.scan(site: site)
+            guard let pageFile = pageFiles.first(where: { $0.path == page.filePath }) else {
+                failed.append(page.filename)
+                continue
+            }
+            do {
+                try PageStore.delete(pageFile)
+                succeeded += 1
+            } catch {
+                failed.append(page.filename)
+            }
+        }
+
+        // 整体重刷一次页面列表——比逐个 splice 高效。
+        if let site = currentSite {
+            pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+            info = SiteProbe.inspect(site: site)
+        }
+
+        if failed.isEmpty {
+            toast = Toast(text: "已删除 \(succeeded) 个页面", kind: .success)
+        } else {
+            toast = Toast(
+                text: "成功 \(succeeded) 个，失败 \(failed.count) 个（\(failed.prefix(3).joined(separator: "、"))）",
+                kind: .failure
+            )
+        }
+    }
+
+    /// 批量给一组页面追加同一个标签。
+    ///
+    /// 已有该标签的不重复加；删标签留到 PR5 之后专门做（schema 不便）。
+    /// tags 为空数组时直接返回（用户点了批量添加但标签留空）。
+    func addTagToPages(_ pages: [BlogPage], tag: String) {
+        let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else { return }
+        guard currentSite != nil else { return }
+
+        var updated = 0
+        for page in pages {
+            guard page.tags.contains(trimmed) == false else { continue }
+            var edited = page
+            edited.front.setTags(page.tags + [trimmed])
+            do {
+                try PageStore.saveAtPath(page.filePath, front: edited.front, body: edited.body)
+                updated += 1
+            } catch {
+                continue
+            }
+        }
+
+        if let site = currentSite {
+            self.pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+        }
+
+        if updated > 0 {
+            toast = Toast(text: "已给 \(updated) 个页面添加标签「\(trimmed)」", kind: .success)
+        } else {
+            toast = Toast(text: "这些页面都已经有「\(trimmed)」标签了", kind: .info)
+        }
+    }
+
+    /// 批量给一组页面设置同一个 layout。
+    func setLayoutForPages(_ pages: [BlogPage], layout: String) {
+        guard currentSite != nil else { return }
+        let trimmed = layout.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else { return }
+
+        var updated = 0
+        for page in pages {
+            var edited = page
+            edited.front.set("layout", trimmed)
+            do {
+                try PageStore.saveAtPath(page.filePath, front: edited.front, body: edited.body)
+                updated += 1
+            } catch {
+                continue
+            }
+        }
+
+        if let site = currentSite {
+            self.pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+        }
+
+        if updated > 0 {
+            toast = Toast(text: "已把 \(updated) 个页面的布局改为「\(trimmed)」", kind: .success)
         }
     }
 
@@ -1038,6 +1269,58 @@ final class HexoManModel: ObservableObject {
             : Toast(text: "拉取失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
     }
 
+    /// 暂存单个文件后刷新状态。
+    func gitStage(path: String) async {
+        guard let site = currentSite else { return }
+        isBusy = true
+        let result = await GitService.add(site: site, path: path, runner: shell)
+        isBusy = false
+        await refreshGit()
+
+        if !result.success {
+            toast = Toast(text: "暂存失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
+        }
+    }
+
+    /// 取消暂存单个文件后刷新状态。
+    func gitUnstage(path: String) async {
+        guard let site = currentSite else { return }
+        isBusy = true
+        let result = await GitService.unstage(site: site, path: path, runner: shell)
+        isBusy = false
+        await refreshGit()
+
+        if !result.success {
+            toast = Toast(text: "取消暂存失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
+        }
+    }
+
+    /// 对单文件跑 `git difftool <path>`。
+    ///
+    /// 先看站点是否配置过 `diff.tool`：配置了就跑 difftool 让 GUI 工具接管；
+    /// 没配就在访达中定位到那个文件，让用户拿自己的编辑器（VSCode/Xcode 等）对比。
+    /// 即便站点不是 git 仓库也允许——`difftool` 内部会兜底返回 nil。
+    func gitDifftool(path: String) async {
+        guard let site = currentSite else { return }
+        isBusy = true
+        let result = await GitService.difftool(site: site, path: path, runner: shell)
+        isBusy = false
+
+        if let result, !result.success {
+            toast = Toast(text: "对比失败：\(result.errorSummary ?? "未知错误")", kind: .failure)
+            return
+        }
+
+        // 没配置 diff.tool：把文件本身交给系统处理。
+        // 路径可能是「source/_posts/foo.md」这样的相对路径，要拼到站点目录下。
+        let absolute = NSWorkspaceBridge.absolutePath(sitePath: site.path, relative: path)
+        if FileManager.default.fileExists(atPath: absolute) {
+            NSWorkspaceBridge.openFile(absolute)
+        } else {
+            NSWorkspaceBridge.openFolder(site.path)
+        }
+    }
+
     // MARK: - 工具链体检
 
     /// 探测 node / npm / npx / hexo / git，并在构建页展示诊断结论。
@@ -1220,43 +1503,72 @@ final class HexoManModel: ObservableObject {
     /// 给当前站点套上主题：装 `hexo-theme-<name>` 包并改写 `_config.yml` 的 `theme`。
     ///
     /// 单独提供而不是并进 createSite，是为了让「先建站、后挑主题」这种顺序也能用。
-    func applyTheme(named rawName: String) async -> Bool {
-        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
+    ///
+    /// `rawName` 接受三种形式：
+    /// - `"yun"` → 装 `hexo-theme-yun`
+    /// - `"hexo-theme-yun"` → 去重前缀，**不**会拼出 `hexo-theme-hexo-theme-yun`
+    /// - `"@scope/hexo-theme-yun"` → scoped 包也兼容
+    ///
+    /// 装完后返回「需要迁移到新主题的项」（公共项迁移 + 主题独有项迁移），
+    /// 由 UI 决定下一步怎么呈现（自动跑 / 列出给用户 / 跳过）。
+    func applyTheme(named rawName: String) async -> ThemeInstallResult {
+        let name = ThemeManager.normalizePackageName(rawName)
+        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_./"))
         guard name.isEmpty == false, name.rangeOfCharacter(from: allowed.inverted) == nil else {
-            toast = Toast(text: "主题名只能包含字母、数字、- 和 _", kind: .failure)
-            return false
+            toast = Toast(text: "主题名只能包含字母、数字、-、_、/ 和 .", kind: .failure)
+            return ThemeInstallResult(installed: false, packageName: name, migration: nil)
         }
         guard let site = currentSite else {
             toast = Toast(text: "请先选择站点", kind: .failure)
-            return false
+            return ThemeInstallResult(installed: false, packageName: name, migration: nil)
         }
 
         isBusy = true
         defer { isBusy = false }
 
-        // 先装包再改配置：配置指向一个装不上的主题，站点会直接构建报错。
+        // 装包。`ThemeManager.fullPackageName(rawName)` 已经把 yun / hexo-theme-yun /
+        // @scope/hexo-theme-yun 都归一成 npm 包名。
+        let fullPackage = ThemeManager.fullPackageName(name)
         let installResult = await shell.run(
-            "npm install hexo-theme-\(name)",
+            "npm install \(fullPackage)",
             executable: "npm",
-            arguments: ["install", "hexo-theme-\(name)", "--no-audit", "--no-fund", "--loglevel", "warn"],
+            arguments: ["install", fullPackage, "--no-audit", "--no-fund", "--loglevel", "warn"],
             workingDirectory: site.path
         )
         guard installResult.success else {
-            toast = Toast(text: "主题 \(name) 安装失败：\(installResult.errorSummary ?? "见日志")", kind: .failure)
-            return false
+            toast = Toast(
+                text: "主题 \(ThemeManager.shortName(from: fullPackage)) 安装失败：\(installResult.errorSummary ?? "见日志")",
+                kind: .failure
+            )
+            return ThemeInstallResult(installed: false, packageName: fullPackage, migration: nil)
         }
+
+        // 从全名反推主题短名（去掉 hexo-theme- 前缀，留 scoped 的 scope 部分）。
+        let shortName = ThemeManager.shortName(from: fullPackage)
 
         do {
-            try writeTheme(named: name, into: site.configFile)
+            try writeTheme(named: shortName, into: site.configFile)
         } catch {
             toast = Toast(text: "写入 theme 失败：\(error.localizedDescription)", kind: .failure)
-            return false
+            return ThemeInstallResult(installed: false, packageName: fullPackage, migration: nil)
         }
 
+        // 跑跨主题迁移（如果原主题配置和样板里都有同名 key，把当前值搬过去）。
+        // 这里**不**自动写入到新主题的 _config.yml 里——可能新主题根本不支持那个 key。
+        // 把结果返回给 UI，让用户决定要不要逐项迁移。
+        let migration = computeThemeMigration(site: site, newThemeShortName: shortName)
         refreshAll()
-        toast = Toast(text: "已切换到主题 \(name)", kind: .success)
-        return true
+
+        if let migration, migration.hasItems {
+            toast = Toast(
+                text: "已切换到主题 \(shortName)。下面列出了可以搬到新主题的旧值，请确认。",
+                kind: .success
+            )
+        } else {
+            toast = Toast(text: "已切换到主题 \(shortName)", kind: .success)
+        }
+
+        return ThemeInstallResult(installed: true, packageName: fullPackage, migration: migration)
     }
 
     /// 只改 `_config.yml` 里的顶层 `theme:` 一行。读不到文件就原样建一个。
@@ -1286,4 +1598,83 @@ final class HexoManModel: ObservableObject {
 
         try lines.joined(separator: "\n").write(toFile: path, atomically: true, encoding: .utf8)
     }
+
+    /// 装主题时跑跨主题迁移评估。
+    ///
+    /// 如果站点当前用主题 A，新装主题 B：
+    /// - A 的 `_config.<A>.yml` 里有些键是「公共项」——hexo 通用配置（站点标题、
+    ///   头像、社交链接等），可能新主题 B 也支持。
+    /// - 也可能 B 自带的 sample 里也有这些键，那应该把 A 里的当前值搬过去。
+    ///
+    /// 这里只**计算**要搬什么，不真正写入。新主题可能完全没那些选项，
+    /// 让用户在 UI 里逐项决定。
+    private func computeThemeMigration(site: HexoSite, newThemeShortName: String) -> ThemeMigrationPlan? {
+        let oldThemeName = info?.theme ?? ""
+        guard oldThemeName.isEmpty == false,
+              oldThemeName != newThemeShortName
+        else { return nil }
+
+        // 找出旧主题配置 + 新主题示例配置。
+        let oldConfigName = "_config.\(oldThemeName).yml"
+        let newSampleName = "\(newThemeShortName)/_config.yml"
+        let root = URL(fileURLWithPath: site.path)
+        let modules = root.appendingPathComponent("node_modules/hexo-theme-\(newThemeShortName)")
+
+        let oldConfigURL = root.appendingPathComponent(oldConfigName)
+        let newSampleURL = modules.appendingPathComponent("_config.yml")
+
+        guard let oldText = try? String(contentsOf: oldConfigURL, encoding: .utf8),
+              let newText = try? String(contentsOf: newSampleURL, encoding: .utf8)
+        else { return nil }
+
+        // 只搬 ConfigSync 认得的同步项（avatar / favicon / title 等）。
+        // 这里复用现有 ConfigSync 逻辑：同 key 且都在旧主题和新主题 sample 里出现。
+        // syncAll 返回 (updatedConfig, changedKeys)。我们只要 changedKeys，
+        // updatedConfig 不在这里写——交给后续 UI 让用户确认。
+        let (_, changedKeys) = ConfigSync.syncAll(siteConfig: oldText, themeConfig: newText)
+
+        guard changedKeys.isEmpty == false else { return nil }
+
+        let entries = changedKeys.map { key in
+            ThemeMigrationEntry(
+                key: key,
+                label: ConfigSync.label(for: key) ?? key,
+                currentValue: YAMLPathEngine.shared.get(key, in: oldText) ?? ""
+            )
+        }
+
+        return ThemeMigrationPlan(
+            fromTheme: oldThemeName,
+            toTheme: newThemeShortName,
+            entries: entries
+        )
+    }
+}
+
+// MARK: - 主题安装结果
+
+/// `applyTheme` 的返回。`migration` 非空表示有可以搬过去的公共项，
+/// UI 用它来展示「要不要把这些值搬到新主题」的清单。
+struct ThemeInstallResult {
+    var installed: Bool
+    /// 实际装的 npm 包名（可能是 `hexo-theme-yun` 或 `@scope/hexo-theme-yun`）。
+    var packageName: String
+    var migration: ThemeMigrationPlan?
+}
+
+/// 跨主题迁移计划。一份「老主题→新主题」的公共项搬运清单。
+struct ThemeMigrationPlan {
+    var fromTheme: String
+    var toTheme: String
+    var entries: [ThemeMigrationEntry]
+
+    var hasItems: Bool { entries.isEmpty == false }
+}
+
+/// 单条迁移项。`currentValue` 是从旧主题配置抽出来的当前值。
+struct ThemeMigrationEntry: Identifiable {
+    var id: String { key }
+    var key: String
+    var label: String
+    var currentValue: String
 }

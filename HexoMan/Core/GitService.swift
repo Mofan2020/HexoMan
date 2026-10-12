@@ -198,6 +198,51 @@ enum GitService {
         )
     }
 
+    /// 暂存单个文件（已跟踪或未跟踪都能 stage）。
+    static func add(site: HexoSite, path: String, runner: ShellRunner) async -> ShellResult {
+        await runner.run(
+            "git add",
+            executable: "git",
+            arguments: ["-C", site.path, "add", "--", path],
+            workingDirectory: site.path
+        )
+    }
+
+    /// 取消暂存单个文件（保留工作区改动）。对应 `git restore --staged <path>`。
+    static func unstage(site: HexoSite, path: String, runner: ShellRunner) async -> ShellResult {
+        await runner.run(
+            "git restore --staged",
+            executable: "git",
+            arguments: ["-C", site.path, "restore", "--staged", "--", path],
+            workingDirectory: site.path
+        )
+    }
+
+    /// 用配置的 difftool 打开对比（如果在站点里 `git config diff.tool` 配过）。
+    ///
+    /// 没配就直接返回 `nil`，让调用方走「打开文件本身」的兜底路径——
+    /// 在 Xcode/VSCode 这种自带 diff 的编辑器里效果等同，而不必在这里
+    /// 强行做 GUI diff 渲染。
+    static func difftool(site: HexoSite, path: String, runner: ShellRunner) async -> ShellResult? {
+        let probe = await runner.run(
+            "git difftool check",
+            executable: "git",
+            arguments: ["-C", site.path, "config", "--get", "diff.tool"],
+            workingDirectory: site.path
+        )
+        // 配置项不存在时 git config 会**以非零退出码**返回空输出，且 stdout 是空的。
+        // 这种情况直接视为未配置，避免去启动一个不存在的工具。
+        let toolName = probe.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard probe.success, !toolName.isEmpty else { return nil }
+
+        return await runner.run(
+            "git difftool",
+            executable: "git",
+            arguments: ["-C", site.path, "difftool", "--", path],
+            workingDirectory: site.path
+        )
+    }
+
     /// 列出远端。
     static func remotes(site: HexoSite) -> [String] {
         let gitConfig = (site.path as NSString).appendingPathComponent(".git/config")

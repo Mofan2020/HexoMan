@@ -24,8 +24,8 @@ struct ThemeView: View {
             if installedThemes.isEmpty && !isLoading {
                 EmptyHint(
                     systemImage: "paintbrush",
-                    title: "还没有安装主题",
-                    message: "点击右上角「安装主题」从推荐列表选择，或输入 npm 包名安装。"
+                    title: "themeView.emptyTitle",
+                    message: "themeView.emptyMessage"
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -37,9 +37,10 @@ struct ThemeView: View {
             Task { await loadThemes() }
         }
         .sheet(isPresented: $showInstallSheet) {
-            InstallThemeSheet(onInstall: { name in
-                Task { await installTheme(name) }
+            ThemeBrowserSheet(onComplete: { result in
+                Task { await refreshAfterInstall(result) }
             })
+            .environmentObject(model)
         }
         .sheet(item: $selectedThemeForConfig) { theme in
             ThemeConfigView(theme: theme)
@@ -49,22 +50,29 @@ struct ThemeView: View {
 
     private var headerSection: some View {
         HStack {
-            Label("主题管理", systemImage: "paintbrush")
+            Label("themeView.title", systemImage: "paintbrush")
                 .font(.title2.weight(.semibold))
 
             Spacer()
 
-            Text("当前：\(currentThemeName)")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(.quaternary.opacity(0.3), in: Capsule())
+            // "当前：xxx" 用两个 Text 拼：key 给前缀，String 给主题名。
+            // 主题名是 _config.yml 里的真实字段，必须保留原文（不能本地化）。
+            HStack(spacing: 4) {
+                Text("themeView.currentPrefix")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Text(currentThemeName)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(.quaternary.opacity(0.3), in: Capsule())
 
             Button {
                 showInstallSheet = true
             } label: {
-                Label("安装主题", systemImage: "plus.circle")
+                Label("themeView.installTheme", systemImage: "plus.circle")
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -73,7 +81,7 @@ struct ThemeView: View {
     }
 
     private var currentThemeName: String {
-        model.info?.theme.isEmpty == false ? model.info!.theme : "未设置"
+        model.info?.theme.isEmpty == false ? model.info!.theme : "—"
     }
 
     private var themeList: some View {
@@ -121,14 +129,17 @@ struct ThemeView: View {
         }
     }
 
-    private func installTheme(_ name: String) async {
-        guard model.currentSite != nil else { return }
-        let success = await model.applyTheme(named: name)
-        if success {
-            await loadThemes()
-        } else {
-            model.toast = Toast(text: "安装失败", kind: .failure)
+    /// 装主题后整体刷新。
+    ///
+    /// ThemeBrowserSheet 自己完成「调 applyTheme + 弹迁移 sheet」，
+    /// 回调到这里时主题已经装好、配置已经切好。我们只需要刷新列表 + 当前主题元数据。
+    private func refreshAfterInstall(_ result: ThemeInstallResult) async {
+        guard result.installed else {
+            model.toast = Toast(text: "主题安装失败", kind: .failure)
+            return
         }
+        await loadThemes()
+        model.refreshAll()
     }
 }
 
@@ -159,7 +170,7 @@ struct ThemeRow: View {
                     Text(theme.name)
                         .font(.callout.weight(.medium))
                     if isActive {
-                        Pill(text: "使用中", tint: .accentColor)
+                        Pill(text: "themeRow.inUse", tint: .accentColor)
                     }
                 }
 
@@ -180,14 +191,14 @@ struct ThemeRow: View {
 
             HStack(spacing: 8) {
                 if !isActive {
-                    Button("启用", action: onActivate)
+                    Button("themeRow.activate", action: onActivate)
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
                 } else {
-                    Pill(text: "已启用", tint: .green)
+                    Pill(text: "themeRow.enabled", tint: .green)
                 }
 
-                Button("配置", action: onConfig)
+                Button("themeRow.config", action: onConfig)
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                     .help("打开主题专属配置文件。需要先生成配置文件。")
@@ -207,85 +218,6 @@ struct ThemeRow: View {
         )
     }
 
-}
-
-// MARK: - 安装主题 Sheet
-
-struct InstallThemeSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let onInstall: (String) -> Void
-
-    @State private var selectedTheme: ThemeCatalog.Item?
-    @State private var customName = ""
-    @State private var mode: InstallMode = .catalog
-
-    enum InstallMode: String, CaseIterable, Identifiable {
-        case catalog = "从推荐列表选"
-        case custom = "输入包名"
-
-        var id: String { rawValue }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("安装新主题")
-                .font(.headline)
-
-            Picker("", selection: $mode) {
-                ForEach(InstallMode.allCases) { m in
-                    Text(m.rawValue).tag(m)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-
-            if mode == .catalog {
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(ThemeCatalog.items) { item in
-                            ThemeCatalogRow(item: item, isSelected: selectedTheme?.name == item.name) {
-                                selectedTheme = item
-                            }
-                        }
-                    }
-                }
-                .frame(maxHeight: 300)
-            } else {
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("例如：hexo-theme-yun", text: $customName)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(.callout, design: .monospaced))
-                    Text("输入完整的 npm 包名，支持 hexo-theme-xxx 或 @scope/hexo-theme-xxx 格式")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-
-            HStack {
-                Spacer()
-                Button("取消") { dismiss() }
-                Button {
-                    let name: String
-                    if mode == .catalog, let selected = selectedTheme {
-                        name = selected.packageName
-                    } else {
-                        name = customName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    }
-                    guard !name.isEmpty else { return }
-                    onInstall(name)
-                    dismiss()
-                } label: {
-                    Text(mode == .catalog ? "安装" : "安装")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(
-                    mode == .catalog ? selectedTheme == nil : customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                )
-            }
-        }
-        .padding(20)
-        .frame(width: 500)
-    }
 }
 
 // MARK: - 主题配置视图

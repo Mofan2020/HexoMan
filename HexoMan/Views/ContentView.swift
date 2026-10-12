@@ -20,6 +20,13 @@ struct ContentView: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        // locale 是 side-channel：不强制撕掉子树，`.environment(\.locale)`
+        // 只对未来 body 评估生效，旧的 Text 不会重渲染本地化。
+        // 用 `.id("lang-\(language.rawValue)")` 把整个 NavigationSplitView 重建，
+        // 让所有本地化字符串在切换时立刻生效。
+        // 这是 Apple 框架在运行时不强制重建 SwiftUI 视图树的固有限制。
+        .id("lang-\(model.language.rawValue)")
+        .environment(\.locale, model.locale)
         .overlay(alignment: .topTrailing) {
             if let toast = model.toast {
                 ToastView(toast: toast) { model.dismissToast() }
@@ -176,6 +183,9 @@ struct ContentView: View {
             siteRequired { BackupView() }
         case .diagnostics:
             siteRequired { DiagnosticsView() }
+        case .environment:
+            // 环境文档不依赖具体站点（讲的是工具链本身）。
+            EnvironmentView()
         }
     }
 

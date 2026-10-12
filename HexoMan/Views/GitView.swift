@@ -206,11 +206,11 @@ struct GitView: View {
             }
 
             VStack(alignment: .leading, spacing: 10) {
-                changeGroup(title: "已暂存", symbol: "checkmark.circle", tint: .green, paths: model.gitStatus?.staged ?? [])
+                changeGroup(title: "已暂存", symbol: "checkmark.circle", tint: .green, paths: model.gitStatus?.staged ?? [], role: .staged)
                 Divider()
-                changeGroup(title: "已修改", symbol: "pencil.circle", tint: .orange, paths: model.gitStatus?.modified ?? [])
+                changeGroup(title: "已修改", symbol: "pencil.circle", tint: .orange, paths: model.gitStatus?.modified ?? [], role: .modified)
                 Divider()
-                changeGroup(title: "未跟踪", symbol: "questionmark.circle", tint: .blue, paths: model.gitStatus?.untracked ?? [])
+                changeGroup(title: "未跟踪", symbol: "questionmark.circle", tint: .blue, paths: model.gitStatus?.untracked ?? [], role: .untracked)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -218,7 +218,7 @@ struct GitView: View {
         }
     }
 
-    private func changeGroup(title: String, symbol: String, tint: Color, paths: [String]) -> some View {
+    private func changeGroup(title: String, symbol: String, tint: Color, paths: [String], role: FileRole) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: symbol)
@@ -238,27 +238,18 @@ struct GitView: View {
                     .foregroundStyle(.tertiary)
             } else {
                 ForEach(paths, id: \.self) { path in
-                    // 点击定位到站点目录，用户自己去 Finder 里找具体文件。
-                    Button {
-                        if let site = model.currentSite {
-                            NSWorkspaceBridge.openFolder(site.path)
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(path)
-                                .font(.system(.caption, design: .monospaced))
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                            Spacer(minLength: 6)
-                            Image(systemName: "folder")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
-                        .contentShape(Rectangle())
+                    HStack(spacing: 6) {
+                        Text(path)
+                            .font(.system(.caption, design: .monospaced))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .textSelection(.enabled)
+
+                        Spacer(minLength: 6)
+
+                        FileActionButtons(role: role, path: path, model: model)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.primary)
-                    .help("在访达中打开站点目录")
+                    .padding(.vertical, 2)
                 }
             }
         }
@@ -444,5 +435,79 @@ struct GitView: View {
 
     private func remoteURL(_ remote: String) -> String {
         remote.components(separatedBy: " → ").dropFirst().joined(separator: " → ")
+    }
+}
+
+// MARK: - 单文件操作按钮
+
+/// 变更文件的三种状态，按状态决定每行右边露出哪些按钮：
+/// - `.staged`    → 「取消暂存」
+/// - `.modified`  → 「暂存」「对比」
+/// - `.untracked` → 「暂存」（未跟踪文件没旧版本可对比）
+enum FileRole {
+    case staged
+    case modified
+    case untracked
+}
+
+/// 同一行里按 `role` 露出对应按钮。所有动作都是异步，
+/// 触发时把整个 `model.isBusy` 顶上去，按钮自己 disabled，
+/// 避免用户在命令未结束前反复点击产生竞态。
+struct FileActionButtons: View {
+    let role: FileRole
+    let path: String
+    @ObservedObject var model: HexoManModel
+
+    var body: some View {
+        switch role {
+        case .staged:
+            Button {
+                Task { await model.gitUnstage(path: path) }
+            } label: {
+                Label("取消暂存", systemImage: "minus.circle")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .disabled(model.isBusy)
+            .help("git restore --staged \(path)")
+
+        case .modified:
+            HStack(spacing: 4) {
+                Button {
+                    Task { await model.gitStage(path: path) }
+                } label: {
+                    Label("暂存", systemImage: "plus.circle")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .disabled(model.isBusy)
+                .help("git add \(path)")
+
+                Button {
+                    Task { await model.gitDifftool(path: path) }
+                } label: {
+                    Label("对比", systemImage: "doc.text.magnifyingglass")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
+                .disabled(model.isBusy)
+                .help("git difftool \(path)（未配 diff.tool 时打开文件本身）")
+            }
+
+        case .untracked:
+            Button {
+                Task { await model.gitStage(path: path) }
+            } label: {
+                Label("暂存", systemImage: "plus.circle")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .disabled(model.isBusy)
+            .help("git add \(path)")
+        }
     }
 }

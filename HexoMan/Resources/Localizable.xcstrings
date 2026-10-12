@@ -1,0 +1,3300 @@
+{
+  "version": "1.0",
+  "sourceLanguage": "en",
+  "strings": {
+    "sidebar.overview": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "总览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overview"
+          }
+        }
+      }
+    },
+    "sidebar.posts": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文章"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posts"
+          }
+        }
+      }
+    },
+    "sidebar.pages": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "页面"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pages"
+          }
+        }
+      }
+    },
+    "sidebar.build": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "构建与预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build & Preview"
+          }
+        }
+      }
+    },
+    "sidebar.config": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Config"
+          }
+        }
+      }
+    },
+    "sidebar.theme": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme"
+          }
+        }
+      }
+    },
+    "sidebar.git": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git"
+          }
+        }
+      }
+    },
+    "sidebar.backup": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup"
+          }
+        }
+      }
+    },
+    "sidebar.diagnostics": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics"
+          }
+        }
+      }
+    },
+    "sidebar.sites": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "站点管理"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sites"
+          }
+        }
+      }
+    },
+    "menu.newPost": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建文章"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Post"
+          }
+        }
+      }
+    },
+    "menu.addSite": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加站点…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Site…"
+          }
+        }
+      }
+    },
+    "menu.refresh": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        }
+      }
+    },
+    "menu.generate": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生成站点"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate Site"
+          }
+        }
+      }
+    },
+    "menu.startServer": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启动预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Server"
+          }
+        }
+      }
+    },
+    "menu.stopServer": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Server"
+          }
+        }
+      }
+    },
+    "menu.openPreview": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开预览页"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Preview"
+          }
+        }
+      }
+    },
+    "menu.goto": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转到"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go To"
+          }
+        }
+      }
+    },
+    "menu.language": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
+    "language.menu.system": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随系统"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow System"
+          }
+        }
+      }
+    },
+    "language.menu.zhHans": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文（简体）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese (Simplified)"
+          }
+        }
+      }
+    },
+    "language.menu.en": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        }
+      }
+    },
+    "language.menu.ja": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Japanese"
+          }
+        }
+      }
+    },
+    "theme.yun.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现代化三栏主题，亮暗双模式，配色可调，中文文档完善"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modern 3-column theme, light & dark, customizable color, full Chinese docs"
+          }
+        }
+      }
+    },
+    "theme.landscape.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 官方默认主题，四栏布局，稳不出错"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo official default theme, 4-column layout, rock-solid"
+          }
+        }
+      }
+    },
+    "theme.next.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功能最全的主题，集成站内搜索、动态背景、多说等"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most feature-complete theme, integrated search, dynamic backgrounds"
+          }
+        }
+      }
+    },
+    "theme.fluid.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fluid 风格，首页大图瀑布流，适合图片多的站"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fluid style, waterfall hero, ideal for image-heavy sites"
+          }
+        }
+      }
+    },
+    "theme.matery.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Material 风格，分类标签齐全，适合技术博客"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Material style, full tag/category support, ideal for tech blogs"
+          }
+        }
+      }
+    },
+    "theme.whiskers.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简洁清爽，时间线布局"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean and tidy, timeline layout"
+          }
+        }
+      }
+    },
+    "theme.volantis.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "功能丰富，社交插件多，社区活跃"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feature-rich, many social plugins, active community"
+          }
+        }
+      }
+    },
+    "theme.reimu.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二次元风格，首页角色立绘"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anime style, hero illustration on home"
+          }
+        }
+      }
+    },
+    "theme.solitude.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简洁的卡片式布局"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimal card-based layout"
+          }
+        }
+      }
+    },
+    "theme.anima.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗色为主，动画细腻"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark-first, subtle animations"
+          }
+        }
+      }
+    },
+    "toast.theme.installed": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已切换到主题 %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switched to theme %@"
+          }
+        }
+      }
+    },
+    "toast.theme.installFailed": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题 %@ 安装失败：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to install theme %@: %@"
+          }
+        }
+      }
+    },
+    "toast.theme.configCreated": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已生成 %@ 的配置文件"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Created config file for %@"
+          }
+        }
+      }
+    },
+    "empty.posts.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有文章"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No posts yet"
+          }
+        }
+      }
+    },
+    "empty.posts.message": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击「新建文章」开始写第一篇。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click New Post to start your first post."
+          }
+        }
+      }
+    },
+    "empty.pages.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有页面"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pages yet"
+          }
+        }
+      }
+    },
+    "empty.pages.message": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个站点目前没有页面。点左上角「新建页面」创建首个页面。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This site has no pages yet. Click New Page in the toolbar to create your first page."
+          }
+        }
+      }
+    },
+    "empty.theme.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有安装主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No themes installed"
+          }
+        }
+      }
+    },
+    "empty.theme.message": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击右上角「安装主题」从推荐列表选择，或输入 npm 包名安装。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click Install Theme in the top right to pick from recommendations, or enter an npm package name."
+          }
+        }
+      }
+    },
+    "button.installTheme": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install Theme"
+          }
+        }
+      }
+    },
+    "button.save": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "button.cancel": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "button.delete": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "button.activate": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activate"
+          }
+        }
+      }
+    },
+    "button.config": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure"
+          }
+        }
+      }
+    },
+    "button.refresh": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新检测"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Re-check"
+          }
+        }
+      }
+    },
+    "button.installDependencies": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装依赖"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install Dependencies"
+          }
+        }
+      }
+    },
+    "button.createSite": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "创建"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
+    },
+    "button.createPage": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "创建页面"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Page"
+          }
+        }
+      }
+    },
+    "theme.active": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current: %@"
+          }
+        }
+      }
+    },
+    "theme.notSet": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未设置"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not set"
+          }
+        }
+      }
+    },
+    "theme.enabled": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用中"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Use"
+          }
+        }
+      }
+    },
+    "theme.alreadyEnabled": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已启用"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
+          }
+        }
+      }
+    },
+    "settings.languageToolkitTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工具链"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toolchain"
+          }
+        }
+      }
+    },
+    "settings.shellEnvironment": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取 zsh 配置"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read zsh configuration"
+          }
+        }
+      }
+    },
+    "settings.customRCPath": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsh 配置文件路径（可选）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsh config file path (optional)"
+          }
+        }
+      }
+    },
+    "settings.customHexoPath": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo 可执行文件路径（可选）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo executable path (optional)"
+          }
+        }
+      }
+    },
+    "installSheet.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装新主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install a new theme"
+          }
+        }
+      }
+    },
+    "installSheet.mode.catalog": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从推荐列表选"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick from recommendations"
+          }
+        }
+      }
+    },
+    "installSheet.mode.custom": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入包名"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter package name"
+          }
+        }
+      }
+    },
+    "installSheet.customPlaceholder": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例如：hexo-theme-yun"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g.: hexo-theme-yun"
+          }
+        }
+      }
+    },
+    "installSheet.customHelp": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入完整的 npm 包名，支持 hexo-theme-xxx 或 @scope/hexo-theme-xxx 格式"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the full npm package name (hexo-theme-xxx or @scope/hexo-theme-xxx)"
+          }
+        }
+      }
+    },
+    "installSheet.install": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install"
+          }
+        }
+      }
+    },
+    "themeView.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题管理"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Themes"
+          }
+        }
+      }
+    },
+    "themeView.installTheme": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install Theme"
+          }
+        }
+      }
+    },
+    "themeView.currentPrefix": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current: %@"
+          }
+        }
+      }
+    },
+    "themeView.emptyTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有安装主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No themes installed"
+          }
+        }
+      }
+    },
+    "themeView.emptyMessage": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击右上角「安装主题」从推荐列表选择，或输入 npm 包名安装。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click Install Theme in the top right to pick from recommendations, or enter an npm package name."
+          }
+        }
+      }
+    },
+    "installSheet.heading": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装新主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install a new theme"
+          }
+        }
+      }
+    },
+    "installSheet.tab.catalog": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从推荐列表选"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick from recommendations"
+          }
+        }
+      }
+    },
+    "installSheet.tab.custom": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入包名"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter package name"
+          }
+        }
+      }
+    },
+    "installSheet.cancel": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "themeRow.activate": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activate"
+          }
+        }
+      }
+    },
+    "themeRow.config": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure"
+          }
+        }
+      }
+    },
+    "themeRow.inUse": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用中"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Use"
+          }
+        }
+      }
+    },
+    "themeRow.enabled": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已启用"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
+          }
+        }
+      }
+    },
+    "themeView.browser.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题市场"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme Market"
+          }
+        }
+      }
+    },
+    "themeView.browser.subtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浏览 HexoMan 精选和 npm 上所有 hexo-theme-* 包，一键安装并预览。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse curated themes and all hexo-theme-* packages on npm, install and preview in one click."
+          }
+        }
+      }
+    },
+    "themeView.browser.allowOnline": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许联网"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Online"
+          }
+        }
+      }
+    },
+    "themeView.browser.done": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "themeView.browser.installed": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已安装"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed"
+          }
+        }
+      }
+    },
+    "themeView.browser.market": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题市场"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Market"
+          }
+        }
+      }
+    },
+    "themeView.browser.preview": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
+    },
+    "themeView.browser.installedEmptyTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有已安装主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No themes installed"
+          }
+        }
+      }
+    },
+    "themeView.browser.installedEmptyMessage": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从中间的市场选一个，或在右侧用 npm 包名安装。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick one from the market in the middle, or enter an npm package name on the right."
+          }
+        }
+      }
+    },
+    "themeView.browser.loading": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加载中…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading…"
+          }
+        }
+      }
+    },
+    "themeView.browser.searchPlaceholder": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索主题（hexo、yun、fluid…）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search themes (hexo, yun, fluid…)"
+          }
+        }
+      }
+    },
+    "themeView.browser.detailEmptyTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选一个主题查看详情"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a theme to view details"
+          }
+        }
+      }
+    },
+    "themeView.browser.detailEmptyMessage": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左侧是已安装主题，中间是市场，右侧显示你选中的主题预览。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left: installed. Middle: market. Right: preview of the selected theme."
+          }
+        }
+      }
+    },
+    "themeView.browser.author": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作者：%@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Author: %@"
+          }
+        }
+      }
+    },
+    "themeView.browser.previewSection": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "官方 demo 预览"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Official demo preview"
+          }
+        }
+      }
+    },
+    "themeView.browser.noPreview": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有官网链接，跳过预览。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No homepage URL available, skipping preview."
+          }
+        }
+      }
+    },
+    "themeView.browser.openInBrowser": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Safari 中打开"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Safari"
+          }
+        }
+      }
+    },
+    "themeView.browser.installButton": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装此主题"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install this theme"
+          }
+        }
+      }
+    },
+    "themeView.browser.installing": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装中…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing…"
+          }
+        }
+      }
+    },
+    "themeView.browser.installHint": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会用 npm 装包并切换当前主题。装完后会自动跑一次跨主题迁移（公共项搬运）。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "npm install + switch the current theme. After install, runs a cross-theme migration for shared keys."
+          }
+        }
+      }
+    },
+    "consentSheet.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网络访问说明"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network Access Disclosure"
+          }
+        }
+      }
+    },
+    "consentSheet.subtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 想访问互联网来扩充主题市场"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan wants to access the internet to extend the theme market"
+          }
+        }
+      }
+    },
+    "consentSheet.body": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 仅访问 npm registry（registry.npmjs.org）来搜索 hexo-theme-* 主题包，全程只读、不上传、不传 Cookie，也不传站点信息。其他所有功能（命令执行、Git、文件读写）都完全离线。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan only accesses the npm registry (registry.npmjs.org) to search for hexo-theme-* packages. Read-only, no uploads, no cookies, no site info shared. Everything else (shell, git, file IO) stays offline."
+          }
+        }
+      }
+    },
+    "consentSheet.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主机：registry.npmjs.org"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host: registry.npmjs.org"
+          }
+        }
+      }
+    },
+    "consentSheet.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数据流向：仅 GET 包元数据（名称、版本、描述、官网、下载量）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data flow: GET package metadata only (name, version, description, homepage, downloads)"
+          }
+        }
+      }
+    },
+    "consentSheet.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发时机：用户打开主题市场并搜索时；无后台轮询"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When: when you open the theme market and search; no background polling"
+          }
+        }
+      }
+    },
+    "consentSheet.bullet4": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭路径：诊断页 →「允许联网补全主题库」开关"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to disable: Diagnostics page → \"Allow online theme search\" toggle"
+          }
+        }
+      }
+    },
+    "consentSheet.dontAskAgain": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不再询问"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't ask again"
+          }
+        }
+      }
+    },
+    "consentSheet.deny": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时不用"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        }
+      }
+    },
+    "consentSheet.allow": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同意并打开"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        }
+      }
+    },
+    "migrationSheet.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "迁移公共项"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Migrate shared keys"
+          }
+        }
+      }
+    },
+    "migrationSheet.subtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从 %@ 到 %@：下列公共项在两边都有，可以把当前值搬到新主题。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From %@ to %@: the shared keys below exist in both. Carry over current values."
+          }
+        }
+      }
+    },
+    "migrationSheet.note": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只勾你确认新主题也支持这些选项的项。错误地搬进去会让新主题加载失败。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only check items you know the new theme supports. Misapplying values can break the new theme."
+          }
+        }
+      }
+    },
+    "migrationSheet.skip": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跳过"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "migrationSheet.apply": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用所选"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply Selected"
+          }
+        }
+      }
+    },
+    "envDocs.pageTitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工具链与运行环境"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toolchain & Environment"
+          }
+        }
+      }
+    },
+    "envDocs.pageSubtitle": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这里汇总了 HexoMan 用到的工具（Node、Git、Hexo）的安装方法和常见问题。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install guides and FAQ for the tools HexoMan relies on (Node, Git, Hexo)."
+          }
+        }
+      }
+    },
+    "envDocs.overview.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始之前"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Before You Start"
+          }
+        }
+      }
+    },
+    "envDocs.overview.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 不自带任何运行时——它调用你系统里已经装好的 Node、npm、Git、Hexo。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan ships no runtime of its own — it calls the Node, npm, Git and Hexo you have installed on your system."
+          }
+        }
+      }
+    },
+    "envDocs.overview.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你需要：Node.js 18 或更高 + Git。Hexo 不用手动装。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You need: Node.js 18 or later + Git. Hexo does not need to be installed manually."
+          }
+        }
+      }
+    },
+    "envDocs.overview.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推荐用 Homebrew 装 Node 和 Git；不想用 Homebrew 可以从官网下载官方安装包。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew is the recommended way to install Node and Git. Otherwise grab the official installers from the nodes.org / git-scm.com."
+          }
+        }
+      }
+    },
+    "envDocs.overview.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "装完点「重新检测」让 HexoMan 刷新工具链状态。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click \"Re-check\" after installing so HexoMan refreshes the toolchain status."
+          }
+        }
+      }
+    },
+    "envDocs.node.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node.js"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node.js"
+          }
+        }
+      }
+    },
+    "envDocs.node.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 靠 Node.js 跑 hexo 命令行工具。版本要求：18 或更高。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan needs Node.js to run the hexo CLI. Required: 18 or later."
+          }
+        }
+      }
+    },
+    "envDocs.node.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 7+ 已经要求 Node 18，Hexo 8 也一样。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 7+ requires Node 18, so does Hexo 8."
+          }
+        }
+      }
+    },
+    "envDocs.node.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "装 Node 后 npm 会一起被装好，不用单独装。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "npm is bundled with Node — no separate install needed."
+          }
+        }
+      }
+    },
+    "envDocs.node.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GUI 程序（从 Dock 启动的 HexoMan）默认不会读 ~/.zshrc，所以 brew 装的 Node 在 HexoMan 里可能「找不到」。详见 Shell 环境章节。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GUI apps (HexoMan launched from the Dock) don't read ~/.zshrc by default — brew-installed Node can be \"missing\" inside HexoMan. See the Shell Environment section."
+          }
+        }
+      }
+    },
+    "envDocs.node.bullet4": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 会自动用临时目录装一份 hexo-cli，不污染你机器的全局 node_modules。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan auto-installs a hexo-cli copy under its own data dir — does not pollute your global node_modules."
+          }
+        }
+      }
+    },
+    "envDocs.node.brew": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew 装（推荐）："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew install (recommended):"
+          }
+        }
+      }
+    },
+    "envDocs.node.official": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "官方安装包："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Official installer:"
+          }
+        }
+      }
+    },
+    "envDocs.node.checkVersion": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看当前版本："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check current version:"
+          }
+        }
+      }
+    },
+    "envDocs.nvm.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多版本管理（nvm / fnm）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version Managers (nvm / fnm)"
+          }
+        }
+      }
+    },
+    "envDocs.nvm.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同一台机器要跑多个不同 Node 版本时用 nvm 或 fnm。HexoMan 通过 ~/.nvm 看 nvm 装的 Node。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you need multiple Node versions on the same machine, use nvm or fnm. HexoMan detects nvm-installed Node via /opt/homebrew/Cellar and ~/.nvm."
+          }
+        }
+      }
+    },
+    "envDocs.nvm.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nvm 装完后新开一个终端，命令行 `node -v` 应该能用。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After nvm install, open a new terminal and `node -v` should work."
+          }
+        }
+      }
+    },
+    "envDocs.nvm.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nvm 默认把 Node 装在 ~/.nvm/versions/node/<v>/bin/node。HexoMan 会自动扫这个目录。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nvm puts Node under ~/.nvm/versions/node/<v>/bin/node. HexoMan scans this automatically."
+          }
+        }
+      }
+    },
+    "envDocs.nvm.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fnm 装在 Homebrew 路径下，HexoMan 也会自动找到。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fnm via Homebrew puts Node in a path HexoMan also detects."
+          }
+        }
+      }
+    },
+    "envDocs.nvm.install": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一键装 nvm（脚本会改 ~/.zshrc）："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install nvm one-shot (modifies ~/.zshrc):"
+          }
+        }
+      }
+    },
+    "envDocs.nvm.use": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "装 LTS 版本："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install the LTS release:"
+          }
+        }
+      }
+    },
+    "envDocs.nvm.aliasDefault": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设为默认版本："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set as default version:"
+          }
+        }
+      }
+    },
+    "envDocs.git.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git"
+          }
+        }
+      }
+    },
+    "envDocs.git.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 不用 Git，但 HexoMan 的版本管理功能全靠 Git（提交、拉取、推送）。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo itself doesn't use Git, but HexoMan's version control (commit, pull, push) relies on it."
+          }
+        }
+      }
+    },
+    "envDocs.git.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode 自带 Git：跑 `xcode-select --install` 就行。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode ships Git: run `xcode-select --install`."
+          }
+        }
+      }
+    },
+    "envDocs.git.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "或者用 Homebrew 装更新版本。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Or install a newer version via Homebrew."
+          }
+        }
+      }
+    },
+    "envDocs.git.brew": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew:"
+          }
+        }
+      }
+    },
+    "envDocs.git.xcode": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode CLT："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode Command Line Tools:"
+          }
+        }
+      }
+    },
+    "envDocs.git.checkVersion": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看版本："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check version:"
+          }
+        }
+      }
+    },
+    "envDocs.hexo.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo"
+          }
+        }
+      }
+    },
+    "envDocs.hexo.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 不依赖全局 hexo 命令行——站点自带的 npm 依赖里有 hexo 就够用。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan doesn't rely on a global hexo CLI — the hexo dependency in your site's node_modules is enough."
+          }
+        }
+      }
+    },
+    "envDocs.hexo.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「创建新站点」时 HexoMan 会用你机器上的 npm 装一份 hexo-cli（装在 HexoMan 自带目录里）。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When creating a new site, HexoMan installs a hexo-cli copy via your npm (under HexoMan's own data dir)."
+          }
+        }
+      }
+    },
+    "envDocs.hexo.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「新建站点」成功后，新站点里会跑 npm install，hexo 进了站点本地 node_modules。从此 hexo 命令都走站点本地版本。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After a successful site init, npm install pulls hexo into the site's local node_modules. From then on, hexo uses the local version."
+          }
+        }
+      }
+    },
+    "envDocs.hexo.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果没有 node / npm，HexoMan 创建站点时会失败，提示要先装 Node.js。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If node / npm is missing, site creation fails with a hint to install Node.js first."
+          }
+        }
+      }
+    },
+    "envDocs.hexo.installLocal": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "站点本地装 hexo："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install hexo locally to a site:"
+          }
+        }
+      }
+    },
+    "envDocs.hexo.checkVersion": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查 hexo 版本（用站点本地依赖）："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check hexo version (uses the site's local dep):"
+          }
+        }
+      }
+    },
+    "envDocs.shell.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell 环境（zsh 配置）"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell Environment (zsh config)"
+          }
+        }
+      }
+    },
+    "envDocs.shell.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 通过 ~/.zshenv / ~/.zprofile / ~/.zshrc 读你的 PATH。这一步缺失会导致「终端里能 hexo -v，HexoMan 里找不到 hexo」。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan reads your PATH via ~/.zshenv / ~/.zprofile / ~/.zshrc. Missing this step is the cause of \"hexo -v works in terminal but HexoMan says it's missing\"."
+          }
+        }
+      }
+    },
+    "envDocs.shell.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS GUI 应用不读 ~/.zshrc——这是 Apple 的设计。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS GUI apps do not read ~/.zshrc — by Apple design."
+          }
+        }
+      }
+    },
+    "envDocs.shell.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 在诊断页里点了「读取 zsh 配置」后会用 zsh -l -c 'echo $PATH' 启动一个登录 shell，拿到完整 PATH。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After enabling \"Read zsh configuration\" in Diagnostics, HexoMan starts a login shell via zsh -l -c to get the full PATH."
+          }
+        }
+      }
+    },
+    "envDocs.shell.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果你的 PATH 写在非标准 rc 文件（比如 .bashrc、.zshenv.local），到诊断页「zsh 配置文件路径」里手动指定。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If your PATH lives in a non-standard rc (e.g. .bashrc, .zshenv.local), point HexoMan to it via the \"zsh config file path\" field."
+          }
+        }
+      }
+    },
+    "envDocs.shell.bullet4": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PATH 不生效的常见原因：rc 文件只 export 给交互式 shell、brewinstall 的 prefix 路径拼错、zsh vs bash 混用。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Common reasons PATH doesn't take effect: rc only exports to interactive shell, brew prefix typo, mixing zsh and bash."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "疑难排查"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Troubleshooting"
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最常见的几个工具链问题。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The most common toolchain issues."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「HexoMan 找不到 hexo」——勾选诊断页的「读取 zsh 配置」，或手动填 hexo 可执行文件路径。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"HexoMan can't find hexo\" — enable \"Read zsh configuration\" in Diagnostics, or set the hexo path manually."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「node -v 在终端能跑，HexoMan 显示未找到」——同上。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"node -v works in terminal, HexoMan says missing\" — same as above."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「hexo 命令报 EACCES」——不要用 sudo 装全局包。用 Homebrew 装 Node，或用 nvm。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"hexo says EACCES\" — never sudo-install global packages. Use Homebrew or nvm."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.bullet4": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「生成的站点访问不了」——检查 _config.yml 的 url 字段。Hexo 不会自动填这个。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Generated site unreachable\" — check the url field in _config.yml. Hexo doesn't fill it automatically."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.bullet5": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「node 版本太老」——升级到 18+。HexoMan 会在诊断页给出警告。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"Node too old\" — upgrade to 18+. HexoMan flags this in Diagnostics."
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.whichNode": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查 node 在哪："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locate node:"
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.pathCheck": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查 PATH："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check PATH:"
+          }
+        }
+      }
+    },
+    "envDocs.troubleshoot.zshrc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看 zsh 配置末尾："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inspect end of zsh config:"
+          }
+        }
+      }
+    },
+    "envDocs.privacy.title": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私与网络访问"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy & Network Access"
+          }
+        }
+      }
+    },
+    "envDocs.privacy.summary": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan 的默认承诺：不联网、不上传任何内容、不上传站点信息。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan's default promise: no networking, no uploads, no site info shared."
+          }
+        }
+      }
+    },
+    "envDocs.privacy.bullet1": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭所有功能时，HexoMan 完全离线——所有命令都在本地跑、不连外网。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With everything disabled, HexoMan is fully offline — all commands run locally, no network calls."
+          }
+        }
+      }
+    },
+    "envDocs.privacy.bullet2": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主题市场里如果用户主动开启了「联网补全」，HexoMan 会调 npm registry（registry.npmjs.org）只读搜索主题包。这一项默认关。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If the user enables \"online theme search\" in the theme market, HexoMan calls npm registry (registry.npmjs.org) read-only to search theme packages. This is off by default."
+          }
+        }
+      }
+    },
+    "envDocs.privacy.bullet3": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启联网后，HexoMan 在 NetworkAccessPolicy.plist 里声明了访问范围——Little Snitch 等工具会自动识别。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When online is enabled, NetworkAccessPolicy.plist declares the access scope — tools like Little Snitch recognize it automatically."
+          }
+        }
+      }
+    },
+    "envDocs.privacy.bullet4": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "任何「允许联网」的开关都会在设置项里显示，关闭后立即生效。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every network toggle is visible in Settings and takes effect immediately when turned off."
+          }
+        }
+      }
+    },
+    "sidebar.environment": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "环境"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Environment"
+          }
+        }
+      }
+    },
+    "envDocs.seeAlso": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相关章节"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See also"
+          }
+        }
+      }
+    },
+    "envDocs.copy.ok": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已复制"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        }
+      }
+    },
+    "pages.sort.modifiedDesc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近修改"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently Modified"
+          }
+        }
+      }
+    },
+    "pages.sort.modifiedAsc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最早修改"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oldest First"
+          }
+        }
+      }
+    },
+    "pages.sort.titleAsc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题 A→Z"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title A→Z"
+          }
+        }
+      }
+    },
+    "pages.sort.titleDesc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题 Z→A"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title Z→A"
+          }
+        }
+      }
+    },
+    "pages.sort.fileNameAsc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件名 A→Z"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filename A→Z"
+          }
+        }
+      }
+    },
+    "pages.sort.wordCountDesc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字数从多到少"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words (high to low)"
+          }
+        }
+      }
+    }
+  }
+}
