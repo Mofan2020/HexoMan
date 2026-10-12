@@ -20,6 +20,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case backup
     case diagnostics
     case sites
+    case environment
 
     var id: String { rawValue }
 
@@ -35,6 +36,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .backup: return "sidebar.backup"
         case .diagnostics: return "sidebar.diagnostics"
         case .sites: return "sidebar.sites"
+        case .environment: return "sidebar.environment"
         }
     }
 
@@ -50,6 +52,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .backup: return "externaldrive"
         case .diagnostics: return "stethoscope"
         case .sites: return "folder"
+        case .environment: return "terminal"
         }
     }
 }

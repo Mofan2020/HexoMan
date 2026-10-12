@@ -73,11 +73,11 @@ struct HexoManApp: App {
                 ForEach(Array(SidebarItem.allCases.enumerated()), id: \.element) { index, item in
                     // 只给能映射到单个数字键的项编号，也就是 ⌘1…⌘9。
                     //
-                    // 这里不能图省事直接对每项都拼字符串：SidebarItem 一共 10 项，
+                    // 这里不能图省事直接对每项都拼字符串：⌘1..9 用 single-character 表达，
                     // 第 10 项算出来是 "10"，而 Character("10") 会直接 fatal error
                     // （一个 Character 只允许一个字形簇），整个进程 SIGTRAP。
                     // 表现是界面上所有按钮突然全没了，看起来像布局崩了，其实是 app 挂了。
-                    // 站点管理正好排在第 10 项，所以它不参与编号。
+                    // SidebarItem 第 10 项之后（站点管理 + 环境文档）不参与编号。
                     if index < 9 {
                         Button(item.title) {
                             model.selection = item

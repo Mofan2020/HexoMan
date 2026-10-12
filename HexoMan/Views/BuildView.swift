@@ -15,6 +15,7 @@ struct BuildView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    missingToolchainBanner
                     environmentBar
                     toolchainPanel
                     dependencyNotice
@@ -251,6 +252,58 @@ struct BuildView: View {
             }
             .padding(14)
             .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    /// Hexo / Node / Git 任一缺失时显示的红色横条。
+    ///
+    /// 不在 BuildView 里把所有诊断都列出来——诊断页 DiagnosticsView 做这件事。
+    /// 这里只放最影响「点了构建能不能成功」的提示：Node 缺失 / Git 缺失。
+    @ViewBuilder
+    private var missingToolchainBanner: some View {
+        let toolchain = model.toolchain
+        if toolchain == nil || (!toolchain!.node.isAvailable && !toolchain!.globalHexo.isAvailable) {
+            // Node 缺失是最致命的——构建命令根本起不来。
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "exclamationmark.octagon.fill")
+                    .foregroundStyle(.red)
+                    .font(.title3)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Node 未检测到")
+                        .font(.headline)
+                    Text("需要 Node.js 18 或更高版本才能执行 hexo 命令。点下面「环境文档」查安装步骤，「诊断」页可以看到完整工具链状态。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    HStack(spacing: 8) {
+                        Button {
+                            model.selection = .environment
+                        } label: {
+                            Label("环境文档", systemImage: "terminal")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+
+                        Button {
+                            model.selection = .diagnostics
+                        } label: {
+                            Label("诊断", systemImage: "stethoscope")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                    .padding(.top, 2)
+                }
+            }
+            .padding(14)
+            .background(Color.red.opacity(0.08),
+                        in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.red.opacity(0.3))
+            )
         }
     }
 

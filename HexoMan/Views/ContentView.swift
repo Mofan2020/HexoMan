@@ -183,6 +183,9 @@ struct ContentView: View {
             siteRequired { BackupView() }
         case .diagnostics:
             siteRequired { DiagnosticsView() }
+        case .environment:
+            // 环境文档不依赖具体站点（讲的是工具链本身）。
+            EnvironmentView()
         }
     }
 
