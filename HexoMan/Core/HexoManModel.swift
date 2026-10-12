@@ -436,6 +436,11 @@ final class HexoManModel: ObservableObject {
     }
 
     /// 经过搜索和筛选后的页面列表。
+    ///
+    /// 同时考虑：
+    /// - `pageFilter`（全部/文章/页面/草稿）
+    /// - `pageSearch`（标题/正文/标签）
+    /// - `pageSort`（按修改时间/标题/文件名/字数）
     var filteredPages: [BlogPage] {
         var result = pages
 
@@ -447,14 +452,57 @@ final class HexoManModel: ObservableObject {
         }
 
         let keyword = pageSearch.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !keyword.isEmpty else { return result }
+        if keyword.isEmpty == false {
+            result = result.filter { page in
+                page.title.lowercased().contains(keyword)
+                    || page.body.lowercased().contains(keyword)
+                    || page.tags.contains { $0.lowercased().contains(keyword) }
+            }
+        }
 
-        return result.filter { page in
-            page.title.lowercased().contains(keyword)
-                || page.body.lowercased().contains(keyword)
-                || page.tags.contains { $0.lowercased().contains(keyword) }
+        // 排序。展示顺序是用户的「查看顺序」，不落盘前导 step 或 front-matter。
+        switch pageSort {
+        case .modifiedDesc:
+            result.sort { $0.modifiedAt > $1.modifiedAt }
+        case .modifiedAsc:
+            result.sort { $0.modifiedAt < $1.modifiedAt }
+        case .titleAsc:
+            result.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .titleDesc:
+            result.sort { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedDescending }
+        case .fileNameAsc:
+            result.sort { $0.filename.localizedStandardCompare($1.filename) == .orderedAscending }
+        case .wordCountDesc:
+            result.sort { $0.wordCount > $1.wordCount }
+        }
+
+        return result
+    }
+
+    /// 页面排序选项。
+    enum PageSort: String, CaseIterable, Identifiable {
+        case modifiedDesc
+        case modifiedAsc
+        case titleAsc
+        case titleDesc
+        case fileNameAsc
+        case wordCountDesc
+
+        var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .modifiedDesc: return "pages.sort.modifiedDesc"
+            case .modifiedAsc: return "pages.sort.modifiedAsc"
+            case .titleAsc: return "pages.sort.titleAsc"
+            case .titleDesc: return "pages.sort.titleDesc"
+            case .fileNameAsc: return "pages.sort.fileNameAsc"
+            case .wordCountDesc: return "pages.sort.wordCountDesc"
+            }
         }
     }
+
+    @Published var pageSort: PageSort = .modifiedDesc
 
     /// 新建文章。返回创建出来的文章，编辑器可以拿它直接进编辑态。
     @discardableResult
@@ -618,6 +666,130 @@ final class HexoManModel: ObservableObject {
             toast = Toast(text: "\(page.filename) 已移到废纸篓", kind: .success)
         } catch {
             toast = Toast(text: "删除失败：\(error.localizedDescription)", kind: .failure)
+        }
+    }
+
+    /// 批量删除页面。所有文件一并进废纸篓，单一 toast 报告结果。
+    func deletePages(_ targets: [BlogPage]) {
+        guard currentSite != nil, targets.isEmpty == false else { return }
+        var succeeded = 0
+        var failed: [String] = []
+
+        for page in targets {
+            guard let site = currentSite else { return }
+            let pageFiles = PageStore.scan(site: site)
+            guard let pageFile = pageFiles.first(where: { $0.path == page.filePath }) else {
+                failed.append(page.filename)
+                continue
+            }
+            do {
+                try PageStore.delete(pageFile)
+                succeeded += 1
+            } catch {
+                failed.append(page.filename)
+            }
+        }
+
+        // 整体重刷一次页面列表——比逐个 splice 高效。
+        if let site = currentSite {
+            pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+            info = SiteProbe.inspect(site: site)
+        }
+
+        if failed.isEmpty {
+            toast = Toast(text: "已删除 \(succeeded) 个页面", kind: .success)
+        } else {
+            toast = Toast(
+                text: "成功 \(succeeded) 个，失败 \(failed.count) 个（\(failed.prefix(3).joined(separator: "、"))）",
+                kind: .failure
+            )
+        }
+    }
+
+    /// 批量给一组页面追加同一个标签。
+    ///
+    /// 已有该标签的不重复加；删标签留到 PR5 之后专门做（schema 不便）。
+    /// tags 为空数组时直接返回（用户点了批量添加但标签留空）。
+    func addTagToPages(_ pages: [BlogPage], tag: String) {
+        let trimmed = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else { return }
+        guard currentSite != nil else { return }
+
+        var updated = 0
+        for page in pages {
+            guard page.tags.contains(trimmed) == false else { continue }
+            var edited = page
+            edited.front.setTags(page.tags + [trimmed])
+            do {
+                try PageStore.saveAtPath(page.filePath, front: edited.front, body: edited.body)
+                updated += 1
+            } catch {
+                continue
+            }
+        }
+
+        if let site = currentSite {
+            self.pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+        }
+
+        if updated > 0 {
+            toast = Toast(text: "已给 \(updated) 个页面添加标签「\(trimmed)」", kind: .success)
+        } else {
+            toast = Toast(text: "这些页面都已经有「\(trimmed)」标签了", kind: .info)
+        }
+    }
+
+    /// 批量给一组页面设置同一个 layout。
+    func setLayoutForPages(_ pages: [BlogPage], layout: String) {
+        guard currentSite != nil else { return }
+        let trimmed = layout.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else { return }
+
+        var updated = 0
+        for page in pages {
+            var edited = page
+            edited.front.set("layout", trimmed)
+            do {
+                try PageStore.saveAtPath(page.filePath, front: edited.front, body: edited.body)
+                updated += 1
+            } catch {
+                continue
+            }
+        }
+
+        if let site = currentSite {
+            self.pages = PageStore.pagesOnly(site: site).compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+        }
+
+        if updated > 0 {
+            toast = Toast(text: "已把 \(updated) 个页面的布局改为「\(trimmed)」", kind: .success)
         }
     }
 

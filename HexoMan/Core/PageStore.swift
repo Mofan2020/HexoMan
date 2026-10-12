@@ -435,6 +435,13 @@ enum PageStore {
             .write(to: URL(fileURLWithPath: page.path), atomically: true, encoding: .utf8)
     }
 
+    /// 接受绝对路径的 save。用于 model 拿到自己（已经从 in-memory 编辑过）后落盘——
+    /// 批量改标签/布局时不想为每个 page 都重新 scan 一遍目录找 PageFile。
+    static func saveAtPath(_ path: String, front: FrontMatter, body: String) throws {
+        try FrontMatterCodec.render(front: front, body: body)
+            .write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+    }
+
     /// 只改一个 front-matter 字段，正文完全不动。
     ///
     /// 这是最安全的改法：只重渲染 front-matter 那几行，

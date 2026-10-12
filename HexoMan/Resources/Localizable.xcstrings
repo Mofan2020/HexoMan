@@ -3187,6 +3187,114 @@
           }
         }
       }
+    },
+    "pages.sort.modifiedDesc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近修改"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently Modified"
+          }
+        }
+      }
+    },
+    "pages.sort.modifiedAsc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最早修改"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oldest First"
+          }
+        }
+      }
+    },
+    "pages.sort.titleAsc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题 A→Z"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title A→Z"
+          }
+        }
+      }
+    },
+    "pages.sort.titleDesc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题 Z→A"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title Z→A"
+          }
+        }
+      }
+    },
+    "pages.sort.fileNameAsc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件名 A→Z"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filename A→Z"
+          }
+        }
+      }
+    },
+    "pages.sort.wordCountDesc": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字数从多到少"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words (high to low)"
+          }
+        }
+      }
     }
   }
 }
