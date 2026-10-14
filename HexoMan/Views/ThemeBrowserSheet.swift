@@ -31,6 +31,19 @@ struct ThemeBrowserSheet: View {
     @State private var installError: String?
     @State private var pendingMigration: ThemeMigrationPlan?
 
+    /// 已安装主题缓存。算属性版本每次 body 重算都扫一遍 `themes/` 目录，
+    /// 在三栏 sheet 里会推挤 HSplitView 重排——视觉上就是「上下乱窜」。
+    /// 现在缓存成 `@State`，由 onAppear + onChange(currentSite) 驱动刷新。
+    @State private var installedThemes: [InstalledTheme] = []
+
+    /// 即时过滤用的搜索任务句柄。新查询进来先 cancel 旧的，
+    /// 不然快敲几字符会堆一摞 Task 完成时乱序回写 `registryResults`。
+    @State private var searchTask: Task<Void, Never>?
+
+    /// 自动获取焦点的开关。sheet 打开后用户直接敲键盘就能搜，
+    /// 不必先点搜索框——之前焦点常被 dismiss 按钮抢走，看起来像「没反应」。
+    @FocusState private var searchFocused: Bool
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -51,7 +64,7 @@ struct ThemeBrowserSheet: View {
                 onAllow: {
                     model.onlineThemeSearch = true
                     showOnlineConsentSheet = false
-                    Task { await loadRegistry() }
+                    scheduleSearch(immediate: true)
                 },
                 onDeny: {
                     showOnlineConsentSheet = false
@@ -79,23 +92,30 @@ struct ThemeBrowserSheet: View {
             .environmentObject(model)
         }
         .onAppear {
-            // 默认进页面时如果有联网权限就直接加载一次，否则等用户敲回个关键字再触发。
+            refreshInstalledThemes()
+            // 默认进页面时如果有联网权限就直接加载一次，否则给离线精选。
             if model.onlineThemeSearch {
-                Task { await loadRegistry() }
+                scheduleSearch(immediate: true)
             } else {
-                // 没开联网权限时给一份纯离线精选结果，避免中栏空白。
-                registryResults = ThemeCatalog.items.map { item in
-                    RegistryPackage(
-                        name: "hexo-theme-\(item.name)",
-                        version: "",
-                        description: item.summaryDescription,
-                        author: item.author,
-                        homepage: item.homepage,
-                        weeklyDownloads: nil,
-                        date: nil
-                    )
-                }
+                registryResults = offlineCatalog(query: "")
             }
+            // 让搜索框拿到焦点，否则 macOS sheet 默认焦点在「完成」按钮上。
+            DispatchQueue.main.async { searchFocused = true }
+        }
+        .onChange(of: model.currentSite?.path) { _, _ in
+            refreshInstalledThemes()
+            scheduleSearch(immediate: true)
+        }
+        .onChange(of: model.info?.theme) { _, _ in
+            refreshInstalledThemes()
+        }
+        // 即时过滤：每次 query 变化重排计划。
+        .onChange(of: searchQuery) { _, _ in
+            scheduleSearch()
+        }
+        // 用户切到 / 离开页面时清掉未完成的搜索任务，避免完成时乱序回写。
+        .onDisappear {
+            searchTask?.cancel()
         }
     }
 
@@ -118,7 +138,7 @@ struct ThemeBrowserSheet: View {
                     if model.dontAskOnlineConsent {
                         // 已经勾「不再询问」，直接打开。
                         model.onlineThemeSearch = true
-                        Task { await loadRegistry() }
+                        scheduleSearch(immediate: true)
                     } else {
                         showOnlineConsentSheet = true
                     }
@@ -201,11 +221,13 @@ struct ThemeBrowserSheet: View {
             TextField("themeView.browser.searchPlaceholder", text: $searchQuery)
                 .textFieldStyle(.plain)
                 .font(.callout)
-                .onSubmit { Task { await loadRegistry() } }
+                .focused($searchFocused)
+                // 保留回车触发——给键盘用户一个「我准备好搜了」的明确手势。
+                .onSubmit { scheduleSearch(immediate: true) }
             if searchQuery.isEmpty == false {
                 Button {
                     searchQuery = ""
-                    Task { await loadRegistry() }
+                    // searchQuery 变化会触发 onChange → scheduleSearch，这里不用再手动。
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
@@ -246,9 +268,37 @@ struct ThemeBrowserSheet: View {
 
     // MARK: - 数据
 
-    private var installedThemes: [InstalledTheme] {
-        guard let site = model.currentSite else { return [] }
-        return ThemeManager.installed(site: site, activeName: model.info?.theme)
+    private func refreshInstalledThemes() {
+        guard let site = model.currentSite else {
+            installedThemes = []
+            return
+        }
+        installedThemes = ThemeManager.installed(site: site, activeName: model.info?.theme)
+    }
+
+    /// 离线精选转 RegistryPackage。search() 内部已经做了，
+    /// 这里再拆一份供「未开联网权限」首屏直接显示用——
+    /// 不希望首屏被网络请求拖延几百毫秒。
+    private func offlineCatalog(query: String) -> [RegistryPackage] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return ThemeCatalog.items
+            .filter { item in
+                trimmed.isEmpty
+                    || item.name.lowercased().contains(trimmed)
+                    || item.summaryDescription.contains(trimmed)
+                    || (item.author.isEmpty ? false : item.author.lowercased().contains(trimmed))
+            }
+            .map { item in
+                RegistryPackage(
+                    name: "hexo-theme-\(item.name)",
+                    version: "",
+                    description: item.summaryDescription,
+                    author: item.author,
+                    homepage: item.homepage,
+                    weeklyDownloads: nil,
+                    date: nil
+                )
+            }
     }
 
     private func sectionHeader(_ key: LocalizedStringKey, systemImage: String) -> some View {
@@ -264,15 +314,26 @@ struct ThemeBrowserSheet: View {
         .padding(.vertical, 8)
     }
 
-    private func loadRegistry() async {
-        isLoadingRegistry = true
-        defer { isLoadingRegistry = false }
-        let results = await ThemeRegistry.shared.search(
-            query: searchQuery,
-            settings: model.onlineThemeSearchSettings
-        )
-        await MainActor.run {
-            self.registryResults = results
+    /// 节流调度：每敲一字符 250ms 内最多发一次网络请求；
+    /// immediate=true 时跳过等待（onSubmit / 重置 query / 切换站点用）。
+    /// 旧任务会被 cancel——避免快敲字符时多个 Task 完成时乱序回写结果。
+    private func scheduleSearch(immediate: Bool = false) {
+        searchTask?.cancel()
+        searchTask = Task { [searchQuery, onlineThemeSearch = model.onlineThemeSearch] in
+            if !immediate {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                if Task.isCancelled { return }
+            }
+            isLoadingRegistry = true
+            let results = await ThemeRegistry.shared.search(
+                query: searchQuery,
+                settings: model.onlineThemeSearchSettings
+            )
+            if Task.isCancelled { return }
+            await MainActor.run {
+                self.registryResults = results
+                self.isLoadingRegistry = false
+            }
         }
     }
 
@@ -286,6 +347,8 @@ struct ThemeBrowserSheet: View {
             if let migration = result.migration, migration.hasItems {
                 pendingMigration = migration
             }
+            // 装完后左栏列表和当前激活主题都会变，主动刷新。
+            refreshInstalledThemes()
             onComplete(result)
         } else {
             installError = "安装失败，看日志或重试"
@@ -436,7 +499,7 @@ private struct ThemeDetailPane: View {
                 .font(.headline)
             if let url = previewURL {
                 ThemePreviewWebView(url: url)
-                    .frame(minHeight: 240, idealHeight: 280, maxHeight: 360)
+                    .frame(height: ThemePreviewWebView.preferredHeight)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)

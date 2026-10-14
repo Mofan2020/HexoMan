@@ -34,6 +34,18 @@ struct ThemeView: View {
         }
         .padding(20)
         .onAppear {
+            // 进入页面时拉一次；后续由 onChange(currentSite) 接力。
+            Task { await loadThemes() }
+        }
+        // 切站点 / 切活动主题后，让列表跟着重算。
+        // 之前只挂在 onAppear 上，结果切完主题 `model.refreshAll()` 更新了
+        // `info.theme`，但本视图的 `installedThemes` 还是旧数组——整页看上去不动。
+        // 同时切站点也复用这条刷新路径。
+        .onChange(of: model.currentSite?.path) { _, _ in
+            installedThemes = []
+            Task { await loadThemes() }
+        }
+        .onChange(of: model.info?.theme) { _, _ in
             Task { await loadThemes() }
         }
         .sheet(isPresented: $showInstallSheet) {
@@ -121,7 +133,8 @@ struct ThemeView: View {
             do {
                 try ThemeManager.switchTheme(site: site, to: theme)
                 model.toast = Toast(text: "已切换到 \(theme.name)", kind: .success)
-                await loadThemes()
+                // 只刷新元数据——`onChange(model.info?.theme)` 会接住并 reload 列表。
+                // 不要手动 loadThemes + refreshAll，重复触发导致行高亮来回切。
                 model.refreshAll()
             } catch {
                 model.toast = Toast(text: "切换失败：\(error.localizedDescription)", kind: .failure)
@@ -152,6 +165,9 @@ struct ThemeRow: View {
     let onConfig: () -> Void
 
     var body: some View {
+        // 高亮只切底色和边框色，不改 padding / row 高度，
+        // 否则切主题瞬间整行 layout 抖一下——视觉上就是「乱窜」。
+        // 用稳定 frame 把内容锁住，让 SwiftUI 不要重新测子 view。
         HStack(spacing: 14) {
             // 状态指示
             ZStack {
@@ -164,6 +180,7 @@ struct ThemeRow: View {
                         .frame(width: 20, height: 20)
                 }
             }
+            .frame(width: 24, height: 24)
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
@@ -205,9 +222,10 @@ struct ThemeRow: View {
             }
         }
         .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            isActive ? Color.accentColor.opacity(0.08) : Color.clear,
-            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isActive ? Color.accentColor.opacity(0.08) : Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -216,6 +234,9 @@ struct ThemeRow: View {
                     lineWidth: 1
                 )
         )
+        // 关掉这一行整块内容的隐式动画——
+        // 颜色突变不想要补间动画，padding 已经固定，不需要 transition。
+        .animation(nil, value: isActive)
     }
 
 }

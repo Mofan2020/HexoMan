@@ -22,6 +22,12 @@ struct BackupView: View {
     /// 是否包含 .git / public 这类体积大但可重建的内容。
     @State private var includeLarge = false
 
+    /// 当前正在跑的 plan 任务句柄。
+    /// 旧任务完成时如果已经被 cancel，直接丢回结果——避免
+    /// 切站点 / 反复拨 includeLarge 时多个 Task 堆在一起乱序回写，
+    /// 看着就是页面上一阵乱跳、按钮按了没反应。
+    @State private var planTask: Task<Void, Never>?
+
     private var activePolicy: BackupManager.Policy {
         includeLarge ? .full : .default
     }
@@ -62,6 +68,10 @@ struct BackupView: View {
             refreshPlan()
         }
         .onChange(of: includeLarge) { _, _ in refreshPlan() }
+        // 离场时把进行中的统计任务 cancel，避免完成时回写到已经被切走的页面。
+        .onDisappear {
+            planTask?.cancel()
+        }
         .alert("操作失败", isPresented: Binding(
             get: { showError != nil },
             set: { if !$0 { showError = nil } }
@@ -173,14 +183,23 @@ struct BackupView: View {
     }
 
     /// 重新统计将要打包的范围。站点或开关变化时都跑一次。
+    ///
+    /// 旧任务会被 cancel——避免切站点时多个统计任务堆在一起完成后乱序
+    /// 回写 `plan`，那会让 UI 短暂显示一个过时的统计数字，
+    /// 甚至在「包含大目录」开关快速来回拨时被卡住。
     private func refreshPlan() {
         guard let site = model.currentSite else {
+            planTask?.cancel()
             plan = nil
             return
         }
-        Task {
+        planTask?.cancel()
+        planTask = Task { [activePolicy] in
             let result = await BackupManager.plan(for: site, policy: activePolicy)
-            plan = result
+            if Task.isCancelled { return }
+            await MainActor.run {
+                self.plan = result
+            }
         }
     }
 

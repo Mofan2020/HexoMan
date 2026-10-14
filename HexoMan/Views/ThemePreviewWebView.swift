@@ -24,6 +24,10 @@ struct ThemePreviewWebView: NSViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
+        // 不让 WKWebView 推挤外层布局——关掉滚动视图的内容大小自动调整，
+        // 配合外面 `.frame(height:)` 把高度锁死，HSplitView 不会被 WebView 推着抖。
+        webView.translatesAutoresizingMaskIntoConstraints = true
+        webView.autoresizingMask = [.width]
         webView.load(URLRequest(url: url))
         return webView
     }
@@ -32,6 +36,9 @@ struct ThemePreviewWebView: NSViewRepresentable {
         // URL 在 view 生命周期内不变；URL 变就是重建 view（HexoMan 没这场景）。
         // 不在这里重新 load——会盖掉用户滚动位置。
     }
+
+    /// 给外面 SwiftUI 用的「期望高度」——避免被 SwiftUI 算出奇怪值。
+    static let preferredHeight: CGFloat = 260
 
     func makeCoordinator() -> Coordinator {
         Coordinator()

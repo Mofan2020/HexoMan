@@ -176,6 +176,7 @@ actor ThemeRegistry {
                 trimmed.isEmpty
                     || item.name.lowercased().contains(trimmed)
                     || item.summaryDescription.contains(trimmed)
+                    || item.author.lowercased().contains(trimmed)
             }
             .map { item in
                 RegistryPackage(
