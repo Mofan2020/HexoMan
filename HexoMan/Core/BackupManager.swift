@@ -137,7 +137,17 @@ enum BackupManager {
             if isDirectory {
                 // 目录命中排除名单：整棵子树都不进去。
                 // 必须是 skipDescendants 而不是单纯 continue，否则仍然会逐个 stat 进去。
-                if policy.excludedDirectories.contains(name) {
+                //
+                // 这里要按**路径任意一段 component**判断——不只是当层目录名。
+                // 旧版本只看 url.lastPathComponent，于是 `themes/landscape/node_modules`
+                // `source/_drafts/.cache` 这种**嵌套**的排除目录照样会被 stat 进去；
+                // 一旦用户装了带 node_modules 的主题，第一次进 backup 页时 plan 计算就会
+                // 卡几十秒到几分钟，UI 看起来像挂死。
+                //
+                // 排除目录的 component 都是 ASCII（"node_modules"、".git"、"public"、…），
+                // 直接拿整个 path 拆 components 命中。
+                let components = url.standardizedFileURL.pathComponents
+                if components.contains(where: { policy.excludedDirectories.contains($0) }) {
                     enumerator.skipDescendants()
                     excludedCount += 1
                 }

@@ -28,6 +28,14 @@ struct BackupView: View {
     /// 看着就是页面上一阵乱跳、按钮按了没反应。
     @State private var planTask: Task<Void, Never>?
 
+    /// `onChange(of: includeLarge)` 在 SwiftUI macOS 14+ / iOS 17+ 上
+    /// **初次 body 评估时会立刻触发一次回调**——即使值没真变。
+    /// 配合 `.onAppear` 里也调 `refreshPlan`，刚进 backup 页这一拍
+    /// 会有两个 plan Task 互相 cancel。视觉上无大碍，但浪费一次
+    /// 全站点遍历，且容易在 cancel 时序上踩到 race。
+    /// 用这个标记把首次回调吞掉，仅在「值真的变过」时才刷新。
+    @State private var hasObservedIncludeLarge = false
+
     private var activePolicy: BackupManager.Policy {
         includeLarge ? .full : .default
     }
@@ -62,12 +70,19 @@ struct BackupView: View {
         .onAppear {
             loadBackups()
             refreshPlan()
+            // 标记 includeLarge 已经「观察过」初始值——后续 onChange 才真正刷新。
+            // SwiftUI macOS 14+ / iOS 17+ 的 .onChange(of:) 在 view 首次出现时
+            // 会立刻回调一次（即使值未变），所以吞掉那次避免与 onAppear 重复扫全站。
+            hasObservedIncludeLarge = true
         }
         .onChange(of: model.currentSite?.path) { _, _ in
             loadBackups()
             refreshPlan()
         }
-        .onChange(of: includeLarge) { _, _ in refreshPlan() }
+        .onChange(of: includeLarge) { _, _ in
+            guard hasObservedIncludeLarge else { return }
+            refreshPlan()
+        }
         // 离场时把进行中的统计任务 cancel，避免完成时回写到已经被切走的页面。
         .onDisappear {
             planTask?.cancel()
@@ -175,11 +190,26 @@ struct BackupView: View {
         }
     }
 
+    /// 列出当前站点的备份。同步读 `~/Library/Application Support/HexoMan/Backups/`，
+    /// 数据量通常是几个到几十个 zip，自身不慢；但 BackupView.onAppear 在主线程上调用，
+    /// 把这一次磁盘列举也挪到后台更稳，避免站点路径含 symlink 时 stat 一卡整个
+    /// view 树渲染被拖住。
     private func loadBackups() {
         guard let site = model.currentSite else { return }
+        let sitePath = site.path
         isLoading = true
-        backups = BackupManager.listBackups(for: site.path)
-        isLoading = false
+        Task.detached(priority: .userInitiated) {
+            let entries = BackupManager.listBackups(for: sitePath)
+            await MainActor.run {
+                // 站点切走后结果直接丢，避免 UI 闪一下旧站点的备份。
+                guard self.model.currentSite?.path == sitePath else {
+                    self.isLoading = false
+                    return
+                }
+                self.backups = entries
+                self.isLoading = false
+            }
+        }
     }
 
     /// 重新统计将要打包的范围。站点或开关变化时都跑一次。

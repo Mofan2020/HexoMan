@@ -379,6 +379,14 @@ final class HexoManModel: ObservableObject {
     }
 
     /// 拉取当前站点的所有数据。
+    ///
+    /// 内部真正干活的扫描/读取（SiteProbe / PostStore / PageStore / ConfigStore /
+    /// GitService / CustomContentStore）全部丢到后台队列——主线程只放任务、立刻返回。
+    /// 旧实现是同步阻塞，站点一大（几百篇文章 + themes/ 套 themes/）就
+    /// 把主线程冻几百 ms 到几秒；那时候 SwiftUI body 评估不出来，整个右侧页面看起来
+    /// 「菜单栏 UI 消失 / 按钮也没了 / 操作无反应」。
+    /// 现在切站点 / 冷启动 init() / 推送恢复后再 refreshAll，UI 都能立刻画出来，
+    /// 数据是几百 ms 后陆续刷进来。
     func refreshAll() {
         guard let site = currentSite else { return }
 
@@ -392,23 +400,47 @@ final class HexoManModel: ObservableObject {
         }
 
         currentSiteMissing = false
-        info = SiteProbe.inspect(site: site)
-        posts = PostStore.load(site: site)
-        // Load pages (excluding posts)
-        let pageFiles = PageStore.pagesOnly(site: site)
-        pages = pageFiles.compactMap { pf in
-            let (front, body) = PageStore.load(pf)
-            return BlogPage(
-                filePath: pf.path,
-                front: front,
-                body: body,
-                modifiedAt: pf.modifiedAt ?? Date(),
-                byteSize: pf.size
-            )
+
+        // 站点路径是 Sendable 的（String），传值给后台任务。Model 本身不能跨 actor，
+        // 所以把要用的字段拷出来。
+        let sitePath = site.path
+
+        // 在调前先把 model 强引用抓住，传给 MainActor.run。
+        // 不走 [weak self] 的原因是 Swift 6 会拒绝在 detached 闭包里
+        // 捕获「可变 weak 引用」（#SendableClosureCaptures 警告→错误）。
+        // 这里 captured 在闭包内是 let，Sendable 没问题。
+        let captured = self
+
+        Task.detached(priority: .userInitiated) {
+            let probed = SiteProbe.inspect(site: site)
+            let loadedPosts = PostStore.load(site: site)
+            let pageFiles = PageStore.pagesOnly(site: site)
+            let loadedPages: [BlogPage] = pageFiles.compactMap { pf in
+                let (front, body) = PageStore.load(pf)
+                return BlogPage(
+                    filePath: pf.path,
+                    front: front,
+                    body: body,
+                    modifiedAt: pf.modifiedAt ?? Date(),
+                    byteSize: pf.size
+                )
+            }
+            let loadedConfigs = ConfigStore.list(site: site)
+            let loadedRemotes = GitService.remotes(site: site)
+            let loadedInject = CustomContentStore.detectedInjectScripts(site: site)
+
+            // 站点如果在后台扫描时被切走了（用户手快点了别的站点），结果直接丢，
+            // 不写回——否则新站点的 UI 会被旧站点的数据瞬间覆盖再被新数据纠正。
+            await MainActor.run { [captured, sitePath] in
+                guard captured.currentSite?.path == sitePath else { return }
+                captured.info = probed
+                captured.posts = loadedPosts
+                captured.pages = loadedPages
+                captured.configFiles = loadedConfigs
+                captured.remotes = loadedRemotes
+                captured.detectedInjectScripts = loadedInject
+            }
         }
-        configFiles = ConfigStore.list(site: site)
-        remotes = GitService.remotes(site: site)
-        detectedInjectScripts = CustomContentStore.detectedInjectScripts(site: site)
 
         Task { await refreshGit() }
     }
