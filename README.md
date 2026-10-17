@@ -1,337 +1,345 @@
 # HexoMan
 
-面向 macOS 的 Hexo 站点管理工具。把「加站点、写文章、生成预览、改配置、看 Git」这几件每天都要做的事收进一个原生 SwiftUI 窗口，文章和配置始终是你磁盘上那些 Markdown 和 YAML，HexoMan 不另建一套数据。
+> **A native macOS manager for Hexo sites.** Add sites, write posts, generate previews, edit configs, manage Git — all in one SwiftUI window. Your posts and configs stay as plain Markdown and YAML on disk; HexoMan keeps no separate database.
 
-<!-- 截图：把主窗口截图放到 docs/screenshot-overview.png 后改成
-![总览页](docs/screenshot-overview.png) -->
+Hexo is fast and the Markdown stays yours, but the day-to-day work — open a project, write a post, edit `_config.yml`, run `hexo g`, push to GitHub — means juggling four terminals and one editor. HexoMan folds it all into one window.
 
-## 功能特性
+![Platform](https://img.shields.io/badge/Platform-macOS%2026%2B-blue.svg)
+![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-左侧是站点切换器和功能栏，右侧是内容区。除「站点管理」外，其余页面都需要先选中一个站点。
+[中文文档](./README.zh-CN.md) · [Releases](https://github.com/Mofan2020/HexoMan/releases)
 
-### 站点管理
+<!-- Screenshot: drop a screenshot into docs/screenshot-overview.png and replace this comment
+![Overview](docs/screenshot-overview.png) -->
 
-- 用「选择站点目录…」或粘贴绝对路径添加站点
-- 判定标准是：目录下有 `package.json`（且声明了 hexo 依赖）和 `_config.yml`
-- 多个站点可共存，按上次打开时间排序，点一行即切换
-- 每个站点可以在访达中打开，或从列表移除（**只从列表移除，不删磁盘文件**）
-- 当前站点不能直接移除，需先切到别的站点
+## Features
 
-### 总览
+A sidebar on the left switches sites and sections; the right pane holds the content. All sections except "Sites" require a selected site.
 
-- 五张指标卡：文章数、Hexo 版本、主题及主题版本、构建产物文件数、依赖是否已安装
-- 依赖未安装时给出可操作提示，并提供「打开站点目录」按钮
-- 站点详情：站点路径、Hexo 来源、实际命令预览、是否为 Git 仓库、远端地址、预览端口
-- 快捷操作：生成站点、清理、启动/停止预览、打开预览页、在访达中显示、刷新 Git 状态
-- 最近 5 条提交，可一键跳到完整 Git 页面
+### Sites
 
-### 文章
+- Add a site by picking its directory or pasting its absolute path.
+- A directory qualifies as a site when it contains `package.json` (declaring `hexo`) and `_config.yml`.
+- Multiple sites coexist, sorted by last-opened time; one click switches.
+- Reveal in Finder or remove from list (list-only — disk files are never touched).
+- The current site cannot be removed until you switch to another one.
 
-- 左侧列表 + 右侧详情；支持按标题、正文、标签搜索
-- 按「全部 / 已发布 / 草稿」筛选
-- 新建文章：填标题、标签、分类后直接进入编辑器
-- 编辑器里可改标题、日期、标签、分类、草稿开关和正文，实时显示字数
-- 详情页显示日期、字数、文件大小、slug、文件名、最后修改时间、标签与分类
-- 一键发布 / 转为草稿（改 front-matter 里的 `draft`）
-- 删除走废纸篓，可恢复
-- 在访达中显示文章文件
+### Overview
 
-### 构建与预览
+- Five metric cards: post count, Hexo version, theme + theme version, build artifact file count, dependencies installed.
+- If dependencies are missing, actionable hints and an "Open site folder" button.
+- Site detail: site path, Hexo source, command preview, Git repo status, remote URL, preview port.
+- Quick actions: generate site, clean, start/stop preview, open preview in browser, reveal in Finder, refresh Git status.
+- Five most recent commits, one-click jump to full Git log.
 
-- 顶部展示构建环境：站点路径、Hexo 来源、实际会执行的命令行
-- 执行 `hexo clean`、`hexo generate`
-- 启动/停止本地预览服务，端口可调（1024–65535），显示预览地址
-- 一键在浏览器打开预览页、在访达中打开 `public` 目录
-- 显示构建产物状态和文件数量
-- 下半屏是日志控制台，实时显示命令输出，可清空
+### Posts
 
-### 配置
+- List on the left, detail on the right; searchable by title, body, and tags.
+- Filter by all / published / drafts.
+- New post: pick title, tags, categories, then go straight into the editor.
+- Editor edits title, date, tags, categories, draft toggle, and body; live word count.
+- Detail page shows date, word count, file size, slug, filename, last-modified, tags, categories.
+- One-click publish / convert to draft (flips `draft` in front-matter).
+- Delete goes to the Trash — recoverable.
+- Reveal in Finder.
 
-- 列出并编辑站点根目录下的所有 `_config*.yml`（主配置排第一，主题配置按名字排序）
-- 顶部有顶层键快捷跳转，点一下就滚动并选中对应行
-- 保存前做基本校验：空内容、含 Tab、缩进不是空格倍数会先提示确认
-- 支持放弃改动、重新从磁盘读取、在访达中显示
+### Build & Preview
+
+- Top section shows the build environment: site path, Hexo source, exact command line to be executed.
+- Runs `hexo clean` and `hexo generate`.
+- Start/stop the local preview server; configurable port (1024–65535); shows the preview URL.
+- One-click open preview in browser, open `public` in Finder.
+- Shows build artifact status and file count.
+- Lower half is a live log console with a clear button.
+
+### Config
+
+- Lists and edits every `_config*.yml` in the site root (main config first, theme configs sorted by name).
+- Top-key shortcut bar: click a key to jump and select that row.
+- Pre-save validation: empty content, contains Tab, indent is not a multiple of spaces — all warn before saving.
+- Discard changes, re-read from disk, reveal in Finder.
 
 ### Git
 
-- 仓库状态：当前分支、领先/落后提交数、上游分支、`git status` 摘要
-- 变更文件按「已暂存 / 已修改 / 未跟踪」分组，每行末尾加 `[+/− 暂存]` 与 `[对比]` 按钮，单文件 stage、unstage、调 difftool
-- 未配 `diff.tool` 时「对比」会改用系统默认编辑器（Xcode/VSCode 等）打开文件本身
-- 提交信息 + 「提交全部改动」（`git add -A` 后提交，含未跟踪文件）
-- 拉取（`git pull --rebase`）、推送（没有待推送提交时按钮禁用）
-- 远端列表
-- 提交历史列表（短 hash、标题、作者、日期）
-- 下方日志控制台显示 git 命令的真实输出
-- 站点不是 Git 仓库时，给出 `git init` 命令并可一键复制到剪贴板
+- Repo status: current branch, ahead/behind counts, upstream, `git status` summary.
+- Changed files grouped by staged / modified / untracked, each row has `[+/− stage]` and `[diff]` buttons; single-file stage, unstage, difftool.
+- When `diff.tool` is not configured, `[diff]` falls back to opening the file in the system default editor (Xcode/VSCode/etc).
+- Commit message + "Commit all changes" (runs `git add -A` then commit, including untracked files).
+- Pull (`git pull --rebase`), push (button disabled when there's nothing to push).
+- Remotes list.
+- Commit history list (short hash, title, author, date).
+- Lower log console shows real `git` output.
+- When the site is not a Git repo, shows a one-click "copy `git init` to clipboard" hint.
 
-### 主题
+### Themes
 
-- 浏览官方主题库（含 HexoMan 精选和 npm 上所有 hexo-theme-* 包），一键预览官方站点（WKWebView 嵌入）+ 安装
-- 装主题时自动跑跨主题迁移——把当前主题里的 avatar/favicon 等公共项搬到新主题（前提是新主题也支持），不让用户改完一个主题就丢一堆配置
-- 包名归一化：yun、hexo-theme-yun、@scope/hexo-theme-yun 三种输入都正确装，不会拼出 hexo-theme-hexo-theme-yun
-- 异常时显示具体错误原因，不再只是「见日志」
-- 错误诊断：哪些项可以自动修复、哪些需要用户手动处理，逐项提示
+- Browse the official theme library (HexoMan picks + every `hexo-theme-*` on npm); one-click preview the official site (embedded WKWebView) + install.
+- Theme install auto-runs cross-theme migration — common items like avatar / favicon move from the old theme to the new one (when the new theme supports them), so changing themes never silently wipes your config.
+- Package name normalization: `yun`, `hexo-theme-yun`, `@scope/hexo-theme-yun` all install correctly — no double `hexo-theme-hexo-theme-yun` accidents.
+- Error states show specific reasons, not just "see log".
+- Diagnostics: which items can be auto-fixed, which need manual action — each flagged explicitly.
 
-### 页面管理
+### Pages
 
-- 单选 / 多选模式切换
-- 排序下拉：最近修改 / 最早修改 / 标题升降序 / 文件名 / 字数从多到少
-- 多选批量操作：批量加标签 / 批量改布局 / 批量删
-- 详情区显示完整 front-matter 表（键 / 值 / 类型）+ 「引用此页的文章」section（路径/permalink/共享标签三种匹配）
-- 资源识别（CSS / JS / 图片）继续保留
+- Single-select / multi-select toggle.
+- Sort dropdown: last modified / earliest modified / title ascending-descending / filename / word count high-to-low.
+- Bulk operations: add tags to many, change layout for many, delete many.
+- Detail area shows full front-matter table (key / value / type) + a "Pages referencing this" section (path / permalink / shared-tag match).
+- Resource recognition (CSS / JS / images) preserved.
 
-### 多语言
+### Localization
 
-- 顶部菜单「语言」可切：跟随系统 / 中文（简体）/ English / 日本語
-- 切换立即生效（Apple 原生 `.environment(\.locale, ...)` + `.id` 强制重渲染）
-- 用 Xcode 15 Strings Catalog（`.xcstrings`）管理翻译
-- 目前覆盖 zh-Hans + en，ja 文案后续单独 PR
+- Top menu "Language": Follow System / 简体中文 / English / 日本語.
+- Switches immediately (Apple-native `.environment(\.locale, ...)` + forced re-render via `.id`).
+- Translations managed via Xcode 15 Strings Catalog (`.xcstrings`).
+- Currently covers `zh-Hans` + `en`; `ja` strings to follow in a separate PR.
 
-### 环境文档
+### Environment Docs
 
-- 左侧栏「环境」页：Node.js / nvm / Git / Hexo / Shell / 疑难排查 / 隐私 八章内置文档
-- 每节带可一键复制到剪贴板的命令（brew install node、`xcode-select --install` 等）
-- BuildView 顶部在 Node 缺失时显示红色横条 + 跳转按钮
+- Sidebar "Environment" page: 8 built-in chapters — Node.js / nvm / Git / Hexo / Shell / Troubleshooting / Privacy.
+- Each section has one-click copy-to-clipboard commands (`brew install node`, `xcode-select --install`, etc).
+- BuildView shows a red banner with a jump button when Node is missing.
 
-## 系统要求
+## Requirements
 
-| 项目 | 要求 |
+| Item | Requirement |
 | --- | --- |
-| 操作系统 | macOS 26 或更高版本 |
-| 从源码构建 | Xcode 26 或更高版本（本工程部署目标为 macOS 26.0） |
-| 工程生成 | [XcodeGen](https://github.com/yonaskolb/XcodeGen) |
+| OS | macOS 26 or later |
+| Build from source | Xcode 26 or later (project deploy target is macOS 26.0) |
+| Project generation | [XcodeGen](https://github.com/yonaskolb/XcodeGen) |
 
-### 依赖请自己装，HexoMan 一个都不带
+### Dependencies: install them yourself; HexoMan ships none
 
-HexoMan **不自带** Node.js、npm、git、hexo，也没有任何内嵌运行时。它只调用你系统里已经装好的那一份。
+HexoMan does **not** bundle Node.js, npm, git, hexo, or any embedded runtime. It calls the versions already installed on your system.
 
-| 命令 | 为什么需要 | 怎么装 |
+| Command | Why | How to install |
 | --- | --- | --- |
-| `node` / `npm` | 跑 hexo、装站点依赖和主题 | `brew install node`，或去 [nodejs.org](https://nodejs.org) 装官方包（建议 18 以上，Hexo 8 需要） |
-| `hexo` | 只有「创建新站点」这一步需要 | 不用装。HexoMan 会用你的 npm 在自己的目录里装一份 `hexo-cli`，见下 |
-| `git` | 「Git」页面的提交 / 推送 / 拉取 | `xcode-select --install`（Xcode 自带）或 `brew install git` |
+| `node` / `npm` | Runs hexo; installs site deps and themes | `brew install node`, or grab the official package from [nodejs.org](https://nodejs.org) (18+ recommended; required by Hexo 8) |
+| `hexo` | Only needed to create a new site | Don't install it. HexoMan uses your npm to install a copy of `hexo-cli` into its own directory — see below |
+| `git` | The Git page's commit / push / pull | `xcode-select --install` (ships with Xcode) or `brew install git` |
 
-「构建与预览」页有一个**运行环境体检**面板，会如实报告每个命令的版本和解析到的绝对路径，缺什么直接给安装命令。点「重新检测」会强制重读一次你的 shell 配置。
+The Build & Preview page has an **Environment Health Check** panel that reports the version and absolute path of every command, with install instructions for anything missing. "Re-check" forces a fresh read of your shell config.
 
-### 为什么要读 zsh 配置
+### Why we read your zsh config
 
-从 Dock 或访达启动的图形程序**不会**加载 `~/.zshrc`，而 Homebrew 的环境变量正是靠 `eval $(brew shellenv)` 写进 PATH 的。结果就是：终端里 `node` 是 `/opt/homebrew/bin/node`，HexoMan 里却只有 `/usr/bin:/bin`，什么都找不到。
+GUI apps launched from Dock or Finder do **not** source `~/.zshrc`, but Homebrew's PATH comes from `eval $(brew shellenv)` living in that file. Result: `node` is `/opt/homebrew/bin/node` in Terminal, but HexoMan only sees `/usr/bin:/bin` and finds nothing.
 
-HexoMan 的做法是启动时跑一次 zsh，按标准顺序 source 你的 `.zshenv` → `.zprofile` → `.zshrc`，把 resulting environment 抓下来缓存，之后所有子进程继承这份环境。这样你终端里能用的 node，HexoMan 里一定能用。
+HexoMan's fix: on launch, run zsh once, source `.zshenv` → `.zprofile` → `.zshrc` in the standard order, capture the resulting environment into a cache, and inherit that into every child process. Whatever `node` resolves to in Terminal will resolve to the same thing inside HexoMan.
 
-- rc 文件按 `$ZDOTDIR` → `$HOME` 定位，和 zsh 自己的规则一致
-- rc 文件的输出和警告会被丢掉，不污染 HexoMan 的日志面板
-- 额外把 `/opt/homebrew/bin` 等常见前缀**前置**到 PATH，brew 没写进 rc 文件时也兜得住
-- 只付一次代价：实测首次约 2 秒（你的 rc 里有 starship / orbstack / brew shellenv），之后每条命令 0.1~0.8 秒
+- rc files are located via `$ZDOTDIR` → `$HOME`, matching zsh's own rules.
+- rc output and warnings are discarded so they don't pollute HexoMan's log panel.
+- Common prefixes like `/opt/homebrew/bin` are prepended to PATH as a safety net when brew isn't in rc.
+- One-time cost: ~2 s on first launch (your rc has starship / orbstack / brew shellenv), then 0.1–0.8 s per command.
 
-不想让它读就在体检面板里关掉「读取 zsh 配置」，手动填 rc 文件路径也行。
+Disable in the health-check panel if you don't want it; or fill in a custom rc path.
 
-## 安装与运行
+## Install & Run
 
-### 方式一：下载 Release
+### Option 1: Download a Release
 
-1. 从 [Releases](https://github.com/Mofan2020/HexoMan/releases) 下载 `HexoMan-<版本>-macos.zip`
-2. 解压得到 `HexoMan.app`，拖进「应用程序」
+1. Download `HexoMan-<version>-macos.zip` from [Releases](https://github.com/Mofan2020/HexoMan/releases).
+2. Unzip and drag `HexoMan.app` into `/Applications`.
 
-**首次打开会被 Gatekeeper 拦住，这是预期行为。** Release 里没有 Apple 开发者证书，app 是 ad-hoc 签名的，也没有经过 Apple 公证，所以 macOS 不允许直接双击打开。两种解决办法，任选其一：
+**First launch will be blocked by Gatekeeper — this is expected.** Releases have no Apple Developer certificate; the app is ad-hoc signed and not notarized, so macOS will not let you double-click it open. Two options:
 
-- 右键（或按住 Control 点击）`HexoMan.app` → 选「打开」→ 在弹窗里再点一次「打开」
-- 或者在终端里去掉隔离属性：
+- Right-click (or Control-click) `HexoMan.app` → "Open" → click "Open" again in the prompt.
+- Or remove the quarantine attribute in Terminal:
 
-```bash
+```sh
 xattr -dr com.apple.quarantine /Applications/HexoMan.app
 ```
 
-去掉之后就可以正常双击启动。
+After that, normal double-click launch works.
 
-### 方式二：从源码构建
+### Option 2: Build from Source
 
-```bash
-brew install xcodegen      # 生成工程用，仓库里不含 .xcodeproj
-xcodegen generate          # 生成 HexoMan.xcodeproj
-open HexoMan.xcodeproj     # 选中 HexoMan scheme 运行
+```sh
+brew install xcodegen      # required for generating the project
+xcodegen generate          # produces HexoMan.xcodeproj
+open HexoMan.xcodeproj     # select the HexoMan scheme and run
 ```
 
-命令行出包：
+Command-line build:
 
-```bash
-./scripts/build-release.sh   # 产物在 build/release/HexoMan.app
+```sh
+./scripts/build-release.sh   # output: build/release/HexoMan.app
 ```
 
-## 使用指南
+## Usage Guide
 
-### 添加站点
+### Add a Site
 
-打开左侧「站点管理」→ 点「选择站点目录…」→ 选中 Hexo 项目根目录（就是有 `_config.yml` 和 `package.json` 的那一层）。
+Open the left sidebar "Sites" → "Choose site folder…" → select your Hexo project root (the directory containing `_config.yml` and `package.json`).
 
-添加后 HexoMan 会立刻探测站点：读 `title` / `url` / `theme`、从 `package.json` 找 hexo 和主题的版本号、检查 `node_modules` 是否就绪、判断是不是 Git 仓库并从 `.git/config` 里读出远端地址。
+After adding, HexoMan immediately probes the site: reads `title` / `url` / `theme`, finds hexo and theme versions from `package.json`, checks `node_modules`, detects whether it's a Git repo and reads the remote from `.git/config`.
 
-### 站点依赖
+### Site Dependencies
 
-依赖没装时，总览页和构建页会给出提示。到「站点管理」点「安装依赖」即可，HexoMan 会用你系统里的 npm 在站点目录跑 `npm install`；装好后 hexo 命令就走站点本地的 `node_modules/.bin/hexo`，版本和 `package.json` 严格一致。
+When deps are missing, the Overview and Build pages show a hint. Go to "Sites" and click "Install dependencies" — HexoMan uses your system npm to run `npm install` in the site directory. After that, hexo runs from the site's local `node_modules/.bin/hexo`, and its version matches `package.json` exactly.
 
-### 写文章
+### Write a Post
 
-「文章」页左上角「新建」→ 填标题（必填）、标签、分类 → 创建后自动进入编辑器写正文 → `⌘S` 保存。
+On the Posts page, top-left "New" → fill title (required), tags, categories → editor opens for the body → `⌘S` to save.
 
-文件会写到站点的文章目录下（见下文「工作原理」），文件名由标题转成 slug，重名自动追加序号。删除文章进的是废纸篓而不是直接删除。
+The file lands in the site's post directory (see "How It Works" below); the filename is the title slugified, with a numeric suffix for collisions. Delete sends the file to the Trash, not a hard delete.
 
-### 生成与预览
+### Generate & Preview
 
-「构建与预览」页 →「生成站点」执行 `hexo generate`，产物落在 `public`。想边写边看就点「启动预览」，然后「打开预览页」在浏览器里看。端口改动需要先停止再启动预览才生效。
+Build & Preview page → "Generate site" runs `hexo generate`; output lands in `public`. Want live preview? Click "Start preview" then "Open preview" to view it in the browser. Port changes require stopping and starting the preview.
 
-### 改配置
+### Edit Config
 
-「配置」页选一个 `_config*.yml`，用顶部键条快速跳转，改完 `⌘S` 保存。保存只写回文件本身，**不会自动跑 generate**，配置生效需要再去构建页跑一次。
+On the Config page, pick a `_config*.yml`, use the top key bar to jump, edit, then `⌘S`. Saving only writes the file back to disk — **generate does not run automatically**; you need to run it on the Build page for changes to take effect.
 
-### Git 面板
+### Git Panel
 
-「Git」页填提交信息点「提交全部改动」即可；「拉取」用 `git pull --rebase`，「推送」在没有待推送提交时是禁用的。存在冲突时页面顶部会红框列出冲突文件，需要手动解决后再提交。
+Fill in a commit message on the Git page and click "Commit all changes". Pull uses `git pull --rebase`; Push is disabled when there's nothing to push. Conflicts show as a red banner at the top of the page listing the conflicting files — resolve them manually, then commit again.
 
-### 键盘快捷键
+### Keyboard Shortcuts
 
-| 快捷键 | 作用 | 位置 |
+| Shortcut | Action | Where |
 | --- | --- | --- |
-| `⌘N` | 跳到「文章」页（新建按钮在文章页左上角） | 菜单 |
-| `⇧⌘O` | 跳到「站点管理」页 | 菜单 |
-| `⌘R` | 刷新当前站点的全部数据 | 菜单 |
-| `⌘B` | 生成站点（`hexo generate`） | 菜单 |
-| `⇧⌘R` | 启动 / 停止预览服务 | 菜单 |
-| `⌥⌘P` | 在浏览器打开预览页 | 菜单 |
-| `⌘E` | 打开当前选中文章的编辑器 | 文章详情页 |
-| `⌘S` | 保存（文章编辑器、配置编辑器） | 编辑器内 |
+| `⌘N` | Jump to Posts page (the New button is in its top-left) | Menu |
+| `⇧⌘O` | Jump to Sites page | Menu |
+| `⌘R` | Refresh all data for the current site | Menu |
+| `⌘B` | Generate site (`hexo generate`) | Menu |
+| `⇧⌘R` | Start / stop preview server | Menu |
+| `⌥⌘P` | Open preview in browser | Menu |
+| `⌘E` | Open the editor for the currently selected post | Post detail page |
+| `⌘S` | Save (post editor, config editor) | Inside editors |
 
-菜单里带站点的操作在未选中站点时是禁用的。
+Menu items that need a site are disabled when no site is selected.
 
-## 工作原理
+## How It Works
 
-这一节说明 HexoMan 到底在你机器上做了什么，方便你判断哪些行为可以信任。
+This section describes what HexoMan actually does on your machine, so you can judge which behaviors to trust.
 
-### 怎么找到 hexo 可执行文件
+### How the `hexo` executable is found
 
-`HexoService.resolveInvocation` 按固定优先级选一个（侧边栏底部会显示当前用的是哪一种）：
+`HexoService.resolveInvocation` selects one with a fixed priority (the bottom of the sidebar shows which one is in use right now):
 
-1. **自定义路径**：你在「构建与预览」页手填的可执行文件
-2. **站点本地依赖**：`<站点>/node_modules/.bin/hexo`，存在且可执行就用它——最准，版本一定和站点 `package.json` 一致
-3. **用户 PATH**：你 shell 环境里的 `hexo`（`npm i -g hexo-cli` 装的那种），走上面那套 zsh bootstrap 读到的真实 PATH
-4. **常见全局前缀**：`/usr/local/bin/hexo`、`/opt/homebrew/bin/hexo`、`~/.nvm/versions/node/<最新版本>/bin/hexo`
-5. **HexoMan 自装**：之前「创建新站点」时自举出来的那份
-6. **npx**：以上都没有时退回 `npx hexo`，界面上标注为「npx（将临时下载）」
+1. **Custom path** — the executable you typed in on the Build & Preview page.
+2. **Site local deps** — `<site>/node_modules/.bin/hexo` if it exists and is executable; the most accurate, matches the site's `package.json` exactly.
+3. **User PATH** — `hexo` from your shell environment (e.g. `npm i -g hexo-cli`), using the PATH discovered by the zsh bootstrap above.
+4. **Common global prefixes** — `/usr/local/bin/hexo`, `/opt/homebrew/bin/hexo`, `~/.nvm/versions/node/<latest>/bin/hexo`.
+5. **HexoMan self-install** — a copy HexoMan previously installed when creating a new site.
+6. **npx** — fallback to `npx hexo` if all of the above miss; the UI marks this as "npx (will download on demand)".
 
-命令实际执行时会把可执行文件和参数打印在「构建与预览」页的「命令预览」里，可以直接看到会跑什么。
+The actual executable and arguments are printed in the "Command preview" on the Build & Preview page so you can see exactly what will run.
 
-### 创建站点时怎么拿到 hexo-cli
+### How `hexo-cli` is acquired when creating a site
 
-只有 `hexo init` 这一步必须先有 hexo-cli，而让用户自己去 `npm i -g hexo-cli` 太麻烦。所以 HexoMan 会用**你自己的 npm** 在 `~/Library/Application Support/HexoMan/cli` 装一份 `hexo-cli`：
+Only `hexo init` strictly needs `hexo-cli` first, and asking users to `npm i -g hexo-cli` is annoying. So HexoMan uses **your own npm** to install `hexo-cli` into `~/Library/Application Support/HexoMan/cli`:
 
-1. 先找现成的：手填路径 → 你 PATH 里的 hexo → HexoMan 之前自装的那份
-2. 都找不到才现场 `npm install hexo-cli`，装在 HexoMan 自己的目录下
-3. `hexo init` 成功后，在新站点里跑 `npm install`，hexo 就成了站点本地依赖，自装的那份从此不再参与
+1. Look for an existing copy first: custom path → your PATH `hexo` → HexoMan's previous self-install.
+2. Only if none exist, run `npm install hexo-cli` into HexoMan's own directory.
+3. After `hexo init` succeeds, HexoMan runs `npm install` inside the new site. From that moment hexo is the site's local dependency, and the self-installed copy never participates again.
 
-装在 Application Support 而不是全局，是为了不污染你的全局 `node_modules`：删掉 HexoMan 就等于连它一起删干净，而且不会往任何 shell 配置文件里写东西。
+Installing into Application Support instead of globally keeps your global `node_modules` clean: deleting HexoMan deletes its bundled copy too, and nothing is written to any shell config.
 
-### 文章存在哪
+### Where posts live
 
-文章就是站点文章目录下的 Markdown 文件，**没有数据库**。目录位置从 `_config.yml` 里读：优先 `new_dir`，其次 `<source_dir>/_posts`，读不到就按默认的 `source/_posts` 算。
+Posts are Markdown files in the site's post directory. **There is no database.** The directory is read from `_config.yml`: prefer `new_dir`, then `<source_dir>/_posts`, falling back to `source/_posts`.
 
-每个文件开头用 `---` 包起来的 front-matter 被解析成标题、日期、标签、分类、草稿状态。解析保留原始键值和顺序，目标是「读到什么样，写回去就还什么样」——改一次标题不会把你手写的其他字段格式洗掉。日期支持 `YYYY-MM-DD HH:mm:ss` 和 `YYYY-MM-DD` 两种写法。
+The `---`-wrapped front-matter at the top of each file is parsed into title, date, tags, categories, draft status. Parsing preserves the original keys and order — the goal is "read it as it is, write it back exactly as it was". Changing the title does not reformat your other hand-written fields. Dates accept both `YYYY-MM-DD HH:mm:ss` and `YYYY-MM-DD`.
 
-配置和文章的读写都直接走文件系统，没有中间缓存或中间数据库。
+Config and post read/write go straight to the filesystem. No intermediate cache, no intermediate database.
 
-### HexoMan 不做的事
+### What HexoMan does not do
 
-不联网、不上传任何内容到外部服务、没有账号体系、没有自动更新、没有崩溃上报、没有云同步。配置只落在本机的 `~/Library/Application Support/HexoMan/settings.json`。
+No network calls, no uploading to external services, no accounts, no auto-update, no crash reporting, no cloud sync. Config lives only on your machine at `~/Library/Application Support/HexoMan/settings.json`.
 
-## 自定义内容是怎么注入的
+## How Custom Content Is Injected
 
-「加个 banner 要去哪改」是小白卡住频率最高的问题，答案通常是「不知道」。常见误区是去 `themes/landscape/layout/` 改模板——那在 `npm install` 时会被覆盖，升级主题就白改一次。
+"Where do I add a banner?" is the question that trips up beginners most. The usual (wrong) answer is to edit `themes/landscape/layout/` — that's overwritten on `npm install`, and a theme upgrade silently wipes your work.
 
-HexoMan 的做法是自动在站点里生成一对文件：
+HexoMan's approach is to auto-create a pair of files in the site:
 
-| 文件 | 谁维护 | 作用 |
+| File | Maintained by | Purpose |
 | --- | --- | --- |
-| `scripts/hexoman-inject.json` | 你（通过 HexoMan 界面） | 填的 HTML，分 head 和 body |
-| `scripts/hexoman-inject.js` | HexoMan | 注入逻辑，读 json 并插到每页 |
+| `scripts/hexoman-inject.json` | You (via HexoMan's UI) | Your HTML, split into head and body |
+| `scripts/hexoman-inject.js` | HexoMan | The injection logic — reads the json and inserts into every page |
 
-注入走 Hexo 的 `_after_html_render` 钩子，在每页 `</head>` / `</body>` 前插入。相比改主题源码有三个好处：
+Injection uses Hexo's `_after_html_render` hook, inserting before each page's `</head>` / `</body>`. Three advantages over editing theme source:
 
-- 升级主题、重新 `npm install` 都不会丢
-- 不依赖主题支不支持某个注入目录，**换任何主题都通用**
-- 删掉这两个文件就等于彻底关掉这个功能，站点里没有任何残留
+- Survives theme upgrades and `npm install`.
+- Doesn't depend on whether the theme supports an inject directory — **works with any theme**.
+- Deleting those two files turns the feature off completely; no leftover state in the site.
 
-> **实现上的一个坑**：`_after_html_render` 的入参在不同 Hexo 版本里不一样——Hexo 8.1.2 实测传的是**字符串**，而传 `{ path, content }` 对象的版本也存在。生成的脚本对两种形态都做了兼容，并且**任何分支都保证返回值非空**。这一条不是洁癖：早期按「对象」写导致 filter 返回 `undefined`，构建不报错、照常显示 `46 files generated`，但产物 HTML 全部变成 0 字节，整个站点被静默清空。
+> **Implementation gotcha:** the argument to `_after_html_render` varies between Hexo versions. Hexo 8.1.2 passes a **string**; some versions pass an object `{ path, content }`. The generated script handles both forms, and **every branch guarantees a non-empty return value**. This is not paranoia: an early version written for the "object" form caused the filter to return `undefined`; the build didn't error and cheerfully reported "46 files generated", but the produced HTML was 0 bytes and the entire site was silently wiped.
 
-## 配置存放
+## Settings Storage
 
-`~/Library/Application Support/HexoMan/settings.json`，包含：
+`~/Library/Application Support/HexoMan/settings.json`, containing:
 
-- `sites`：已知站点列表（路径 + 上次打开时间）
-- `lastSitePath`：上次打开的站点
-- `serverPort`：预览端口，默认 4000
-- `autoScrollLog`：日志是否自动滚动到底
-- `customHexoPath`：手填的 hexo 可执行文件路径，空表示自动探测
-- `usesShellEnvironment`：是否用 zsh 读取 rc 文件获得真实 PATH，默认 `true`
-- `customRCPath`：手填的 zsh rc 文件路径，空表示自动按 `$ZDOTDIR` → `$HOME` 找
+- `sites`: known sites (path + last-opened time)
+- `lastSitePath`: the last opened site
+- `serverPort`: preview port, default 4000
+- `autoScrollLog`: whether the log auto-scrolls to the bottom
+- `customHexoPath`: hand-typed hexo executable path; empty = auto-detect
+- `usesShellEnvironment`: whether to source zsh rc files to get the real PATH; default `true`
+- `customRCPath`: hand-typed zsh rc path; empty = auto-locate via `$ZDOTDIR` → `$HOME`
 
-应用退到后台或关窗口时会自动落盘。删掉这个文件等于恢复出厂设置，不影响你的站点文件。
+Settings are auto-saved when the app backgrounds or closes. Deleting this file is a factory reset — your site files are untouched.
 
-## 开发
+## Development
 
-### 目录结构
+### Layout
 
 ```
 HexoMan/
-├── HexoManApp.swift        应用入口、菜单栏、快捷键
-├── Core/                   与界面无关的模型和文件读写
-│   ├── HexoManModel.swift  状态中枢，所有界面只跟它打交道
-│   ├── HexoSite.swift      站点模型与站点探测
-│   ├── BlogPost.swift      文章模型与 source/_posts 下的文件读写
-│   ├── FrontMatter.swift   front-matter 解析与回写
-│   ├── ConfigFile.swift    _config*.yml 的列出与读写
-│   ├── SiteSettings.swift  常用配置项的可视化读写（保真，不动嵌套块）
-│   ├── CustomContent.swift head/body 自定义注入的配置与脚本
-│   ├── SnippetLibrary.swift 常见代码片段（banner/统计/CSS/JS）
+├── HexoManApp.swift        App entry, menu bar, shortcuts
+├── Core/                   UI-independent models and file I/O
+│   ├── HexoManModel.swift  State hub — the UI talks only to it
+│   ├── HexoSite.swift      Site model + site probing
+│   ├── BlogPost.swift      Post model + read/write under source/_posts
+│   ├── FrontMatter.swift   Front-matter parsing and re-write
+│   ├── ConfigFile.swift    List and read/write _config*.yml
+│   ├── SiteSettings.swift  Visual read/write for common config items (lossless; doesn't touch nested blocks)
+│   ├── CustomContent.swift Config + script for head/body injection
+│   ├── SnippetLibrary.swift Common code snippets (banner/stats/CSS/JS)
 │   ├── GitService.swift    git status / log / commit / push / pull
-│   ├── HexoService.swift   hexo 可执行文件定位与命令组装
-│   ├── HexoCLIBootstrap.swift  创建站点时用用户的 npm 自举 hexo-cli
-│   ├── ShellRunner.swift   子进程执行、实时日志、shell 环境缓存
-│   ├── ShellEnvironment.swift   zsh bootstrap，读 .zshenv/.zprofile/.zshrc
-│   ├── HexoEnvironment.swift    node/npm/npx/hexo/git 工具链体检
-│   ├── YAMLScalars.swift   YAML 顶层标量解析
-│   ├── SettingsStore.swift settings.json 读写
-│   └── SystemIntegration.swift 访达打开等系统交互
-└── Views/                  界面
-    ├── ContentView.swift   侧边栏 + 内容区的分发
+│   ├── HexoService.swift   Locate hexo executable + assemble commands
+│   ├── HexoCLIBootstrap.swift  Bootstrap hexo-cli with user's npm when creating a site
+│   ├── ShellRunner.swift   Subprocess execution, live log, shell environment cache
+│   ├── ShellEnvironment.swift   zsh bootstrap, reads .zshenv/.zprofile/.zshrc
+│   ├── HexoEnvironment.swift    node/npm/npx/hexo/git toolchain health check
+│   ├── YAMLScalars.swift   YAML top-level scalar parsing
+│   ├── SettingsStore.swift settings.json read/write
+│   └── SystemIntegration.swift Reveal-in-Finder and similar system integration
+└── Views/                  UI
+    ├── ContentView.swift   Sidebar + content-area dispatch
     ├── SiteManagerView / DashboardView / PostsView
     ├── PostEditorView / BuildView / ConfigView / GitView
-    ├── VisualConfigView  配置页的可视化那一半（表单 + 自定义内容）
-    └── Components.swift    复用的卡片、标签、空状态、日志控制台
+    ├── VisualConfigView    The visual half of the config page (form + custom content)
+    └── Components.swift    Reusable cards, tags, empty states, log console
 ```
 
-划分原则很简单：**界面不碰文件系统**。所有读写在 `Core/` 里完成，`Views/` 只从 `HexoManModel` 取状态、发出动作。
+The split is simple: **the UI never touches the filesystem.** All I/O happens in `Core/`; `Views/` only reads state from `HexoManModel` and issues actions.
 
-### 工程是生成出来的
+### The project is generated
 
-`HexoMan.xcodeproj` 不入库，`project.yml` 是唯一真源。改了工程结构就改 `project.yml`，然后：
+`HexoMan.xcodeproj` is not in the repo; `project.yml` is the single source of truth. To change project structure, edit `project.yml` and run:
 
-```bash
+```sh
 xcodegen generate
 ```
 
-### 加一个新页面
+### Adding a New Page
 
-1. 在 `Core/SidebarItem`（`HexoManModel.swift`）里加一个 case，填 `title` 和 `symbolName`
-2. 在 `HexoMan/Views/` 下写对应 View
-3. 在 `ContentView.content` 的 switch 里加一个分支，页面需要站点就包一层 `siteRequired { ... }`
-4. `xcodegen generate` 后运行
+1. Add a case to `Core/SidebarItem` in `HexoManModel.swift`, with `title` and `symbolName`.
+2. Write the matching View under `HexoMan/Views/`.
+3. Add a branch in `ContentView.content`'s switch; wrap with `siteRequired { ... }` if the page needs a site.
+4. `xcodegen generate` and run.
 
-界面需要的任何数据，从 `HexoManModel` 上取；需要新增文件读写能力，就在 `Core/` 里加一个新的 Store/Service，再从 model 暴露一个方法。
+Any data the UI needs comes from `HexoManModel`. If you need new file I/O, add a new Store/Service in `Core/` and expose a method on the model.
 
-## 后续计划
+## Roadmap
 
-- 应用内创建新的 Hexo 项目
-- 应用内安装站点依赖
-- 主题目录下的配置文件编辑
+- Create a new Hexo project from inside the app
+- Install site dependencies from inside the app
+- Edit configs under the theme directory
 
 ## License
 
