@@ -28,13 +28,22 @@ struct BackupView: View {
     /// 看着就是页面上一阵乱跳、按钮按了没反应。
     @State private var planTask: Task<Void, Never>?
 
-    /// `onChange(of: includeLarge)` 在 SwiftUI macOS 14+ / iOS 17+ 上
-    /// **初次 body 评估时会立刻触发一次回调**——即使值没真变。
-    /// 配合 `.onAppear` 里也调 `refreshPlan`，刚进 backup 页这一拍
-    /// 会有两个 plan Task 互相 cancel。视觉上无大碍，但浪费一次
-    /// 全站点遍历，且容易在 cancel 时序上踩到 race。
-    /// 用这个标记把首次回调吞掉，仅在「值真的变过」时才刷新。
-    @State private var hasObservedIncludeLarge = false
+    /// 本次统计针对的是哪个站点。用来识别「换了站点但旧统计的
+    /// MainActor 回写才姗姗来迟」——那种情况会把新站点的统计覆盖成旧站点的。
+    @State private var planSitePath: String?
+
+    /// includeLarge 的**上一次参与统计的值**。
+    ///
+    /// 之前是用 `hasObservedIncludeLarge` 布尔量来吞掉 `.onChange(of:)` 的首调，
+    /// 那个思路是错的：SwiftUI 在 macOS 14+/iOS 17+ 上会在**首次 body 评估期间**
+    /// 就触发一次 `onChange` 回调，那时 `.onAppear` 还没跑，
+    /// `hasObservedIncludeLarge` 仍是 false，于是唯一一次真实需要的首刷被丢掉了——
+    /// 于是备份页一进来「将打包 N 个文件」永远是「正在统计…」，
+    /// 看起来就是这个页面没法用。
+    ///
+    /// 改成记住「上次统计用的值」，首调时若值没真的变过就不重扫。
+    /// 不依赖 onAppear / onChange 的相对时序，也就不会再被回调顺序坑到。
+    @State private var lastPlannedIncludeLarge: Bool?
 
     private var activePolicy: BackupManager.Policy {
         includeLarge ? .full : .default
@@ -70,17 +79,12 @@ struct BackupView: View {
         .onAppear {
             loadBackups()
             refreshPlan()
-            // 标记 includeLarge 已经「观察过」初始值——后续 onChange 才真正刷新。
-            // SwiftUI macOS 14+ / iOS 17+ 的 .onChange(of:) 在 view 首次出现时
-            // 会立刻回调一次（即使值未变），所以吞掉那次避免与 onAppear 重复扫全站。
-            hasObservedIncludeLarge = true
         }
         .onChange(of: model.currentSite?.path) { _, _ in
             loadBackups()
             refreshPlan()
         }
         .onChange(of: includeLarge) { _, _ in
-            guard hasObservedIncludeLarge else { return }
             refreshPlan()
         }
         // 离场时把进行中的统计任务 cancel，避免完成时回写到已经被切走的页面。
@@ -160,19 +164,34 @@ struct BackupView: View {
                     .background(.quaternary.opacity(0.3), in: Capsule())
             }
 
-            Button {
-                Task { await createBackup() }
-            } label: {
-                if isCreating {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
+            // 把按钮 label 内的 `if isCreating` 提到外面来——否则 Button 在两种状态下
+            // 会是 ProgressView vs Label 两种 view 类型。SwiftUI macOS 14+ / iOS 17+
+            // 对 Button label 的 view 类型稳定性比旧版本严格，类型一变会让整棵子树
+            // 渲染失败，外观表现就是「站点备份」标题和按钮一起消失，下面只剩
+            // Group 里的 EmptyHint。
+            //
+            // 旧版本（Xcode 15 / macOS 13）SwiftUI 偷懒不强检，这种写法看着没事；
+            // 升 Xcode 26/27 之后就裸奔了。整个 BackupView「菜单栏 UI 消失 /
+            // 开始备份按钮没有出现 / 操作无反应」症状的真实根因就是这里。
+            //
+            // 改法：在外部根据 isCreating 选 ProgressView vs Button 本身，
+            // Button label 内部永远只有一个 Label 类型——稳定。
+            if isCreating {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Button {
+                    Task { await createBackup() }
+                } label: {
                     Label("新建备份", systemImage: "plus.circle")
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                // 备份进行中禁用：这一分支已经换成 ProgressView 了，
+                // 但留一道保险——万一 isCreating 在同一帧内被两次点击穿过，
+                // 第二个 createBackup 会并发写同一个 zip 文件。
+                .disabled(model.currentSite == nil || isCreating)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(model.currentSite == nil || isCreating)
         }
     }
 
@@ -217,17 +236,47 @@ struct BackupView: View {
     /// 旧任务会被 cancel——避免切站点时多个统计任务堆在一起完成后乱序
     /// 回写 `plan`，那会让 UI 短暂显示一个过时的统计数字，
     /// 甚至在「包含大目录」开关快速来回拨时被卡住。
+    ///
+    /// 「同样的站点 + 同样的开关」重复调用是**空操作**。这一条很关键：
+    /// onAppear 和 onChange(of: includeLarge) 的首调都可能要求刷新，
+    /// 不做幂等就会 cancel 掉刚起步的任务、再起一个，
+    /// 于是 `plan` 迟迟不落地，界面停在「正在统计…」。
     private func refreshPlan() {
         guard let site = model.currentSite else {
             planTask?.cancel()
             plan = nil
+            planSitePath = nil
+            lastPlannedIncludeLarge = nil
             return
         }
+
+        // 幂等：同一站点 + 同一策略，且统计任务还活着，就什么都不做。
+        // （任务已结束且有结果时也不必重扫；`plan != nil` 覆盖了这种情况。）
+        if planSitePath == site.path,
+           lastPlannedIncludeLarge == includeLarge,
+           plan != nil || (planTask?.isCancelled == false)
+        {
+            return
+        }
+
         planTask?.cancel()
-        planTask = Task { [activePolicy] in
-            let result = await BackupManager.plan(for: site, policy: activePolicy)
+        planSitePath = site.path
+        lastPlannedIncludeLarge = includeLarge
+        // 新统计开始前先清掉旧结果，界面立刻回到「正在统计…」，
+        // 不会拿上一个站点的数字冒充当前站点的。
+        plan = nil
+
+        let policy = activePolicy
+        let sitePath = site.path
+        planTask = Task {
+            let result = await BackupManager.plan(for: site, policy: policy)
             if Task.isCancelled { return }
             await MainActor.run {
+                // 双重保险：既看 cancel，也看当前站点 / 当前策略是不是还是这一份。
+                // 光看 cancel 挡不住「旧任务刚好在 cancel 生效前完成」的窄缝。
+                guard self.model.currentSite?.path == sitePath,
+                      self.lastPlannedIncludeLarge == self.includeLarge
+                else { return }
                 self.plan = result
             }
         }

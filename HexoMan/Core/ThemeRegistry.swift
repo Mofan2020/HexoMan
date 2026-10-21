@@ -173,10 +173,7 @@ actor ThemeRegistry {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return ThemeCatalog.items
             .filter { item in
-                trimmed.isEmpty
-                    || item.name.lowercased().contains(trimmed)
-                    || item.summaryDescription.contains(trimmed)
-                    || item.author.lowercased().contains(trimmed)
+                trimmed.isEmpty || item.matches(trimmed)
             }
             .map { item in
                 RegistryPackage(
@@ -277,19 +274,32 @@ extension ThemeCatalog.Item {
 
     /// Item 关联的本地化 key 字符串。必须在 xcstrings 里也填上 `theme.<key>.summary`。
     /// 加新精选主题时记得同时在这里加一行。
+    ///
+    /// key 统一用**小写**短名。xcstrings 里的键是 `theme.fluid.summary` /
+    /// `theme.anima.summary` / `theme.matery.summary`，全小写；这里之前写的是
+    /// `theme.Fluid.summary`（跟着 `Item.name` 的大写走），于是查不到、
+    /// 回落成通用的「主题包」，那三条主题的描述和搜索匹配全废。
+    /// 不再靠 switch 硬编码：改成统一小写后查，省得以后加主题又漏一个。
     var literalKey: String {
-        switch name {
-        case "yun": return "theme.yun.summary"
-        case "landscape": return "theme.landscape.summary"
-        case "next": return "theme.next.summary"
-        case "Fluid": return "theme.fluid.summary"
-        case "Matery": return "theme.matery.summary"
-        case "whiskers": return "theme.whiskers.summary"
-        case "volantis": return "theme.volantis.summary"
-        case "reimu": return "theme.reimu.summary"
-        case "solitude": return "theme.solitude.summary"
-        case "Anima": return "theme.anima.summary"
-        default: return ""
-        }
+        let key = name.lowercased()
+        guard key.isEmpty == false else { return "" }
+        return "theme.\(key).summary"
+    }
+
+    /// 离线搜索的匹配判定。查询词已 lowercased。
+    ///
+    /// 覆盖用户真会敲的东西：主题短名、完整包名（`hexo-theme-yun`）、
+    /// 作者、描述。以前只比 name / description / author 三个字段，
+    /// 于是敲 `hexo-theme-` 这种前缀全查不到——用户以为搜索坏了。
+    /// `haystack` 统一小写，中英文都能命中（描述走的是当前语言）。
+    func matches(_ query: String) -> Bool {
+        let haystacks = [
+            name,
+            "hexo-theme-\(name)",
+            author,
+            homepage,
+            summaryDescription
+        ]
+        return haystacks.contains { $0.lowercased().contains(query) }
     }
 }

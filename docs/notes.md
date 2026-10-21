@@ -3,6 +3,68 @@
 记这里的是「改了会影响其他维护者的判断」的事。不写实现细节（commit 里看），
 不写 UI 文案（审查时被覆盖）。
 
+## 2026-10-21  ·  主题市场与备份页的交互失效
+
+三个用户可见的故障：主题市场搜不到东西、点某个主题没反应、备份页一进去就卡在
+「正在统计…」。根因彼此独立，但有一类共同教训值得记下来。
+
+### 教训：macOS 上不要用 `List(selection:)` 做「点一行选中」
+
+`ThemeBrowserSheet` 的市场列表原来是 `List(selection:)` + `.tag(Optional(pkg))`。
+绑定本身已经是 `Optional`，tag 又包了一层 `Optional`，两侧类型对不上，
+行点击因此不生效——表现就是「点 reimu 完全没反应，右栏一直是空的」。
+
+`ContentView` 的侧边栏早就因为同类问题改成了显式 `Button`（见 `navigationList`
+的注释）。这次把主题市场、主题迁移勾选框也一并换成了显式按钮，
+选中态自己画高亮背景，不依赖 List 的隐式选中机制。
+
+**判断依据**：凡是「点一行 → 右边/下面换内容」这种主从布局，选中态就**不要**交给
+`List(selection:)`。用显式按钮 + 自己画高亮，行为可预期，也不受 macOS 各版本
+List 选中语义差异影响。
+
+仓库里还剩几处 `List(selection:)`（`ConfigView` / `SchemaConfigView` /
+`PostsView` / `PagesView`）。它们用的是 `String?` 绑定配非 Optional 的 `.tag(id)`，
+和这次的类型不匹配不是一回事，目前也没人报障，所以**没动**。
+如果哪天这些列表也出现「点了没反应」，按同一思路换显式按钮即可。
+
+### 教训：`onChange(of:)` 的首调回调早于 `onAppear`
+
+`BackupView` 原来用一个 `hasObservedIncludeLarge` 布尔量，想吞掉
+`.onChange(of: includeLarge)` 在首次 body 评估时的那次回调，避免和 `onAppear`
+里的 `refreshPlan()` 重复扫站点。
+
+但 SwiftUI 这次的回调发生在 **`onAppear` 之前**，那时布尔量还是 false，
+于是唯一一次真正需要的首刷被丢掉了，统计结果永远不落地。
+
+改法不再依赖 `onAppear` 与 `onChange` 的相对时序：改成记住
+「上次统计用的站点路径 + 上次统计用的开关值」，值没变就不重扫。
+`refreshPlan()` 同时做成幂等，并补了回写前的二次校验
+（站点和开关都还对得上才写 `plan`），避免切站点时旧结果覆盖新站点的。
+
+**判断依据**：想靠一个「首次调用」标记位来去重时，先确认那个回调真的晚于
+你设标记的位置。SwiftUI 里 `onChange` 的首调早于 `onAppear`，靠时序假设写的去重
+逻辑都很脆。改成「比对上一次用的输入值」就没有顺序依赖。
+
+### 顺带修的：本地化 key 的大小写
+
+`ThemeCatalog.Item.literalKey` 之前用 `switch name` 硬编码，键名跟着
+`Item.name` 的大小写走，写成了 `theme.Fluid.summary`。而 xcstrings 里的键是
+全小写的 `theme.fluid.summary`——`Fluid` / `Matery` / `Anima` 三条都查不到，
+静默回落成通用的「主题包」，那三条主题的描述和基于描述的搜索全都失效。
+
+改成统一 `name.lowercased()` 拼键，不再用 switch 硬编码，以后加主题不会漏。
+`xcstrings` 本身一个字的翻译都没动——`theme.*.summary` 这 10 条的中英文
+本来就在，缺的只是大小写对不上的那三条。
+
+### 没动的与原因
+
+- **剩余的 `List(selection:)`**：见上，`String?` + 非 Optional tag 与本次的
+  类型不匹配不是同一类问题，未报障，不在这次范围内。
+- **`ThemeCatalog.items` 仍是硬编码的 10 条**：这是**有意**的。
+  联网搜索走 npm registry，只在用户开了「允许联网」后启用；没开时只显示这 10 条
+  离线精选，避免小白面对几百个搜索结果无从下手。这次补的是搜索体验
+  （能搜到 + 知道为什么搜不到），没有改成全量 npm 目录。
+
 ## 2026-10-12  ·  PR1：本地化基础
 
 PR1 把项目从「中文硬编码 + 0 国际化」改到「中文/英文双语，本地化基础设施就位」。

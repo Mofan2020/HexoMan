@@ -193,6 +193,32 @@ struct ThemeBrowserSheet: View {
 
             searchField
 
+            // 没开联网权限时，挂一条常驻提示。
+            // 之前只在「有搜索结果但很少」时靠空状态文案解释，而空状态是刚加的——
+            // 用户看到的是「搜不到东西」却不知道有 10 条以外的世界，
+            // 于是以为搜索坏了。这里把开关本身放到列表正上方，一点就能开。
+            if !model.onlineThemeSearch {
+                Button {
+                    if model.dontAskOnlineConsent {
+                        model.onlineThemeSearch = true
+                        scheduleSearch(immediate: true)
+                    } else {
+                        showOnlineConsentSheet = true
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "wifi")
+                        Text("只搜得到内置精选 · 点这里开启联网搜全部")
+                            .font(.caption)
+                        Spacer(minLength: 0)
+                    }
+                    .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+            }
+
             if isLoadingRegistry {
                 HStack {
                     ProgressView()
@@ -202,14 +228,43 @@ struct ThemeBrowserSheet: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding()
+            } else if registryResults.isEmpty {
+                EmptyHint(
+                    systemImage: "magnifyingglass",
+                    title: "没有匹配的主题",
+                    message: model.onlineThemeSearch
+                        ? "换个关键词再试试。npm 上叫「主题包」的不一定都以 hexo-theme- 开头，也可以直接搜主题的英文名。"
+                        : "当前只能搜内置的 10 个精选主题。想搜 npm 上全部主题，点右上角「允许联网」。"
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(selection: $selectedRegistryPackage) {
-                    ForEach(registryResults) { pkg in
-                        RegistryPackageRow(pkg: pkg)
-                            .tag(Optional(pkg))
+                // 这里刻意不用 `List(selection:)`。
+                //
+                // macOS 上单选 List 传 Optional 绑定 + `.tag(Optional(pkg))` 时行点击经常不生效，
+                // 表现就是「点某个主题完全没反应」——选中态永远不变，右栏详情也不刷新。
+                // ContentView 的侧边栏早就因为同一个坑改成了显式按钮（见 navigationList 的注释）。
+                // 这里沿用同样的做法：按钮动作是显式的，点了就一定赋值。
+                ScrollView {
+                    LazyVStack(spacing: 4) {
+                        ForEach(registryResults) { pkg in
+                            Button {
+                                selectedRegistryPackage = pkg
+                            } label: {
+                                RegistryPackageRow(pkg: pkg)
+                            }
+                            .buttonStyle(.plain)
+                            .background(
+                                selectedRegistryPackage?.id == pkg.id
+                                    ? Color.accentColor.opacity(0.12)
+                                    : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 6)
+                            )
+                            .contentShape(Rectangle())
+                        }
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
                 }
-                .listStyle(.inset)
             }
         }
     }
@@ -279,15 +334,14 @@ struct ThemeBrowserSheet: View {
     /// 离线精选转 RegistryPackage。search() 内部已经做了，
     /// 这里再拆一份供「未开联网权限」首屏直接显示用——
     /// 不希望首屏被网络请求拖延几百毫秒。
+    ///
+    /// 匹配规则复用 `ThemeCatalog.Item.matches`，与 ThemeRegistry 内部那份保持一致。
+    /// 之前两份各写各的过滤条件，长得几乎一样但字段不同，
+    /// 于是会出现「刚打开时能搜到 reimu，敲一下字就搜不到了」。
     private func offlineCatalog(query: String) -> [RegistryPackage] {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return ThemeCatalog.items
-            .filter { item in
-                trimmed.isEmpty
-                    || item.name.lowercased().contains(trimmed)
-                    || item.summaryDescription.contains(trimmed)
-                    || (item.author.isEmpty ? false : item.author.lowercased().contains(trimmed))
-            }
+            .filter { trimmed.isEmpty || $0.matches(trimmed) }
             .map { item in
                 RegistryPackage(
                     name: "hexo-theme-\(item.name)",
@@ -645,10 +699,37 @@ private struct ThemeMigrationSheet: View {
                     .foregroundStyle(.secondary)
             }
 
-            List(selection: $selectedKeys) {
-                ForEach(plan.entries) { entry in
-                    MigrationRow(entry: entry)
-                        .tag(Optional(entry.key))
+            // 同样不用 `List(selection:)`——macOS 上单选/多选 List 的行点击都不可靠，
+            // 表现是勾选框点了没反应、底部「应用」按钮一直因为空选中而灰着。
+            // 改成显式 toggle，动作确定生效。
+            ScrollView {
+                LazyVStack(spacing: 4) {
+                    ForEach(plan.entries) { entry in
+                        Button {
+                            if selectedKeys.contains(entry.key) {
+                                selectedKeys.remove(entry.key)
+                            } else {
+                                selectedKeys.insert(entry.key)
+                            }
+                        } label: {
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: selectedKeys.contains(entry.key) ? "checkmark.square.fill" : "square")
+                                    .foregroundStyle(selectedKeys.contains(entry.key) ? Color.accentColor : Color.secondary)
+                                MigrationRow(entry: entry)
+                                Spacer(minLength: 0)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 6)
+                        .background(
+                            selectedKeys.contains(entry.key)
+                                ? Color.accentColor.opacity(0.08)
+                                : Color.clear,
+                            in: RoundedRectangle(cornerRadius: 6)
+                        )
+                    }
                 }
             }
             .frame(minHeight: 200, idealHeight: 280, maxHeight: 360)
