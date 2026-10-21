@@ -170,3 +170,8 @@ jobs:
           name: HexoMan ${{ github.ref_name }}
           body_path: release-notes.md
           files: ${{ steps.package.outputs.name }}
+          # 默认标 prerelease——按发版规则，星空喵实测通过后才会把 prerelease 关掉。
+          # 上一版（v0.7.1）workflow 没设这个，出来直接是正式版，事后被手动
+          # `gh release edit --prerelease` 才转成 prerelease——属于流程漏洞。
+          # 现在让 workflow 默认就是 prerelease，省一次手动改。
+          prerelease: true
