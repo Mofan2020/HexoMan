@@ -560,15 +560,31 @@ private struct ThemeDetailPane: View {
                             .strokeBorder(Color.secondary.opacity(0.2))
                     )
             } else {
-                Text("themeView.browser.noPreview")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                // 没有可用预览时要说清**为什么**，别只丢一句「暂无预览」。
+                // 实测 npm 搜索结果里 4/25 根本没有 homepage，
+                // 另有 11/25 的 homepage 是 GitHub 仓库页而非 demo——
+                // 这两种情况都走这里，文案要能区分。
+                VStack(spacing: 6) {
+                    Text("themeView.browser.noPreview")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    if isRepositoryPage {
+                        Text("这个主题在 npm 上只填了仓库地址，没有演示站。可以点下方链接去 GitHub 看截图和说明。")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(16)
+                .background(.quaternary.opacity(0.1), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
-            if let url = previewURL {
+            if let url = outLinkURL {
                 Link(destination: url) {
                     HStack(spacing: 4) {
                         Image(systemName: "safari")
-                        Text("themeView.browser.openInBrowser")
+                        Text(isRepositoryPage ? "在 GitHub 上查看" : "themeView.browser.openInBrowser")
                     }
                     .font(.caption)
                 }
@@ -576,12 +592,50 @@ private struct ThemeDetailPane: View {
         }
     }
 
+    /// 嵌进 WebView 的地址。**只认真正的站点，不认仓库页。**
+    ///
+    /// 之前这里直接返回 `pkg.homepage`，于是 GitHub 仓库页也被塞进
+    /// WKWebView——那不是演示，是一份 README 渲染结果，
+    /// 放在「演示预览」的位置上就是在误导。
+    /// 现在仓库页改成只给一个「在 GitHub 上查看」的外链，
+    /// 内嵌预览只留给真正的 demo 站。
     private var previewURL: URL? {
-        // 主页里如果没有 .demo 子域或者 docs 子域，就用 homepage。
-        // 部分主题禁用了 iframe（X-Frame-Options），webview 渲染出来会是空白，
-        // 提示用户「在浏览器中打开」是降级方案。
+        guard let raw = pkg.homepage, raw.isEmpty == false,
+              let url = URL(string: raw),
+              isEmbeddable(url)
+        else { return nil }
+        return url
+    }
+
+    /// 「在浏览器打开」指向的地址。仓库页也照样给——那是用户唯一能看的地方。
+    private var outLinkURL: URL? {
         guard let raw = pkg.homepage, raw.isEmpty == false else { return nil }
         return URL(string: raw)
+    }
+
+    /// homepage 是不是 GitHub 仓库页（而非演示站）。
+    private var isRepositoryPage: Bool {
+        guard let raw = pkg.homepage, raw.isEmpty == false,
+              let url = URL(string: raw),
+              let host = url.host?.lowercased()
+        else { return false }
+        return host == "github.com" || host.hasSuffix(".github.com")
+            || host == "gitlab.com" || host.hasSuffix(".gitlab.com")
+    }
+
+    /// 能不能内嵌。只排除代码托管站，其余交给 WebView 试。
+    ///
+    /// 大量主题官网带 X-Frame-Options，嵌进来是空白——那是它们的选择，
+    /// 下方「在浏览器打开」就是降级方案，所以这里只拦最明显的代码托管页。
+    private func isEmbeddable(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        let codeHosts = ["github.com", "github.io", "gitlab.com", "gitee.com", "bitbucket.org"]
+        if codeHosts.contains(host) { return false }
+        if host.hasSuffix(".github.com") || host.hasSuffix(".github.io")
+            || host.hasSuffix(".gitlab.com") {
+            return false
+        }
+        return true
     }
 
     private var actionSection: some View {

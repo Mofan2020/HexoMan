@@ -142,9 +142,19 @@ struct ContentView: View {
                 }
             }
 
-            Text("hexo：\(model.hexoSource)")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            // 拆成「前缀 + 值」两个 Text。写成 `Text("hexo：\(model.hexoSource)")`
+            // 会走 LocalizedStringKey 插值，而 xcstrings 里根本没有这个键，
+            // 于是 fallback 把**字面量原文**直接显示出来——用户看到的是
+            // `hexo：%@`。这里 prefix 是现成的本地化键
+            // （`themeView.currentPrefix` 那类），值用 String 重载不参与本地化。
+            HStack(spacing: 4) {
+                Text("footer.hexoSource")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Text(model.hexoSource)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)

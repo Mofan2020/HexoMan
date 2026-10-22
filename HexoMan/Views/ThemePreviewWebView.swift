@@ -32,9 +32,24 @@ struct ThemePreviewWebView: NSViewRepresentable {
         return webView
     }
 
+    /// **URL 变化时必须重新加载。**
+    ///
+    /// 原来的实现把这里写成空的，注释说「URL 在 view 生命周期内不变；
+    /// URL 变就是重建 view（HexoMan 没这场景）」。这个假设是**错的**：
+    /// 主题市场的选中项一变 url 就变，而右侧详情面板复用的是同一个
+    /// ThemeDetailPane，SwiftUI 不会重建 WKWebView——
+    /// 于是它继续显示**第一次加载的那个页面**。
+    ///
+    /// 症状就是用户报的：点开 reimu / landscape / 任何主题，
+    /// 预览里始终是最初那一个（默认选中 yun 时就是 yun）的站点内容，
+    /// 「演示的都不是这个主题」。
     func updateNSView(_ webView: WKWebView, context: Context) {
-        // URL 在 view 生命周期内不变；URL 变就是重建 view（HexoMan 没这场景）。
-        // 不在这里重新 load——会盖掉用户滚动位置。
+        // 靠 coordinator 记住「已经发起过哪个 URL」，
+        // 而不是只比 webView.url：首次更新时 webView.url 可能还是 nil
+        // （load 刚发起尚未提交），只比它会导致第一次加载被跳过。
+        guard context.coordinator.lastLoadedURL != url else { return }
+        context.coordinator.lastLoadedURL = url
+        webView.load(URLRequest(url: url))
     }
 
     /// 给外面 SwiftUI 用的「期望高度」——避免被 SwiftUI 算出奇怪值。
@@ -45,6 +60,10 @@ struct ThemePreviewWebView: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        /// 已经发起过加载的 URL。updateNSView 靠它判断要不要重载，
+        /// 避免自己触发的重载形成循环。
+        var lastLoadedURL: URL?
+
         // 不拦截任何导航——用户点了内嵌预览里的链接，按 WebView 默认行为在新窗口打开。
         // 拦截会引入不必要的复杂度，且主题官方 demo 通常不会有恶意跳转。
     }

@@ -23,6 +23,7 @@
 //
 
 import Foundation
+import os
 
 /// npm registry 上的单个主题包。
 ///
@@ -66,11 +67,44 @@ struct RegistrySearchResponse: Codable, Hashable {
             var version: String?
             var description: String?
             var links: Links?
-            var publisher: String?
+            var publisher: Publisher?
             var date: String?
 
             enum CodingKeys: String, CodingKey {
                 case name, version, description, links, publisher, date
+            }
+
+            /// npm 的 `package.publisher` **是对象** `{"email":..,"username":..}`，
+            /// 不是字符串。之前这里声明成 `String?`，真实响应一解码就
+            /// `typeMismatch` 抛出去，整个 `objects` 全废，
+            /// 再被 `fetchOnline` 的 catch 吞掉、静默退回离线 10 条——
+            /// 表现就是「开了联网也搜不到，一条在线结果都没有」。
+            ///
+            /// 这里自定义解码，同时接受对象和裸字符串：npm 不同接口
+            /// （search / abbreviated）在这个字段上并不一致，
+            /// 写死一种形状等于赌运气。
+            struct Publisher: Codable, Hashable {
+                var username: String?
+
+                init(from decoder: Decoder) throws {
+                    let c = try decoder.singleValueContainer()
+                    if let s = try? c.decode(String.self) {
+                        username = s
+                    } else if let obj = try? c.decode(Username.self) {
+                        username = obj.username
+                    } else {
+                        username = nil
+                    }
+                }
+
+                func encode(to encoder: Encoder) throws {
+                    var c = encoder.singleValueContainer()
+                    try c.encode(username ?? "")
+                }
+
+                struct Username: Codable, Hashable {
+                    var username: String?
+                }
             }
 
             struct Links: Codable, Hashable {
@@ -161,6 +195,16 @@ actor ThemeRegistry {
         } catch {
             // 联网失败（断网、超时、JSON 解析错）一律退化到离线模式。
             // 用户体验比显示错误好——主题页本来就有「离线」按钮文案。
+            //
+            // 但**必须留痕**。这里以前是纯静默 fallback，于是「npm 返回 25 条、
+            // 解码全抛异常」和「真的断网」在界面上长得一模一样，
+            // 排查时只能靠猜。现在把原因写进 os_log，
+            // 诊断页能看到，不会再出现「说不清到底发没发请求」。
+            ThemeLog.searchFailure(
+                query: query,
+                error: error,
+                httpStatus: nil
+            )
             return offlineCatalog(query: query)
         }
     }
@@ -219,13 +263,27 @@ actor ThemeRegistry {
 
         guard let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode) else {
+            let code = (response as? HTTPURLResponse)?.statusCode
+            ThemeLog.searchFailure(query: query, error: RegistryError.badStatus, httpStatus: code)
             throw RegistryError.badStatus
         }
 
         let decoder = JSONDecoder()
-        let parsed = try decoder.decode(RegistrySearchResponse.self, from: data)
+        let parsed: RegistrySearchResponse
+        do {
+            parsed = try decoder.decode(RegistrySearchResponse.self, from: data)
+        } catch {
+            // 解码失败单独记一条：HTTP 200 但拿不到结果，
+            // 和「请求没发出去 / 被拒」是两回事，必须能分开看。
+            ThemeLog.decodeFailure(
+                query: query,
+                error: error,
+                payloadBytes: data.count
+            )
+            throw error
+        }
 
-        return parsed.objects.compactMap { obj -> RegistryPackage? in
+        let results = parsed.objects.compactMap { obj -> RegistryPackage? in
             guard let rawName = obj.package.name,
                   rawName.hasPrefix("hexo-theme-")
             else { return nil }
@@ -238,17 +296,64 @@ actor ThemeRegistry {
                 name: rawName,
                 version: obj.package.version ?? "",
                 description: obj.package.description ?? "",
-                author: obj.package.publisher,
+                author: obj.package.publisher?.username,
                 homepage: obj.package.links?.homepage,
                 weeklyDownloads: weeklyDownloads,
                 date: obj.package.date
             )
         }
+
+        // 成功也记一条。「到底有没有真的发请求」不该靠猜——
+        // 日志里能直接看到 query、拿回多少条、耗时。
+        ThemeLog.searchSuccess(
+            query: query,
+            objectCount: parsed.objects.count,
+            keptCount: results.count
+        )
+        return results
     }
 
     enum RegistryError: Error {
         case invalidURL
         case badStatus
+    }
+}
+
+// MARK: - 主题搜索日志
+
+/// 主题市场联网行为的统一日志出口。
+///
+/// 之前 `search` 的失败路径是纯静默 fallback，导致「HTTP 200 但解码全废」
+/// 和「真的断网」在界面上完全一样，排查只能靠猜。上一版就是因此
+/// 误判成「搜索能走通」，实际上一条在线结果都进不来。
+///
+/// 用 os_log（`OSLog`）而不是 print：能在「诊断」页 / Console.app 里
+/// 按 subsystem 过滤，也不会混进 stdout 淹没真正的输出。
+enum ThemeLog {
+    private static let log = Logger(subsystem: "com.skyc8266.hexoman", category: "ThemeRegistry")
+
+    static func searchSuccess(query: String, objectCount: Int, keptCount: Int) {
+        log.info("""
+            搜索成功 query=\(query, privacy: .public) \
+            npm 返回 \(objectCount) 条，保留 \(keptCount) 条
+            """)
+    }
+
+    static func searchFailure(query: String, error: Error, httpStatus: Int?) {
+        let status = httpStatus.map(String.init) ?? "无响应"
+        log.error("""
+            搜索失败 query=\(query, privacy: .public) \
+            status=\(status, privacy: .public) \
+            error=\(String(describing: error), privacy: .public)
+            """)
+    }
+
+    static func decodeFailure(query: String, error: Error, payloadBytes: Int) {
+        log.error("""
+            解码失败 query=\(query, privacy: .public) \
+            收到 \(payloadBytes) 字节但解析不出结果 \
+            error=\(String(describing: error), privacy: .public)
+            """)
     }
 }
 

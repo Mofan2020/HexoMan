@@ -2,6 +2,30 @@
   "version": "1.0",
   "sourceLanguage": "en",
   "strings": {
+    "footer.hexoSource": {
+      "comment": "",
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo 来源"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo from"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo の入手元"
+          }
+        }
+      }
+    },
     "sidebar.overview": {
       "comment": "",
       "extractionState": "manual",
@@ -16,6 +40,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Overview"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "概要"
           }
         }
       }
@@ -35,6 +65,12 @@
             "state": "translated",
             "value": "Posts"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記事"
+          }
         }
       }
     },
@@ -52,6 +88,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pages"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ページ"
           }
         }
       }
@@ -71,6 +113,12 @@
             "state": "translated",
             "value": "Build & Preview"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ビルドとプレビュー"
+          }
         }
       }
     },
@@ -88,6 +136,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Config"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
           }
         }
       }
@@ -107,6 +161,12 @@
             "state": "translated",
             "value": "Theme"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマ"
+          }
         }
       }
     },
@@ -121,6 +181,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git"
+          }
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "Git"
@@ -143,6 +209,12 @@
             "state": "translated",
             "value": "Backup"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップ"
+          }
         }
       }
     },
@@ -160,6 +232,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Diagnostics"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診断"
           }
         }
       }
@@ -179,6 +257,12 @@
             "state": "translated",
             "value": "Sites"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイト管理"
+          }
         }
       }
     },
@@ -196,6 +280,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "New Post"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規記事"
           }
         }
       }
@@ -215,6 +305,12 @@
             "state": "translated",
             "value": "Add Site…"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイトを追加…"
+          }
         }
       }
     },
@@ -232,6 +328,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Refresh"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新"
           }
         }
       }
@@ -251,6 +353,12 @@
             "state": "translated",
             "value": "Generate Site"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイトを生成"
+          }
         }
       }
     },
@@ -268,6 +376,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Start Server"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プレビューを開始"
           }
         }
       }
@@ -287,6 +401,12 @@
             "state": "translated",
             "value": "Stop Server"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プレビューを停止"
+          }
         }
       }
     },
@@ -304,6 +424,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Preview"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プレビューを開く"
           }
         }
       }
@@ -323,6 +449,12 @@
             "state": "translated",
             "value": "Go To"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移動"
+          }
         }
       }
     },
@@ -340,6 +472,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Language"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
           }
         }
       }
@@ -359,6 +497,12 @@
             "state": "translated",
             "value": "Follow System"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システムに従う"
+          }
         }
       }
     },
@@ -377,6 +521,12 @@
             "state": "translated",
             "value": "Chinese (Simplified)"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文（簡体字）"
+          }
         }
       }
     },
@@ -391,6 +541,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "English"
@@ -413,6 +569,12 @@
             "state": "translated",
             "value": "Japanese"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
+          }
         }
       }
     },
@@ -430,6 +592,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Modern 3-column theme, light & dark, customizable color, full Chinese docs"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "モダンな3カラムテーマ。ライトとダークの両方に対応し、配色を調整でき、中国語のドキュメントも整っています"
           }
         }
       }
@@ -449,6 +617,12 @@
             "state": "translated",
             "value": "Hexo official default theme, 4-column layout, rock-solid"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 公式のデフォルトテーマ。4カラム構成で、表示が安定しています"
+          }
         }
       }
     },
@@ -466,6 +640,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Most feature-complete theme, integrated search, dynamic backgrounds"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "機能が最も揃ったテーマ。サイト内検索、動的背景、多说などに対応"
           }
         }
       }
@@ -485,6 +665,12 @@
             "state": "translated",
             "value": "fluid style, waterfall hero, ideal for image-heavy sites"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fluid スタイル。トップに並べる大きな画像が印象的で、写真の多いサイトに向いています"
+          }
         }
       }
     },
@@ -502,6 +688,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Material style, full tag/category support, ideal for tech blogs"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Material スタイル。カテゴリとタグを網羅していて、技術ブログに向いています"
           }
         }
       }
@@ -521,6 +713,12 @@
             "state": "translated",
             "value": "Clean and tidy, timeline layout"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すっきりとしたタイムラインレイアウト"
+          }
         }
       }
     },
@@ -538,6 +736,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Feature-rich, many social plugins, active community"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "機能が豊富で、ソーシャルプラグインも多く、コミュニティが活発"
           }
         }
       }
@@ -557,6 +761,12 @@
             "state": "translated",
             "value": "Anime style, hero illustration on home"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二次元スタイル。トップにキャラクターの立ち絵"
+          }
         }
       }
     },
@@ -574,6 +784,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Minimal card-based layout"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シンプルなカード型レイアウト"
           }
         }
       }
@@ -593,6 +809,12 @@
             "state": "translated",
             "value": "Dark-first, subtle animations"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダーク基調で、きめ細やかなアニメーション"
+          }
         }
       }
     },
@@ -610,6 +832,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Switched to theme %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマ %@ に切り替えました"
           }
         }
       }
@@ -629,6 +857,12 @@
             "state": "translated",
             "value": "Failed to install theme %@: %@"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマ %@ のインストールに失敗しました：%@"
+          }
         }
       }
     },
@@ -646,6 +880,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Created config file for %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ の設定ファイルを作成しました"
           }
         }
       }
@@ -665,6 +905,12 @@
             "state": "translated",
             "value": "No posts yet"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記事がまだありません"
+          }
         }
       }
     },
@@ -682,6 +928,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Click New Post to start your first post."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「新規記事」をクリックして最初の記事を書きましょう。"
           }
         }
       }
@@ -701,6 +953,12 @@
             "state": "translated",
             "value": "No pages yet"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ページがまだありません"
+          }
         }
       }
     },
@@ -718,6 +976,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "This site has no pages yet. Click New Page in the toolbar to create your first page."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このサイトにはまだページがありません。ツールバーの「新規ページ」で最初のページを作成してください。"
           }
         }
       }
@@ -737,6 +1001,12 @@
             "state": "translated",
             "value": "No themes installed"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマがまだありません"
+          }
         }
       }
     },
@@ -754,6 +1024,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Click Install Theme in the top right to pick from recommendations, or enter an npm package name."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右上の「テーマをインストール」からおすすめを選ぶか、npm パッケージ名を入力してインストールしてください。"
           }
         }
       }
@@ -773,6 +1049,12 @@
             "state": "translated",
             "value": "Install Theme"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマをインストール"
+          }
         }
       }
     },
@@ -790,6 +1072,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存"
           }
         }
       }
@@ -809,6 +1097,12 @@
             "state": "translated",
             "value": "Cancel"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
         }
       }
     },
@@ -826,6 +1120,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
           }
         }
       }
@@ -845,6 +1145,12 @@
             "state": "translated",
             "value": "Activate"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効化"
+          }
         }
       }
     },
@@ -862,6 +1168,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Configure"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
           }
         }
       }
@@ -881,6 +1193,12 @@
             "state": "translated",
             "value": "Re-check"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再チェック"
+          }
         }
       }
     },
@@ -898,6 +1216,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Install Dependencies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "依存関係をインストール"
           }
         }
       }
@@ -917,6 +1241,12 @@
             "state": "translated",
             "value": "Create"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作成"
+          }
         }
       }
     },
@@ -934,6 +1264,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Create Page"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ページを作成"
           }
         }
       }
@@ -953,6 +1289,12 @@
             "state": "translated",
             "value": "Current: %@"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在：%@"
+          }
         }
       }
     },
@@ -970,6 +1312,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not set"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未設定"
           }
         }
       }
@@ -989,6 +1337,12 @@
             "state": "translated",
             "value": "In Use"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用中"
+          }
         }
       }
     },
@@ -1006,6 +1360,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enabled"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効"
           }
         }
       }
@@ -1025,6 +1385,12 @@
             "state": "translated",
             "value": "Toolchain"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ツールチェーン"
+          }
         }
       }
     },
@@ -1042,6 +1408,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Read zsh configuration"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsh 設定を読み込む"
           }
         }
       }
@@ -1061,6 +1433,12 @@
             "state": "translated",
             "value": "zsh config file path (optional)"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsh 設定ファイルのパス（任意）"
+          }
         }
       }
     },
@@ -1078,6 +1456,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "hexo executable path (optional)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo 実行ファイルのパス（任意）"
           }
         }
       }
@@ -1097,6 +1481,12 @@
             "state": "translated",
             "value": "Install a new theme"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しいテーマをインストール"
+          }
         }
       }
     },
@@ -1114,6 +1504,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pick from recommendations"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "おすすめから選ぶ"
           }
         }
       }
@@ -1133,6 +1529,12 @@
             "state": "translated",
             "value": "Enter package name"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パッケージ名を入力"
+          }
         }
       }
     },
@@ -1150,6 +1552,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "e.g.: hexo-theme-yun"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例：hexo-theme-yun"
           }
         }
       }
@@ -1169,6 +1577,12 @@
             "state": "translated",
             "value": "Enter the full npm package name (hexo-theme-xxx or @scope/hexo-theme-xxx)"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完全な npm パッケージ名を入力します。hexo-theme-xxx や @scope/hexo-theme-xxx の形式に対応しています"
+          }
         }
       }
     },
@@ -1186,6 +1600,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Install"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール"
           }
         }
       }
@@ -1205,6 +1625,12 @@
             "state": "translated",
             "value": "Themes"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマ管理"
+          }
         }
       }
     },
@@ -1222,6 +1648,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Install Theme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマをインストール"
           }
         }
       }
@@ -1241,6 +1673,12 @@
             "state": "translated",
             "value": "Current: %@"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在：%@"
+          }
         }
       }
     },
@@ -1258,6 +1696,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "No themes installed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマがまだありません"
           }
         }
       }
@@ -1277,6 +1721,12 @@
             "state": "translated",
             "value": "Click Install Theme in the top right to pick from recommendations, or enter an npm package name."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右上の「テーマをインストール」からおすすめを選ぶか、npm パッケージ名を入力してインストールしてください。"
+          }
         }
       }
     },
@@ -1294,6 +1744,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Install a new theme"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しいテーマをインストール"
           }
         }
       }
@@ -1313,6 +1769,12 @@
             "state": "translated",
             "value": "Pick from recommendations"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "おすすめから選ぶ"
+          }
         }
       }
     },
@@ -1330,6 +1792,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enter package name"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パッケージ名を入力"
           }
         }
       }
@@ -1349,6 +1817,12 @@
             "state": "translated",
             "value": "Cancel"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
         }
       }
     },
@@ -1366,6 +1840,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activate"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効化"
           }
         }
       }
@@ -1385,6 +1865,12 @@
             "state": "translated",
             "value": "Configure"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
         }
       }
     },
@@ -1402,6 +1888,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "In Use"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用中"
           }
         }
       }
@@ -1421,6 +1913,12 @@
             "state": "translated",
             "value": "Enabled"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効"
+          }
         }
       }
     },
@@ -1438,6 +1936,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Theme Market"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーママーケット"
           }
         }
       }
@@ -1457,6 +1961,12 @@
             "state": "translated",
             "value": "Browse curated themes and all hexo-theme-* packages on npm, install and preview in one click."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan のおすすめと npm 上のすべての hexo-theme-* パッケージを参照し、ワンクリックでインストールしてプレビューできます。"
+          }
         }
       }
     },
@@ -1474,6 +1984,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allow Online"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンラインを許可"
           }
         }
       }
@@ -1493,6 +2009,12 @@
             "state": "translated",
             "value": "Done"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了"
+          }
         }
       }
     },
@@ -1510,6 +2032,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Installed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール済み"
           }
         }
       }
@@ -1529,6 +2057,12 @@
             "state": "translated",
             "value": "Market"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーママーケット"
+          }
         }
       }
     },
@@ -1546,6 +2080,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Preview"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プレビュー"
           }
         }
       }
@@ -1565,6 +2105,12 @@
             "state": "translated",
             "value": "No themes installed"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール済みのテーマはありません"
+          }
         }
       }
     },
@@ -1582,6 +2128,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pick one from the market in the middle, or enter an npm package name on the right."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中央のマーケットから選ぶか、右側で npm パッケージ名を入力してください。"
           }
         }
       }
@@ -1601,6 +2153,12 @@
             "state": "translated",
             "value": "Loading…"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み込み中…"
+          }
         }
       }
     },
@@ -1618,6 +2176,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Search themes (hexo, yun, fluid…)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマを検索（hexo、yun、fluid…）"
           }
         }
       }
@@ -1637,6 +2201,12 @@
             "state": "translated",
             "value": "Pick a theme to view details"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーマを選んで詳細を表示"
+          }
         }
       }
     },
@@ -1654,6 +2224,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Left: installed. Middle: market. Right: preview of the selected theme."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左はインストール済みのテーマ、中央はマーケット、右は選択したテーマのプレビューです。"
           }
         }
       }
@@ -1673,6 +2249,12 @@
             "state": "translated",
             "value": "Author: %@"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作者：%@"
+          }
         }
       }
     },
@@ -1690,6 +2272,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Official demo preview"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公式デモのプレビュー"
           }
         }
       }
@@ -1709,6 +2297,12 @@
             "state": "translated",
             "value": "No homepage URL available, skipping preview."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公式サイトの URL がないため、プレビューを省略します。"
+          }
         }
       }
     },
@@ -1726,6 +2320,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open in Safari"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safari で開く"
           }
         }
       }
@@ -1745,6 +2345,12 @@
             "state": "translated",
             "value": "Install this theme"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このテーマをインストール"
+          }
         }
       }
     },
@@ -1762,6 +2368,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Installing…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール中…"
           }
         }
       }
@@ -1781,6 +2393,12 @@
             "state": "translated",
             "value": "npm install + switch the current theme. After install, runs a cross-theme migration for shared keys."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "npm でパッケージを入れて現在のテーマを切り替えます。完了後、共通項目の引き継ぎ（テーマ間の移行）が自動で実行されます。"
+          }
         }
       }
     },
@@ -1798,6 +2416,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Network Access Disclosure"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ネットワークアクセスの説明"
           }
         }
       }
@@ -1817,6 +2441,12 @@
             "state": "translated",
             "value": "HexoMan wants to access the internet to extend the theme market"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan がテーママーケットを拡充するためにインターネットへのアクセスを求めています"
+          }
         }
       }
     },
@@ -1834,6 +2464,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "HexoMan only accesses the npm registry (registry.npmjs.org) to search for hexo-theme-* packages. Read-only, no uploads, no cookies, no site info shared. Everything else (shell, git, file IO) stays offline."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan は hexo-theme-* パッケージの検索に npm レジストリ（registry.npmjs.org）へアクセスするだけです。読み取りのみで、アップロードも Cookie の送信もサイト情報の送信も行いません。ほかの機能（コマンド実行、Git、ファイル入出力）はすべてオフラインです。"
           }
         }
       }
@@ -1853,6 +2489,12 @@
             "state": "translated",
             "value": "Host: registry.npmjs.org"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ホスト：registry.npmjs.org"
+          }
         }
       }
     },
@@ -1870,6 +2512,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Data flow: GET package metadata only (name, version, description, homepage, downloads)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信するデータ：パッケージ情報の取得（名前、バージョン、説明、公式サイト、ダウンロード数）のみ"
           }
         }
       }
@@ -1889,6 +2537,12 @@
             "state": "translated",
             "value": "When: when you open the theme market and search; no background polling"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "実行される場面：テーママーケットを開いて検索したときのみ。バックグラウンドでの定期通信はありません"
+          }
         }
       }
     },
@@ -1906,6 +2560,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "How to disable: Diagnostics page → \"Allow online theme search\" toggle"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無効化の方法：診断ページ →「テーマ一覧のオンライン補完を許可」のスイッチ"
           }
         }
       }
@@ -1925,6 +2585,12 @@
             "state": "translated",
             "value": "Don't ask again"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次回から確認しない"
+          }
         }
       }
     },
@@ -1942,6 +2608,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not now"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今回は使わない"
           }
         }
       }
@@ -1961,6 +2633,12 @@
             "state": "translated",
             "value": "Allow"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "許可して開く"
+          }
         }
       }
     },
@@ -1978,6 +2656,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Migrate shared keys"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共通項目を移行"
           }
         }
       }
@@ -1997,6 +2681,12 @@
             "state": "translated",
             "value": "From %@ to %@: the shared keys below exist in both. Carry over current values."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ から %@ へ：以下の共通項目は両方に存在するので、現在の値を新しいテーマへ引き継げます。"
+          }
         }
       }
     },
@@ -2014,6 +2704,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Only check items you know the new theme supports. Misapplying values can break the new theme."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しいテーマでも対応していると確認できた項目だけにチェックを入れてください。値を誤って移すと、新しいテーマの表示が壊れることがあります。"
           }
         }
       }
@@ -2033,6 +2729,12 @@
             "state": "translated",
             "value": "Skip"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スキップ"
+          }
         }
       }
     },
@@ -2050,6 +2752,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apply Selected"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択した項目を適用"
           }
         }
       }
@@ -2069,6 +2777,12 @@
             "state": "translated",
             "value": "Toolchain & Environment"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ツールチェーンと実行環境"
+          }
         }
       }
     },
@@ -2086,6 +2800,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Install guides and FAQ for the tools HexoMan relies on (Node, Git, Hexo)."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan が使うツール（Node、Git、Hexo）のインストール方法とよくある質問をまとめています。"
           }
         }
       }
@@ -2105,6 +2825,12 @@
             "state": "translated",
             "value": "Before You Start"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめる前に"
+          }
         }
       }
     },
@@ -2122,6 +2848,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "HexoMan ships no runtime of its own — it calls the Node, npm, Git and Hexo you have installed on your system."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan は実行環境を一切同梱していません。すでにシステムにある Node、npm、Git、Hexo を呼び出して使います。"
           }
         }
       }
@@ -2141,6 +2873,12 @@
             "state": "translated",
             "value": "You need: Node.js 18 or later + Git. Hexo does not need to be installed manually."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必要なもの：Node.js 18 以上と Git。Hexo は手動で入れる必要はありません。"
+          }
         }
       }
     },
@@ -2158,6 +2896,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Homebrew is the recommended way to install Node and Git. Otherwise grab the official installers from the nodes.org / git-scm.com."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node と Git は Homebrew で入れるのがおすすめです。Homebrew を使わない場合は公式サイトからインストーラーを取得してください。"
           }
         }
       }
@@ -2177,6 +2921,12 @@
             "state": "translated",
             "value": "Click \"Re-check\" after installing so HexoMan refreshes the toolchain status."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール後に「再チェック」をクリックすると、HexoMan がツールチェーンの状態を更新します。"
+          }
         }
       }
     },
@@ -2191,6 +2941,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node.js"
+          }
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "Node.js"
@@ -2213,6 +2969,12 @@
             "state": "translated",
             "value": "HexoMan needs Node.js to run the hexo CLI. Required: 18 or later."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan は hexo コマンドラインツールを動かすために Node.js を使います。18 以上が必要です。"
+          }
         }
       }
     },
@@ -2230,6 +2992,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hexo 7+ requires Node 18, so does Hexo 8."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 7 以降は Node 18 が必須で、Hexo 8 も同じです。"
           }
         }
       }
@@ -2249,6 +3017,12 @@
             "state": "translated",
             "value": "npm is bundled with Node — no separate install needed."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node を入れると npm も一緒に入るので、個別にインストールする必要はありません。"
+          }
         }
       }
     },
@@ -2266,6 +3040,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "GUI apps (HexoMan launched from the Dock) don't read ~/.zshrc by default — brew-installed Node can be \"missing\" inside HexoMan. See the Shell Environment section."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GUI アプリ（HexoMan を Dock から起動するもの）は既定で ~/.zshrc を読まないため、brew で入れた Node が「見つからない」ことがあります。シェルの環境についての章を参照してください。"
           }
         }
       }
@@ -2285,6 +3065,12 @@
             "state": "translated",
             "value": "HexoMan auto-installs a hexo-cli copy under its own data dir — does not pollute your global node_modules."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan は一時ディレクトリに hexo-cli を自動で用意し、マシンのグローバル node_modules を汚しません。"
+          }
         }
       }
     },
@@ -2302,6 +3088,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Homebrew install (recommended):"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew でインストール（推奨）："
           }
         }
       }
@@ -2321,6 +3113,12 @@
             "state": "translated",
             "value": "Official installer:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公式インストーラー："
+          }
         }
       }
     },
@@ -2338,6 +3136,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check current version:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在バージョンを確認："
           }
         }
       }
@@ -2357,6 +3161,12 @@
             "state": "translated",
             "value": "Version Managers (nvm / fnm)"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン管理（nvm / fnm）"
+          }
         }
       }
     },
@@ -2374,6 +3184,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "When you need multiple Node versions on the same machine, use nvm or fnm. HexoMan detects nvm-installed Node via /opt/homebrew/Cellar and ~/.nvm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同じマシンで複数の Node バージョンを切り替えたいときは nvm や fnm を使ってください。HexoMan は ~/.nvm を通して nvm で入れた Node を検出します。"
           }
         }
       }
@@ -2393,6 +3209,12 @@
             "state": "translated",
             "value": "After nvm install, open a new terminal and `node -v` should work."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nvm を入れたあと、新しいターミナルを開いて `node -v` が使えることを確認してください。"
+          }
         }
       }
     },
@@ -2410,6 +3232,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "nvm puts Node under ~/.nvm/versions/node/<v>/bin/node. HexoMan scans this automatically."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nvm は Node を ~/.nvm/versions/node/<v>/bin/node に置きます。HexoMan はこのディレクトリを自動的に走査します。"
           }
         }
       }
@@ -2429,6 +3257,12 @@
             "state": "translated",
             "value": "fnm via Homebrew puts Node in a path HexoMan also detects."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "fnm を Homebrew 経由で入れた場合も、HexoMan は自動的に見つけます。"
+          }
         }
       }
     },
@@ -2446,6 +3280,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Install nvm one-shot (modifies ~/.zshrc):"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nvm をまとめてインストール（スクリプトが ~/.zshrc を書き換えます）："
           }
         }
       }
@@ -2465,6 +3305,12 @@
             "state": "translated",
             "value": "Install the LTS release:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LTS をインストール："
+          }
         }
       }
     },
@@ -2483,6 +3329,12 @@
             "state": "translated",
             "value": "Set as default version:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デフォルトに設定："
+          }
         }
       }
     },
@@ -2497,6 +3349,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git"
+          }
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "Git"
@@ -2519,6 +3377,12 @@
             "state": "translated",
             "value": "Hexo itself doesn't use Git, but HexoMan's version control (commit, pull, push) relies on it."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo 自体は Git を使いませんが、HexoMan のバージョン管理機能（コミット、プル、プッシュ）はすべて Git に依存しています。"
+          }
         }
       }
     },
@@ -2536,6 +3400,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Xcode ships Git: run `xcode-select --install`."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode に付属している Git を使う：`xcode-select --install` を実行するだけです。"
           }
         }
       }
@@ -2555,6 +3425,12 @@
             "state": "translated",
             "value": "Or install a newer version via Homebrew."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew でより新しいバージョンを入れることもできます。"
+          }
         }
       }
     },
@@ -2572,6 +3448,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Homebrew:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew："
           }
         }
       }
@@ -2591,6 +3473,12 @@
             "state": "translated",
             "value": "Xcode Command Line Tools:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xcode コマンドラインツール："
+          }
         }
       }
     },
@@ -2609,6 +3497,12 @@
             "state": "translated",
             "value": "Check version:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョンを確認："
+          }
         }
       }
     },
@@ -2623,6 +3517,12 @@
           }
         },
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hexo"
+          }
+        },
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "Hexo"
@@ -2645,6 +3545,12 @@
             "state": "translated",
             "value": "HexoMan doesn't rely on a global hexo CLI — the hexo dependency in your site's node_modules is enough."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan はグローバルの hexo コマンドラインに依存しません。サイトの npm 依存関係に hexo が入っていれば十分です。"
+          }
         }
       }
     },
@@ -2662,6 +3568,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "When creating a new site, HexoMan installs a hexo-cli copy via your npm (under HexoMan's own data dir)."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規サイトを作るときに、HexoMan は npm を使って hexo-cli を用意します（HexoMan 専用のディレクトリ内）。"
           }
         }
       }
@@ -2681,6 +3593,12 @@
             "state": "translated",
             "value": "After a successful site init, npm install pulls hexo into the site's local node_modules. From then on, hexo uses the local version."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「新規サイト」の作成に成功すると、そのサイトの中で npm install が実行され、hexo がサイトローカルの node_modules に入ります。あとは hexo コマンドが常にサイトのローカル版を使います。"
+          }
         }
       }
     },
@@ -2698,6 +3616,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "If node / npm is missing, site creation fails with a hint to install Node.js first."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "node / npm がないと、サイトの作成は失敗し、先に Node.js を入れるよう案内します。"
           }
         }
       }
@@ -2717,6 +3641,12 @@
             "state": "translated",
             "value": "Install hexo locally to a site:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo をサイトローカルに入れる："
+          }
         }
       }
     },
@@ -2734,6 +3664,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check hexo version (uses the site's local dep):"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hexo のバージョンを確認（サイトローカルの依存を使用）："
           }
         }
       }
@@ -2753,6 +3689,12 @@
             "state": "translated",
             "value": "Shell Environment (zsh config)"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シェル環境（zsh 設定）"
+          }
         }
       }
     },
@@ -2770,6 +3712,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "HexoMan reads your PATH via ~/.zshenv / ~/.zprofile / ~/.zshrc. Missing this step is the cause of \"hexo -v works in terminal but HexoMan says it's missing\"."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan は ~/.zshenv / ~/.zprofile / ~/.zshrc を通して PATH を読み取ります。ここが欠けると「ターミナルでは hexo -v が通るのに、HexoMan では hexo が見つからない」という症状になります。"
           }
         }
       }
@@ -2789,6 +3737,12 @@
             "state": "translated",
             "value": "macOS GUI apps do not read ~/.zshrc — by Apple design."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS の GUI アプリは ~/.zshrc を読みません。これは Apple の設計によるものです。"
+          }
         }
       }
     },
@@ -2806,6 +3760,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "After enabling \"Read zsh configuration\" in Diagnostics, HexoMan starts a login shell via zsh -l -c to get the full PATH."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan は診断ページで「zsh 設定を読み込む」を有効にすると、`zsh -l -c 'echo $PATH'` でログインシェルを起動し、完全な PATH を取得します。"
           }
         }
       }
@@ -2825,6 +3785,12 @@
             "state": "translated",
             "value": "If your PATH lives in a non-standard rc (e.g. .bashrc, .zshenv.local), point HexoMan to it via the \"zsh config file path\" field."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PATH が標準以外の rc ファイル（.bashrc、.zshenv.local など）にある場合は、診断ページの「zsh 設定ファイルのパス」で指定してください。"
+          }
         }
       }
     },
@@ -2842,6 +3808,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Common reasons PATH doesn't take effect: rc only exports to interactive shell, brew prefix typo, mixing zsh and bash."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PATH が効かない主な原因：rc ファイルが対話シェルにだけ export している、brew の prefix パスの誤り、zsh と bash の混同。"
           }
         }
       }
@@ -2861,6 +3833,12 @@
             "state": "translated",
             "value": "Troubleshooting"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トラブルシューティング"
+          }
         }
       }
     },
@@ -2878,6 +3856,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "The most common toolchain issues."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "よくあるツールの問題をまとめました。"
           }
         }
       }
@@ -2897,6 +3881,12 @@
             "state": "translated",
             "value": "\"HexoMan can't find hexo\" — enable \"Read zsh configuration\" in Diagnostics, or set the hexo path manually."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「HexoMan が hexo を見つけられない」—— 診断ページの「zsh 設定を読み込む」を有効にするか、hexo の実行ファイルのパスを直接指定してください。"
+          }
         }
       }
     },
@@ -2914,6 +3904,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"node -v works in terminal, HexoMan says missing\" — same as above."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「ターミナルでは node -v が動くのに HexoMan では見つからない」—— 上と同じです。"
           }
         }
       }
@@ -2933,6 +3929,12 @@
             "state": "translated",
             "value": "\"hexo says EACCES\" — never sudo-install global packages. Use Homebrew or nvm."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「hexo コマンドが EACCES エラーになる」—— sudo でグローバルパッケージを入れないでください。Homebrew か nvm で Node を入れます。"
+          }
         }
       }
     },
@@ -2950,6 +3952,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"Generated site unreachable\" — check the url field in _config.yml. Hexo doesn't fill it automatically."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「生成したサイトを開けない」—— _config.yml の url フィールドを確認してください。Hexo はこの値を自動で埋めません。"
           }
         }
       }
@@ -2969,6 +3977,12 @@
             "state": "translated",
             "value": "\"Node too old\" — upgrade to 18+. HexoMan flags this in Diagnostics."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「Node のバージョンが古い」—— 18 以上に更新してください。HexoMan が診断ページで警告します。"
+          }
         }
       }
     },
@@ -2986,6 +4000,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Locate node:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "node の場所を確認："
           }
         }
       }
@@ -3005,6 +4025,12 @@
             "state": "translated",
             "value": "Check PATH:"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PATH を確認："
+          }
         }
       }
     },
@@ -3022,6 +4048,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inspect end of zsh config:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsh 設定の末尾を確認："
           }
         }
       }
@@ -3041,6 +4073,12 @@
             "state": "translated",
             "value": "Privacy & Network Access"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プライバシーとネットワークアクセス"
+          }
         }
       }
     },
@@ -3058,6 +4096,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "HexoMan's default promise: no networking, no uploads, no site info shared."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HexoMan の既定の約束：通信しない、何もアップロードしない、サイト情報を送信しない。"
           }
         }
       }
@@ -3077,6 +4121,12 @@
             "state": "translated",
             "value": "With everything disabled, HexoMan is fully offline — all commands run locally, no network calls."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての機能を無効にした場合、HexoMan は完全にオフラインです。コマンドはすべてローカルで実行し、外部には接続しません。"
+          }
         }
       }
     },
@@ -3094,6 +4144,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "If the user enables \"online theme search\" in the theme market, HexoMan calls npm registry (registry.npmjs.org) read-only to search theme packages. This is off by default."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テーママーケットで「オンライン補完」を有効にした場合、HexoMan は npm レジストリ（registry.npmjs.org）に読み取り専用で接続してテーマパッケージを検索します。既定では無効です。"
           }
         }
       }
@@ -3113,6 +4169,12 @@
             "state": "translated",
             "value": "When online is enabled, NetworkAccessPolicy.plist declares the access scope — tools like Little Snitch recognize it automatically."
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンラインを有効にすると、HexoMan は NetworkAccessPolicy.plist でアクセス範囲を宣言します。Little Snitch などのツールが自動的に認識します。"
+          }
         }
       }
     },
@@ -3130,6 +4192,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Every network toggle is visible in Settings and takes effect immediately when turned off."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「オンラインを許可」のスイッチはすべて設定に表示され、無効にするとすぐ反映されます。"
           }
         }
       }
@@ -3149,6 +4217,12 @@
             "state": "translated",
             "value": "Environment"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "環境"
+          }
         }
       }
     },
@@ -3166,6 +4240,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "See also"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "関連章"
           }
         }
       }
@@ -3185,6 +4265,12 @@
             "state": "translated",
             "value": "Copied"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コピーしました"
+          }
         }
       }
     },
@@ -3202,6 +4288,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recently Modified"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更が新しい順"
           }
         }
       }
@@ -3221,6 +4313,12 @@
             "state": "translated",
             "value": "Oldest First"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更が古い順"
+          }
         }
       }
     },
@@ -3238,6 +4336,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Title A→Z"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タイトル A→Z"
           }
         }
       }
@@ -3257,6 +4361,12 @@
             "state": "translated",
             "value": "Title Z→A"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タイトル Z→A"
+          }
         }
       }
     },
@@ -3275,6 +4385,12 @@
             "state": "translated",
             "value": "Filename A→Z"
           }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイル名 A→Z"
+          }
         }
       }
     },
@@ -3292,6 +4408,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Words (high to low)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字数の多い順"
           }
         }
       }

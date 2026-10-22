@@ -61,9 +61,31 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     /// 解析任意字符串。失败回落到 `.system`（最不坏的选择）。
     static func resolve(_ raw: String) -> AppLanguage {
-        if let match = AppLanguage(rawValue: raw) { return match }
+        if let match = AppLanguage(rawValue: raw), match.hasTranslations {
+            return match
+        }
         // 兼容旧版写入的 zh_CN 之类（早期调试里手填过）。
         if raw.hasPrefix("zh") { return .zhHans }
         return .system
+    }
+
+    /// 这个语言档**真的带了翻译**吗。
+    ///
+    /// 存在的意义是：万一某个语言档只有枚举项、catalog 里一条都没有，
+    /// 选中它时 SwiftUI 找不到对应的 `.lproj`，每个 `Text` 都退回
+    /// 开发语言（catalog 的 sourceLanguage 是 en）。结果不是「那个语言的界面」，
+    /// 而是**中英混杂**——一半 key 走 fallback，一半是硬编码中文，
+    /// 看起来就是「这个语言整个坏掉」。
+    ///
+    /// 所以让没有翻译的语言档不能被选中/恢复：退到 `.system` 至少
+    /// 是一套自洽的语言，比掉进混杂状态好。
+    ///
+    /// `ja` 现在是 **true** —— 184 条日文已全部补入 `Localizable.xcstrings`，
+    /// bundle 产出 `ja.lproj`。加新语言档时记得同步这里。
+    var hasTranslations: Bool {
+        switch self {
+        case .system, .zhHans, .en, .ja:
+            return true
+        }
     }
 }

@@ -3,10 +3,78 @@
 记这里的是「改了会影响其他维护者的判断」的事。不写实现细节（commit 里看），
 不写 UI 文案（审查时被覆盖）。
 
+## 2026-10-21  ·  联网搜索为什么"看起来能用"其实一直失效
+
+上一版（v0.7.2）的主题搜索修复里，我验证了「请求能发出去」就下结论说搜索可用，
+这是错的。真实情况是**一条在线结果都没进来**，用户看到的永远是离线那 10 条硬编码。
+教训记在这里，因为它反映的是一种很容易复发的判断错误。
+
+### 教训：验证网络功能要验到"结果"，不是"请求"
+
+npm 搜索接口的 `package.publisher` 是**对象** `{"email":..,"username":..}`，
+而解码结构里声明的是 `String?`。`Codable` 遇到类型不符直接抛 `typeMismatch`，
+整个 `objects` 数组全废。而 `fetchOnline` 把 decode 包在 `try` 里，
+catch 之后静默 `return offlineCatalog(query:)` —— **失败被伪装成"没搜到"**。
+
+当时的验证只做了两件事：确认 settings 里 `onlineThemeSearch == true`、
+用 curl 确认 registry 返回 200 和 25 条 JSON。两件都成立，
+但**没有一件能证明这些 JSON 被解码成了模型对象**。
+
+用旧代码跑真实响应复现出来的错误：
+`typeMismatch: Expected value of type String. Path: objects[0].package.publisher`
+
+**判断依据**：验证网络功能时，"能拿到响应"和"能用上响应"是两件事。
+凡是 catch 之后有静默 fallback 的路径，必须单独验证 fallback 之前的那个返回值，
+否则 fallback 会把任何失败都伪装成正常的空结果。
+另外，本地化的 `summaryDescription` 也有同样的"静默失败"特征
+（查不到键就回落成通用的"主题包"），所以它当时也没能暴露问题。
+
+### 配套改动：失败必须留痕
+
+新增 `ThemeLog`（os_log，subsystem `com.skyc8266.hexoman`），成功 / 请求失败 /
+解码失败各一条。以后"到底有没有真的发请求"可以直接看日志，不靠猜。
+Console.app 按 subsystem 过滤，或 `log stream --predicate 'subsystem == "com.skyc8266.hexoman"'`。
+
+### 教训：WKWebView 复用时 URL 变了必须自己 reload
+
+`ThemePreviewWebView.updateNSView` 原本是空的，注释里假设
+「URL 变就是重建 view（HexoMan 没这场景）」。这个假设是错的：
+详情面板复用同一个 `WKWebView`，SwiftUI 不会重建它，
+于是它永远显示**第一次加载**的页面。默认选中 yun 时，症状就是
+"点开任何主题，预览里都是 yun"。
+
+**判断依据**：任何"用户切换选中项 → 右侧/下方内容跟着变"的布局，
+如果右侧用的是有状态的原生控件（`WKWebView`、`NSTableView`、`Map` 等），
+都要在 `update*` 里显式处理状态同步，不能指望 SwiftUI 重建视图。
+
+### 顺带：别把代码托管页当"演示站"
+
+实测 npm 搜索 25 条结果里，11 条 homepage 指向 GitHub 仓库页、4 条根本没有
+homepage。把仓库页塞进"官方 demo 预览"位置是误导。现在内嵌预览只认真正的站点，
+仓库页改为给外链，并说明为什么没有预览。
+
+## 2026-10-21  ·  待处理：`LocalizedStringKey` 插值陷阱（29 处）
+
+全仓扫描发现 29 处 `Text("中文 \(变量)")` 形式，xcstrings 里没有对应键。
+这类写法走 `LocalizedStringKey` 插值，查不到键时会 fallback 显示**字面量原文**，
+于是界面上出现 `hexo：%@`、`共 %@ 个文件` 这种裸露占位符。
+
+**当前影响范围**：切到英文 / 日语时才会暴露；中文界面下正常
+（源语言 fallback 成原文，恰好就是想要的文案）。
+已修 `ContentView` 里状态栏那一处（`footer.hexoSource`），其余 28 处未动。
+
+**为什么没一次改完**：这 28 处要逐条抽成「前缀（本地化键）+ 值（String 重载）」，
+或者补齐对应键，牵涉到每个页面的文案判断，属于独立的批量工作，
+不适合和这次的联网搜索修复混在一个提交里。已在 v0.7.3 的说明里不出现，
+避免把未修的东西说成已修。
+
+**判断依据**：新增任何带插值的 `Text` 时，要么用 `String(localized:)` + 显式参数，
+要么拆成前缀 Text + 值 Text。不要写 `Text("前缀 \(值)")`。
+
 ## 2026-10-21  ·  主题市场与备份页的交互失效
 
 三个用户可见的故障：主题市场搜不到东西、点某个主题没反应、备份页一进去就卡在
-「正在统计…」。根因彼此独立，但有一类共同教训值得记下来。
+「正在统计…」。根因彼此独立。
 
 ### 教训：macOS 上不要用 `List(selection:)` 做「点一行选中」
 
@@ -34,7 +102,7 @@ List 选中语义差异影响。
 里的 `refreshPlan()` 重复扫站点。
 
 但 SwiftUI 这次的回调发生在 **`onAppear` 之前**，那时布尔量还是 false，
-于是唯一一次真正需要的首刷被丢掉了，统计结果永远不落地。
+于是唯一一次真正需要的首刷被丢掉了。
 
 改法不再依赖 `onAppear` 与 `onChange` 的相对时序：改成记住
 「上次统计用的站点路径 + 上次统计用的开关值」，值没变就不重扫。
@@ -44,6 +112,15 @@ List 选中语义差异影响。
 **判断依据**：想靠一个「首次调用」标记位来去重时，先确认那个回调真的晚于
 你设标记的位置。SwiftUI 里 `onChange` 的首调早于 `onAppear`，靠时序假设写的去重
 逻辑都很脆。改成「比对上一次用的输入值」就没有顺序依赖。
+
+> **⚠️ 这条不是备份页打不开的根因。** 用户实测备份页问题在这次修复后**依旧存在**。
+> 实测 `BackupManager.plan` 对 152MB 的真实站点只要 17ms / 28 文件，
+> 站点内也没有会触发遍历死循环的符号链接——即使上述首刷真的被丢掉，
+> 结果也该是 17ms 后就出来，不会表现为「无法操作」。
+> 所以备份页的真实根因**尚未定位**，待查。
+> 目前仍存疑的嫌疑点：`loadBackups()` 把 `isLoading = true` 之后整个内容区
+> 被 `ProgressView` 独占，而 `isLoading = false` 只写在 `MainActor.run` 内部；
+> `guard let site = model.currentSite else { return }` 又在设 `isLoading` 之前返回。
 
 ### 顺带修的：本地化 key 的大小写
 
@@ -87,9 +164,11 @@ JP 语言档（`AppLanguage.ja`）已经在枚举里声明，但 `Localizable.xc
 
 ### 没动的与原因
 
-- **JP 翻译**：未做。`Localizable.xcstrings` 里 `ja` 项不存在，
-  `AppLanguage.ja` 选了之后 xcstrings 查不到就走英文 fallback。
-  按 Q1=C 这一版不加。
+- **JP 翻译**：**已于 2026-10-22 补齐**（184 条，见同日条目）。
+  当时这一条记录的是「未做 / 不在这一版范围」，现已过期，保留仅为说明决策来历。
+  `AppLanguage.hasTranslations` 随之从 `ja: false` 改为 `true`，
+  用来挡住「只有枚举项、没有一条翻译」的语言档——那种情况下选中它
+  会让界面变成一半 fallback 一半硬编码中文。
 - **大部分 toast 文案**：未本地化。`HexoManModel.toast: Toast`
   是 String 字段，已经创建出来的 toast 不会跟随语言切换。
   这是 Apple 框架的限制（toast.text 已经是某种语言的 String，
