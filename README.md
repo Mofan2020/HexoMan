@@ -43,12 +43,15 @@ A sidebar on the left switches sites and sections; the right pane holds the cont
 - One-click publish / convert to draft (flips `draft` in front-matter).
 - Delete goes to the Trash — recoverable.
 - Reveal in Finder.
+- Drop images onto the editor, paste a screenshot, or use "Insert image": the file lands in `source/images/<year>/` and a Markdown reference is inserted. Duplicate names get a suffix; HEIC is converted to PNG.
+- Filter the list by tag or category; the row menu copies the slug or the file path.
 
 ### Build & Preview
 
 - Top section shows the build environment: site path, Hexo source, exact command line to be executed.
 - Runs `hexo clean` and `hexo generate`.
 - Start/stop the local preview server; configurable port (1024–65535); shows the preview URL.
+- "Include drafts" switch: adds `--draft` to the command so draft posts show up locally (restart the preview to apply).
 - One-click open preview in browser, open `public` in Finder.
 - Shows build artifact status and file count.
 - Lower half is a live log console with a clear button.

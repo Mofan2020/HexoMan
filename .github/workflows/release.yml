@@ -149,7 +149,14 @@ jobs:
             echo
             echo "之后就可以正常双击启动了。"
             echo
-            cat changelog.md
+            # 仓库根有 release-notes.md 就用它当更新日志（按发版模板手写的
+            # 那份），没有才退回「两个 tag 之间的提交列表」——列表里全是
+            # 提交标题，用户读起来像在看 git log。
+            if [ -f release-notes.md ]; then
+              cat release-notes.md
+            else
+              cat changelog.md
+            fi
           } > release-notes.md
 
       - name: 上传 zip 作为 artifact
