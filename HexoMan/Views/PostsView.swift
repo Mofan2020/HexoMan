@@ -5,6 +5,7 @@
 //  文章列表：左列表 + 右详情。数据全部来自 HexoManModel，不直接碰文件系统。
 //
 
+import AppKit
 import SwiftUI
 
 struct PostsView: View {
@@ -99,10 +100,97 @@ struct PostsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+
+            facetBar
         }
         .padding(.horizontal, 12)
         .padding(.top, 10)
         .padding(.bottom, 8)
+    }
+
+    /// 标签 / 分类两档过滤。
+    ///
+    /// 用 `Menu` 而不是 `Picker`：切站点之后旧的过滤值可能已经不存在了，
+    /// `Picker` 的 tag 对不上时会显示成空白，`Menu` 至少标题永远是当前值。
+    /// 选项跟着当前站点里真实出现过的标签走，不写死。
+    @ViewBuilder
+    private var facetBar: some View {
+        let tags = model.allPostTags
+        let categories = model.allPostCategories
+        if !tags.isEmpty || !categories.isEmpty || model.hasPostFacetFilter {
+            HStack(spacing: 8) {
+                if !tags.isEmpty {
+                    Menu {
+                        Button("posts.filter.allTags") { model.postTagFilter = "" }
+                        Divider()
+                        ForEach(tags, id: \.self) { tag in
+                            Button {
+                                model.postTagFilter = (model.postTagFilter == tag) ? "" : tag
+                            } label: {
+                                if model.postTagFilter == tag {
+                                    Label(tag, systemImage: "checkmark")
+                                } else {
+                                    Text(tag)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label(
+                            model.postTagFilter.isEmpty
+                                ? String(localized: "posts.filter.tags")
+                                : model.postTagFilter,
+                            systemImage: "tag"
+                        )
+                        .font(.caption)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                    .help("posts.filter.byTag")
+                }
+
+                if !categories.isEmpty {
+                    Menu {
+                        Button("posts.filter.allCategories") { model.postCategoryFilter = "" }
+                        Divider()
+                        ForEach(categories, id: \.self) { category in
+                            Button {
+                                model.postCategoryFilter = (model.postCategoryFilter == category) ? "" : category
+                            } label: {
+                                if model.postCategoryFilter == category {
+                                    Label(category, systemImage: "checkmark")
+                                } else {
+                                    Text(category)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label(
+                            model.postCategoryFilter.isEmpty
+                                ? String(localized: "posts.filter.categories")
+                                : model.postCategoryFilter,
+                            systemImage: "folder"
+                        )
+                        .font(.caption)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                    .help("posts.filter.byCategory")
+                }
+
+                if model.hasPostFacetFilter {
+                    Button {
+                        model.clearPostFacets()
+                    } label: {
+                        Label("posts.filter.clear", systemImage: "xmark.circle")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.top, 2)
+        }
     }
 
     @ViewBuilder
@@ -117,7 +205,8 @@ struct PostsView: View {
             EmptyHint(
                 systemImage: "line.3.horizontal.decrease.circle",
                 title: "没有匹配的文章",
-                message: "当前筛选「\(model.postFilter.title)」加搜索词「\(model.postSearch)」没有命中任何文章，换个条件试试。"
+                message: "",
+                messageText: emptyListMessage
             )
         } else {
             List(selection: $selectedPostID) {
@@ -129,6 +218,13 @@ struct PostsView: View {
                             Button(post.isDraft ? "发布" : "转为草稿") { model.toggleDraft(post) }
                             Button("在访达中显示") { PostStore.reveal(post) }
                             Divider()
+                            Button("posts.action.copySlug") {
+                                copyToPasteboard(post.slug)
+                            }
+                            Button("posts.action.copyPath") {
+                                copyToPasteboard(post.filePath)
+                            }
+                            Divider()
                             Button("删除…", role: .destructive) {
                                 selectedPostID = post.id
                                 showingDeleteConfirm = true
@@ -139,6 +235,16 @@ struct PostsView: View {
             .listStyle(.inset)
             .alternatingRowBackgrounds()
         }
+    }
+
+    /// 空列表的时候说清楚是哪几个条件没命中——只写「没有匹配」会让用户
+    /// 以为文章丢了。
+    private var emptyListMessage: String {
+        var parts = ["筛选「\(model.postFilter.title)」"]
+        if !model.postTagFilter.isEmpty { parts.append("标签「\(model.postTagFilter)」") }
+        if !model.postCategoryFilter.isEmpty { parts.append("分类「\(model.postCategoryFilter)」") }
+        if !model.postSearch.isEmpty { parts.append("搜索词「\(model.postSearch)」") }
+        return parts.joined(separator: " + ") + " 没有命中任何文章。"
     }
 
     private var listFooter: some View {
@@ -342,6 +448,13 @@ struct PostsView: View {
     }
 
     // MARK: - 辅助
+
+    private func copyToPasteboard(_ text: String) {
+        guard !text.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        model.showToast("\(String(localized: "posts.copied"))：\(text)", kind: .success)
+    }
 
     private var selectedPost: BlogPost? {
         guard let id = selectedPostID else { return nil }

@@ -454,6 +454,14 @@ struct BuildView: View {
 
                 Spacer(minLength: 0)
 
+                Toggle(isOn: $model.previewDrafts) {
+                    Text("build.previewDrafts")
+                        .font(.callout)
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help("build.previewDrafts.help")
+
                 Button {
                     model.refreshAll()
                 } label: {
@@ -465,9 +473,12 @@ struct BuildView: View {
             }
 
             if model.isServerRunning {
-                Label("端口改动要重启预览才生效：先「停止预览」，改完再「启动预览」。", systemImage: "info.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("端口改动要重启预览才生效：先「停止预览」，改完再「启动预览」。", systemImage: "info.circle")
+                    Label("build.restart.drafts", systemImage: "info.circle")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
         }
         .padding(14)

@@ -227,6 +227,9 @@ struct EmptyHint: View {
     var systemImage: String
     var title: LocalizedStringKey
     var message: LocalizedStringKey
+    /// 拼出来的说明（比如「筛选 X + 标签 Y 没有命中」）。给了它就用它，
+    /// 因为这种句子是运行时拼的，进不了文案表。
+    var messageText: String?
 
     var body: some View {
         VStack(spacing: 10) {
@@ -235,8 +238,14 @@ struct EmptyHint: View {
                 .foregroundStyle(.tertiary)
             Text(title)
                 .font(.headline)
-            Text(message)
-                .font(.callout)
+            Group {
+                if let messageText {
+                    Text(verbatim: messageText)
+                } else {
+                    Text(message)
+                }
+            }
+            .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 380)

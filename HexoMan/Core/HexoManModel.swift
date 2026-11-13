@@ -96,9 +96,15 @@ final class HexoManModel: ObservableObject {
     @Published var selection: SidebarItem = .overview
     @Published var postSearch = ""
     @Published var postFilter: PostFilter = .all
+    /// 按标签过滤。空串表示不按标签过滤。
+    @Published var postTagFilter = ""
+    /// 按分类过滤。空串表示不按分类过滤。
+    @Published var postCategoryFilter = ""
     @Published var pageSearch = ""
     @Published var pageFilter: PageFilter = .all
     @Published var serverPort: Int = AppSettings.defaultPort
+    /// 预览是否连草稿一起渲染。改了要在预览页重启服务才生效。
+    @Published var previewDrafts: Bool = false
     @Published var toast: Toast?
     @Published var isBusy = false
 
@@ -276,6 +282,7 @@ final class HexoManModel: ObservableObject {
     init() {
         settings = SettingsStore.load()
         serverPort = settings.serverPort
+        previewDrafts = settings.previewDrafts
         customHexoPath = settings.customHexoPath
         sites = settings.sites.sorted { $0.lastOpened > $1.lastOpened }
 
@@ -310,6 +317,7 @@ final class HexoManModel: ObservableObject {
         settings.sites = sites
         settings.lastSitePath = currentSite?.path
         settings.serverPort = serverPort
+        settings.previewDrafts = previewDrafts
         SettingsStore.save(settings)
     }
 
@@ -457,6 +465,15 @@ final class HexoManModel: ObservableObject {
         case .draft: result = result.filter(\.isDraft)
         }
 
+        // 标签/分类过滤。站里没有这个标签了就当作没筛（切站点之后残留的
+        // 旧条件不该把一个好好的列表筛成空）。
+        if !postTagFilter.isEmpty, allPostTags.contains(postTagFilter) {
+            result = result.filter { $0.tags.contains(postTagFilter) }
+        }
+        if !postCategoryFilter.isEmpty, allPostCategories.contains(postCategoryFilter) {
+            result = result.filter { $0.categories.contains(postCategoryFilter) }
+        }
+
         let keyword = postSearch.trimmingCharacters(in: .whitespaces).lowercased()
         guard !keyword.isEmpty else { return result }
 
@@ -465,6 +482,26 @@ final class HexoManModel: ObservableObject {
                 || post.body.lowercased().contains(keyword)
                 || post.tags.contains { $0.lowercased().contains(keyword) }
         }
+    }
+
+    /// 当前站点里出现过的所有标签，按名字排序。
+    var allPostTags: [String] {
+        Array(Set(posts.flatMap(\.tags))).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    /// 当前站点里出现过的所有分类。
+    var allPostCategories: [String] {
+        Array(Set(posts.flatMap(\.categories))).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    /// 有没有在用标签/分类过滤。
+    var hasPostFacetFilter: Bool {
+        !postTagFilter.isEmpty || !postCategoryFilter.isEmpty
+    }
+
+    func clearPostFacets() {
+        postTagFilter = ""
+        postCategoryFilter = ""
     }
 
     /// 经过搜索和筛选后的页面列表。
@@ -1216,7 +1253,13 @@ final class HexoManModel: ObservableObject {
         // 少了这步，缓存未建立时会退回继承环境，brew 装的 hexo 就找不到。
         await shell.prewarmEnvironment()
 
-        let command = HexoService.server(site: site, port: serverPort, customPath: customHexoPath, runner: shell)
+        let command = HexoService.server(
+            site: site,
+            port: serverPort,
+            drafts: previewDrafts,
+            customPath: customHexoPath,
+            runner: shell
+        )
         let id = shell.startService(
             label: "hexo server",
             executable: command.executable,
@@ -1242,6 +1285,67 @@ final class HexoManModel: ObservableObject {
     var isServerRunning: Bool { serverJobID != nil }
 
     var previewURL: URL { HexoService.previewURL(port: serverPort) }
+
+    // MARK: - 插图
+
+    /// 把磁盘上的几张图存进当前站点，返回能直接插进正文的 Markdown（一张一行）。
+    ///
+    /// 单张失败不影响其余的：拖十张进来，坏的那张跳过并说明，剩下的照插。
+    func storeImages(at urls: [URL], base: String) -> [String] {
+        guard let site = currentSite else {
+            toast = Toast(text: "先选一个站点再插图", kind: .failure)
+            return []
+        }
+        let root = URL(fileURLWithPath: site.path)
+        var lines: [String] = []
+        var failed = 0
+        for url in urls {
+            guard let data = SiteMedia.data(for: url) else {
+                failed += 1
+                continue
+            }
+            do {
+                let stored = try SiteMedia.store(
+                    data: data,
+                    filename: url.lastPathComponent,
+                    site: root,
+                    base: base
+                )
+                lines.append(stored.markdown)
+            } catch {
+                failed += 1
+            }
+        }
+        if lines.isEmpty {
+            toast = Toast(text: failed > 0 ? "图片没能写进站点，见日志" : "没有可插入的图片", kind: .failure)
+        } else if failed > 0 {
+            toast = Toast(text: "插入了 \(lines.count) 张，\(failed) 张读不出来", kind: .info)
+        } else {
+            toast = Toast(text: "插入了 \(lines.count) 张图", kind: .success)
+        }
+        return lines
+    }
+
+    /// 剪贴板里的图（截图）走这条。
+    func storeImageData(_ data: Data, filename: String, base: String) -> String? {
+        guard let site = currentSite else {
+            toast = Toast(text: "先选一个站点再插图", kind: .failure)
+            return nil
+        }
+        do {
+            let stored = try SiteMedia.store(
+                data: data,
+                filename: filename,
+                site: URL(fileURLWithPath: site.path),
+                base: base
+            )
+            toast = Toast(text: "图片已存到 \(stored.relativePath)", kind: .success)
+            return stored.markdown
+        } catch {
+            toast = Toast(text: "图片没能写进站点", kind: .failure)
+            return nil
+        }
+    }
 
     // MARK: - Git
 

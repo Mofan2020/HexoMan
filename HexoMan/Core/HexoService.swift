@@ -122,11 +122,16 @@ enum HexoService {
     static func server(
         site: HexoSite,
         port: Int,
+        drafts: Bool = false,
         customPath: String? = nil,
         runner: ShellRunner? = nil
     ) -> (executable: String, arguments: [String]) {
         let invocation = resolveInvocation(site: site, customPath: customPath, runner: runner)
-        return (invocation.executable, invocation.arguments(["server", "-p", String(port)]))
+        var args = ["server", "-p", String(port)]
+        // `hexo server` 默认只渲染已发布的文章，草稿（front-matter 里
+        // draft: true）在预览里根本不存在——写草稿的人会以为预览坏了。
+        if drafts { args.append("--draft") }
+        return (invocation.executable, invocation.arguments(args))
     }
 
     /// 服务可访问地址。
