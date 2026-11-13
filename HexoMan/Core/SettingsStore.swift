@@ -56,7 +56,38 @@ struct AppSettings: Codable {
     /// 勾了就别再弹——开关仍能在设置项里改回。
     var dontAskOnlineConsent: Bool = false
 
+    /// 预览时是否连草稿一起渲染（`hexo server --draft`）。
+    ///
+    /// 默认 false：草稿是没写完的东西，默认不进预览更符合直觉。但写草稿的
+    /// 时候想看效果，就得有这一档，否则只能先取消草稿标记。
+    var previewDrafts: Bool = false
+
     static let defaultPort = 4000
+
+    init() {}
+
+    /// **逐字段容错解码。**
+    ///
+    /// Swift 合成的 `init(from:)` 遇到缺字段直接抛 `keyNotFound`，而
+    /// `SettingsStore.load()` 一旦抛就退回全套出厂设置——所以只要新版本加了
+    /// 一个字段，老用户的站点列表、自定义 hexo 路径、语言选择会一起消失，
+    /// 而且没有任何提示。这里每个字段都 `decodeIfPresent`，缺的用默认值。
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = AppSettings()
+        sites = try container.decodeIfPresent([HexoSite].self, forKey: .sites) ?? fallback.sites
+        lastSitePath = try container.decodeIfPresent(String.self, forKey: .lastSitePath)
+        serverPort = try container.decodeIfPresent(Int.self, forKey: .serverPort) ?? fallback.serverPort
+        autoScrollLog = try container.decodeIfPresent(Bool.self, forKey: .autoScrollLog) ?? fallback.autoScrollLog
+        customHexoPath = try container.decodeIfPresent(String.self, forKey: .customHexoPath) ?? fallback.customHexoPath
+        usesShellEnvironment = try container.decodeIfPresent(Bool.self, forKey: .usesShellEnvironment) ?? fallback.usesShellEnvironment
+        customRCPath = try container.decodeIfPresent(String.self, forKey: .customRCPath) ?? fallback.customRCPath
+        syncsThemeConfig = try container.decodeIfPresent(Bool.self, forKey: .syncsThemeConfig) ?? fallback.syncsThemeConfig
+        language = try container.decodeIfPresent(String.self, forKey: .language) ?? fallback.language
+        onlineThemeSearch = try container.decodeIfPresent(Bool.self, forKey: .onlineThemeSearch) ?? fallback.onlineThemeSearch
+        dontAskOnlineConsent = try container.decodeIfPresent(Bool.self, forKey: .dontAskOnlineConsent) ?? fallback.dontAskOnlineConsent
+        previewDrafts = try container.decodeIfPresent(Bool.self, forKey: .previewDrafts) ?? fallback.previewDrafts
+    }
 }
 
 /// 读写 `~/Library/Application Support/HexoMan/settings.json`。
