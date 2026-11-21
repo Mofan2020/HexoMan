@@ -233,6 +233,34 @@ class GitService:
     def pull(self) -> ProcessResult:
         return self._run(["pull", "--rebase"])
 
+    def add(self, path: str) -> ProcessResult:
+        """暂存单个文件（已跟踪或未跟踪都能 stage）。"""
+        return self._run(["add", "--", path])
+
+    def unstage(self, path: str) -> ProcessResult:
+        """取消暂存单个文件（保留工作区改动）。
+
+        对应 ``git restore --staged <path>``。
+        """
+        return self._run(["restore", "--staged", "--", path])
+
+    def difftool(self, path: str) -> ProcessResult | None:
+        """用配置的 difftool 打开对比。
+
+        站点里没配 ``diff.tool`` 时返回 ``None``——调用方据此走
+        「打开文件本身」的兜底路径。在 Xcode / VSCode 这种自带 diff 的
+        编辑器里效果等同，而不必在这里强行做 GUI diff 渲染。
+        """
+        probe = self._run(["config", "--get", "diff.tool"])
+        # 配置项不存在时 git config 会**以非零退出码**返回空输出，
+        # 且 stdout 是空的。这种情况直接视为未配置，
+        # 避免去启动一个不存在的工具。
+        tool_name = probe.output.strip()
+        if not probe.success or not tool_name:
+            return None
+
+        return self._run(["difftool", "--", path])
+
     def remotes(self) -> list[str]:
         """列出远端。
 

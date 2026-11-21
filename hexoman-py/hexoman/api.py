@@ -22,6 +22,7 @@ pywebview 把 Python 的方法名**原样**暴露给 JS（``get_state`` 就叫
 
 from __future__ import annotations
 
+import os
 import threading
 from typing import Any
 
@@ -33,13 +34,17 @@ from . import (
     custom_content as custom_content_module,
     environment_docs as environment_docs_module,
     frontmatter,
+    hexo_bootstrap as hexo_bootstrap_module,
     i18n,
     markdown_render,
     page_assets as page_assets_module,
     page_reference as page_reference_module,
     pages as pages_module,
+    site_creator as site_creator_module,
     site_media as site_media_module,
+    site_settings as site_settings_module,
     snippet_library as snippet_library_module,
+    theme_installer as theme_installer_module,
     theme_manager as theme_manager_module,
     theme_registry as theme_registry_module,
 )
@@ -776,6 +781,286 @@ class HexoManAPI:
         items = ConfigSchema.list_fields(YamlDocument(text), [str(part) for part in keyPath])
         return {"ok": True, "items": [item.to_dict() for item in items]}
 
+    # -- 常用配置（SiteSettings） -------------------------------------
+
+    def getSiteSettings(self, path: str = "") -> dict[str, Any]:
+        """常用配置项的表单结构 + 当前值。
+
+        ``path`` 为空时用当前站点的 ``_config.yml``。
+        """
+        target = path or self._current_config_path()
+        if not target:
+            return {"ok": False, "error": "noSite"}
+
+        text = config_file_module.read_text(target) or ""
+        values = site_settings_module.SiteSettings.values(text)
+
+        groups: list[dict[str, Any]] = []
+        for name in site_settings_module.SiteSettings.groups():
+            fields = []
+            for field in site_settings_module.SiteSettings.fields(name):
+                item = field.to_dict(self._settings.language)
+                item["value"] = values.get(field.key, "")
+                # 挂着多行块的键不能改——硬改会把整个嵌套结构搞坏。
+                item["isNestedBlock"] = site_settings_module.SiteSettings.is_nested_block(
+                    field.key, text
+                )
+                fields.append(item)
+
+            groups.append(
+                {
+                    "key": name,
+                    "label": i18n.t(f"siteSettings.group.{name}", self._settings.language),
+                    "fields": fields,
+                }
+            )
+
+        return {"ok": True, "path": target, "groups": groups}
+
+    def updateSiteSetting(self, path: str, key: str, value: str) -> dict[str, Any]:
+        """改一个常用配置项。只动那一行，注释和缩进原样保留。"""
+        target = path or self._current_config_path()
+        if not target:
+            return {"ok": False, "error": "noSite"}
+        if not key:
+            return {"ok": False, "error": "keyEmpty"}
+
+        text = config_file_module.read_text(target)
+        if text is None:
+            return {"ok": False, "error": "notFound"}
+
+        try:
+            updated = site_settings_module.SiteSettings.set_value(value, key, text)
+        except site_settings_module.SiteSettingsError as error:
+            # 注意：不能用 ``i18n.t("...", lang, key=...)``——``t()`` 的第一个
+            # 形参就叫 ``key``，传同名关键字会 TypeError。这里自己取模板再格式化。
+            template = i18n.get_strings(self._settings.language).get(
+                "siteSettings.nestedBlock", ""
+            )
+            return {
+                "ok": False,
+                "error": error.code,
+                "key": error.key,
+                "message": template.replace("{key}", error.key) if template else "",
+            }
+
+        try:
+            ConfigStore.save(ConfigFile(path=target, name="", contents=updated))
+        except config_file_module.ConfigStoreError as error:
+            return {"ok": False, "error": error.code, "message": error.message}
+
+        return {"ok": True, "path": target, "key": key, "value": value}
+
+    # -- 新建站点（SiteCreator） ---------------------------------------
+
+    def listSiteTemplates(self) -> dict[str, Any]:
+        """``hexo init`` 可用的模板。"""
+        language = self._settings.language
+        templates = [
+            {
+                "key": item.key,
+                "title": i18n.t(item.title_key, language),
+                "subtitle": i18n.t(item.subtitle_key, language),
+            }
+            for item in site_creator_module.SiteCreator.templates()
+        ]
+        return {"ok": True, "templates": templates}
+
+    def createSite(
+        self,
+        name: str,
+        parentDirectory: str,
+        template: str = "standard",
+        installDependencies: bool = True,
+    ) -> dict[str, Any]:
+        """新建一个 Hexo 站点。
+
+        站点建好后会**自动加入列表**并选中——用户不用再去「添加站点」
+        那里手动贴一遍路径。
+        """
+        if not name or not name.strip():
+            return {"ok": False, "error": "invalidName"}
+        if not parentDirectory or not parentDirectory.strip():
+            return {"ok": False, "error": "parentEmpty"}
+
+        result = site_creator_module.SiteCreator.create(
+            name.strip(),
+            parentDirectory.strip(),
+            template=template,
+            install_dependencies=bool(installDependencies),
+            runner=self._runner,
+            environment=self._environment,
+            custom_hexo_path=self._settings.custom_hexo_path,
+        )
+
+        if not result.ok:
+            return {
+                "ok": False,
+                "error": result.error,
+                "message": i18n.t(
+                    {
+                        "invalidName": "siteWizard.invalidName",
+                        "parentEmpty": "siteWizard.parentEmpty",
+                        "parentMissing": "siteWizard.parentMissing",
+                        "alreadyExists": "siteWizard.alreadyExists",
+                        "hexoUnavailable": "siteWizard.hexoUnavailable",
+                        "initFailed": "siteWizard.initFailed",
+                        "notCreated": "siteWizard.notCreated",
+                    }.get(result.error, "result.failed"),
+                    self._settings.language,
+                    path=result.message,
+                    message=result.message,
+                ),
+            }
+
+        # 校验通过才纳入管理，避免留下「已添加但坏掉」的站点。
+        added = self._site_list.add(result.path)
+        self._persist()
+
+        if not added:
+            return {
+                "ok": False,
+                "error": "notAdded",
+                "path": result.path,
+                "message": "站点已生成，但没有通过 Hexo 站点校验，未加入列表",
+            }
+
+        return {
+            "ok": True,
+            "path": result.path,
+            "dependencyFailed": result.dependency_failed,
+        }
+
+    def installDependencies(self) -> dict[str, Any]:
+        """在当前站点目录跑 ``npm install``。"""
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+
+        success = site_creator_module.SiteCreator.install_dependencies(
+            site, runner=self._runner
+        )
+        return {"ok": success, "path": site.path}
+
+    # -- 主题安装与迁移（ThemeInstaller） ------------------------------
+
+    def applyTheme(self, packageName: str) -> dict[str, Any]:
+        """装主题并切换过去。
+
+        装包用 ``npm install``，只改 ``_config.yml`` 里的 ``theme`` 一行，
+        最后算一份跨主题迁移清单给用户确认。
+        """
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+
+        name = theme_manager_module.ThemeManager.normalize_package_name(packageName)
+        if not name:
+            return {"ok": False, "error": "invalidName"}
+
+        allowed = set(
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_./"
+        )
+        if any(character not in allowed for character in name):
+            return {"ok": False, "error": "invalidName"}
+
+        npm = self._runner.which("npm")
+        if not npm:
+            return {"ok": False, "error": "npmMissing"}
+
+        full_package = theme_manager_module.ThemeManager.full_package_name(name)
+        install = self._runner.run(
+            [
+                npm,
+                "install",
+                full_package,
+                "--no-audit",
+                "--no-fund",
+                "--loglevel",
+                "warn",
+            ],
+            cwd=site.path,
+        )
+        if not install.success:
+            return {
+                "ok": False,
+                "error": "installFailed",
+                "message": install.error_summary or "",
+                "packageName": full_package,
+            }
+
+        short_name = theme_manager_module.ThemeManager.short_name(full_package)
+        theme_installer_module.ThemeInstaller.write_theme(site, short_name)
+
+        migration = theme_installer_module.ThemeInstaller.compute_migration(site, short_name)
+
+        return {
+            "ok": True,
+            "installed": True,
+            "packageName": full_package,
+            "activeTheme": short_name,
+            "migration": migration.to_dict() if migration else None,
+        }
+
+    def getThemeMigration(self, themeName: str) -> dict[str, Any]:
+        """算一份跨主题迁移清单（不装、不写）。"""
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+
+        name = theme_manager_module.ThemeManager.normalize_package_name(themeName)
+        if not name:
+            return {"ok": False, "error": "invalidName"}
+
+        plan = theme_installer_module.ThemeInstaller.compute_migration(site, name)
+        return {"ok": True, "migration": plan.to_dict() if plan else None}
+
+    def applyThemeMigration(self, keys: list[str]) -> dict[str, Any]:
+        """把选中的公共项从旧主题配置搬到站点配置。"""
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+        if not keys:
+            return {"ok": False, "error": "noKeys"}
+
+        from .config_sync import ConfigSync
+
+        active = theme_manager_module.ThemeManager.active_theme_name(site)
+        if not active:
+            return {"ok": False, "error": "noActiveTheme"}
+
+        old_theme_config = os.path.join(site.path, f"_config.{active}.yml")
+        old_text = config_file_module.read_text(old_theme_config)
+        if old_text is None:
+            return {"ok": False, "error": "notFound"}
+
+        site_config_path = os.path.join(site.path, "_config.yml")
+        site_text = config_file_module.read_text(site_config_path)
+        if site_text is None:
+            return {"ok": False, "error": "notFound"}
+
+        updated = site_text
+        applied = 0
+        for raw_key in keys:
+            value = YamlDocument(old_text).get(str(raw_key))
+            if value is None:
+                continue
+            result = ConfigSync.apply_to_site(str(raw_key), value, updated)
+            if result is None:
+                continue
+            updated = result
+            applied += 1
+
+        if applied == 0:
+            return {"ok": False, "error": "nothingApplied"}
+
+        try:
+            ConfigStore.save(ConfigFile(path=site_config_path, name="", contents=updated))
+        except config_file_module.ConfigStoreError as error:
+            return {"ok": False, "error": error.code, "message": error.message}
+
+        return {"ok": True, "applied": applied}
+
     def updateConfigValue(
         self, path: str, keyPath: str, value: str
     ) -> dict[str, Any]:
@@ -1118,6 +1403,102 @@ class HexoManAPI:
             "error": result.error_summary,
         }
 
+    def stageGitFile(self, path: str) -> dict[str, Any]:
+        """暂存单个文件。"""
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+        if not path:
+            return {"ok": False, "error": "pathEmpty"}
+
+        result = GitService(site, self._runner).add(path)
+        return {
+            "ok": result.success,
+            "exitCode": result.exit_code,
+            "output": result.output,
+            "error": result.error_summary,
+        }
+
+    def unstageGitFile(self, path: str) -> dict[str, Any]:
+        """取消暂存单个文件（保留工作区改动）。"""
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+        if not path:
+            return {"ok": False, "error": "pathEmpty"}
+
+        result = GitService(site, self._runner).unstage(path)
+        return {
+            "ok": result.success,
+            "exitCode": result.exit_code,
+            "output": result.output,
+            "error": result.error_summary,
+        }
+
+    def diffGitFile(self, path: str) -> dict[str, Any]:
+        """对单文件跑对比。
+
+        站点配了 ``diff.tool`` 就用它；没配就把文件本身交给系统处理
+        （在 VSCode / Xcode 这类自带 diff 的编辑器里效果等同）。
+        """
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+        if not path:
+            return {"ok": False, "error": "pathEmpty"}
+
+        result = GitService(site, self._runner).difftool(path)
+        if result is None:
+            # 没配置 diff.tool：打开文件本身。
+            absolute = os.path.join(site.path, path)
+            if os.path.exists(absolute):
+                open_path(absolute)
+            else:
+                reveal_in_file_manager(site.path)
+            return {"ok": True, "usedTool": False}
+
+        return {
+            "ok": result.success,
+            "usedTool": True,
+            "exitCode": result.exit_code,
+            "output": result.output,
+            "error": result.error_summary,
+        }
+
+    # -- 插图 ---------------------------------------------------------
+
+    def storeImages(self, paths: list[str], base: str = "") -> dict[str, Any]:
+        """把磁盘上的几张图存进当前站点，返回能直接插进正文的 Markdown。
+
+        单张失败不影响其余的：拖十张进来，坏的那张跳过，剩下的照插。
+        """
+        site = self._site_list.current
+        if not site:
+            return {"ok": False, "error": "noSite"}
+        if not paths:
+            return {"ok": True, "markdown": [], "failed": 0}
+
+        lines: list[str] = []
+        failed = 0
+        for path in paths:
+            data = site_media_module.SiteMedia.read_file(path)
+            if data is None:
+                failed += 1
+                continue
+            try:
+                stored = site_media_module.SiteMedia.store(
+                    data=data,
+                    filename=os.path.basename(path),
+                    site=site.path,
+                    base=base,
+                )
+            except OSError:
+                failed += 1
+                continue
+            lines.append(stored.markdown)
+
+        return {"ok": True, "markdown": lines, "failed": failed}
+
     # -- 内部 ---------------------------------------------------------
 
     def _hexo_service(self, site: Site) -> HexoService:
@@ -1148,6 +1529,11 @@ class HexoManAPI:
     def _current_info(self) -> dict[str, Any] | None:
         site = self._site_list.current
         return sites_module.inspect_site(site).to_dict() if site else None
+
+    def _current_config_path(self) -> str:
+        """当前站点的 ``_config.yml`` 路径。没有站点时返回空串。"""
+        site = self._site_list.current
+        return site.config_file if site else ""
 
     def _persist(self) -> None:
         """把当前状态写回 settings.json。"""

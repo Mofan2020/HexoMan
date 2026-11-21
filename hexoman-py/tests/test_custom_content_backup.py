@@ -235,6 +235,29 @@ def test_create_backup_writes_zip(site: Site, tmp_path: Path):
     assert "_config.yml" in names
 
 
+def test_backup_contains_every_planned_file(site: Site, tmp_path: Path):
+    """zip 里的条目必须与实际该被打包的文件一一对应。
+
+    期望值在这里独立数出来（直接遍历源目录），不从 create_backup 的返回值反推，
+    否则备份少打了一半文件这种问题会一起被放过。
+    """
+    backup_dir = tmp_path / "backups"
+
+    entry = BackupManager.create_backup(site, directory=str(backup_dir))
+
+    root = Path(site.path)
+    expected = {
+        str(path.relative_to(root)).replace("\\", "/")
+        for path in root.rglob("*")
+        if path.is_file()
+    }
+    with zipfile.ZipFile(entry.path) as archive:
+        names = set(archive.namelist())
+
+    assert names == expected
+    assert len(names) == entry.file_count
+
+
 def test_create_backup_raises_when_empty(tmp_path: Path):
     empty = tmp_path / "empty"
     empty.mkdir()
