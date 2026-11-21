@@ -329,3 +329,40 @@ class TestStoreImages:
         assert result["ok"] is True
         assert result["failed"] == 1
         assert result["markdown"] == []
+
+
+class TestApplyThemeReportsMigration:
+    """换主题之后必须还能拿到「旧主题配过的值」清单。
+
+    ``compute_migration`` 靠站点配置里那个 ``theme`` 和目标的差异认定哪份是
+    旧主题配置。所以它必须在写新 ``theme`` 之前算 —— 顺手交换这两步，接口
+    不会报错，只是清单永远为空。
+    """
+
+    def test_migration_survives_switching_the_theme(
+        self, tmp_path: Path, site_root: Path
+    ):
+        new_theme = site_root / "node_modules" / "hexo-theme-anzhiyu"
+        new_theme.mkdir(parents=True)
+        (new_theme / "_config.yml").write_text("title: 新标题\n", encoding="utf-8")
+
+        class InstallingRunner(CommandRunner):
+            def which(self, name: str):  # type: ignore[override]
+                return "/usr/bin/npm" if name == "npm" else None
+
+            def run(self, args, cwd=None, timeout=None, env=None):  # type: ignore[override]
+                return ProcessResult(exit_code=0, output="")
+
+        store = SettingsStore(path=str(tmp_path / "settings.json"))
+        instance = HexoManAPI(settings_store=store, runner=InstallingRunner())
+        instance.addSite(str(site_root))
+        instance.selectSite(str(site_root))
+
+        result = instance.applyTheme("anzhiyu")
+
+        assert result["ok"] is True
+        assert result["activeTheme"] == "anzhiyu"
+        assert result["migration"] is not None
+        assert result["migration"]["fromTheme"] == "yun"
+        assert result["migration"]["toTheme"] == "anzhiyu"
+        assert result["migration"]["hasItems"] is True

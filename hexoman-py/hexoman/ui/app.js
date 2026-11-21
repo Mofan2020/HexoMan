@@ -39,6 +39,10 @@
     dirty: false,
     previewDrafts: false,
 
+    // 站点设置（常用配置项）
+    siteSettingGroups: [],
+    siteSettingsLoaded: false,
+
     // 页面管理
     pages: [],
     selectedPagePath: "",
@@ -95,6 +99,7 @@
       items: [
         { id: "sites", label: "nav.sites", icon: "folder" },
         { id: "overview", label: "nav.overview", icon: "gauge" },
+        { id: "settings", label: "nav.settings", icon: "cog" },
       ],
     },
     {
@@ -927,6 +932,141 @@
 
   // ------------------------------------------------------------ 站点管理页
 
+  function refreshSitesFromBackend(then) {
+    api("listSites").then(function (result) {
+      if (result && result.ok) {
+        state.sites = result.sites || [];
+        state.currentSitePath = result.currentSitePath || "";
+      }
+      render();
+      if (then) then();
+    });
+  }
+
+  function installCurrentSiteDependencies() {
+    if (!hasSite()) {
+      toast(t("sites.addFailed"), "error");
+      return;
+    }
+    api("installDependencies").then(function (result) {
+      if (result && result.ok) {
+        toast(t("siteWizard.dependenciesInstalled"));
+        return;
+      }
+      toast((result && result.message) || t("siteWizard.dependencyFailed"), "error");
+    });
+  }
+
+  function openSiteWizard() {
+    api("listSiteTemplates").then(function (result) {
+      if (!result || !result.ok) {
+        toast(t("common.error"), "error");
+        return;
+      }
+      showSiteWizard(result.templates || []);
+    });
+  }
+
+  /**
+   * 新建站点。
+   *
+   * 名称和父目录都填了才能点「创建」—— ``customDialog`` 的确认按钮按下之后
+   * 一律关窗，事后才发现填错就只能重来一遍，所以校验放在关窗之前做。
+   */
+  function showSiteWizard(templates) {
+    var html = "";
+    html += '<label class="field"><span class="field-label" data-label="name"></span>';
+    html += '<input class="input" id="wizard-name" type="text" /></label>';
+
+    html += '<div class="field"><span class="field-label" data-label="parent"></span>';
+    html += '<div class="button-row">';
+    html += '<input class="input" id="wizard-parent" type="text" />';
+    html += '<button class="button" id="wizard-choose" type="button"></button>';
+    html += "</div></div>";
+
+    html += '<div class="field"><span class="field-label" data-label="template"></span>';
+    html += '<div class="radio-list">';
+    templates.forEach(function (item, index) {
+      html +=
+        '<label class="radio-item"><input type="radio" name="wizard-template" value="' +
+        escapeHtml(item.key) +
+        '"' +
+        (index === 0 ? " checked" : "") +
+        ' /><span class="radio-text"><span class="radio-title"></span>' +
+        '<span class="radio-hint"></span></span></label>';
+    });
+    html += "</div></div>";
+
+    html +=
+      '<label class="option checkbox"><input type="checkbox" id="wizard-deps" checked /><span></span></label>';
+
+    customDialog({
+      title: t("siteWizard.title"),
+      html: html,
+      confirmLabel: t("siteWizard.create"),
+      onMount: function (modal) {
+        modal.querySelector('[data-label="name"]').textContent = t("siteWizard.name");
+        modal.querySelector("#wizard-name").placeholder = t("siteWizard.namePlaceholder");
+        modal.querySelector('[data-label="parent"]').textContent = t("siteWizard.parent");
+        modal.querySelector('[data-label="template"]').textContent = t("siteWizard.template");
+        modal.querySelector("#wizard-deps + span").textContent = t("siteWizard.installDependencies");
+
+        var choose = modal.querySelector("#wizard-choose");
+        choose.textContent = t("siteWizard.chooseParent");
+        choose.addEventListener("click", function () {
+          api("chooseSiteDirectory").then(function (result) {
+            if (result && result.ok && result.path) {
+              modal.querySelector("#wizard-parent").value = result.path;
+              syncConfirmState();
+            }
+          });
+        });
+
+        var radios = modal.querySelectorAll(".radio-item");
+        templates.forEach(function (item, index) {
+          var node = radios[index];
+          if (!node) return;
+          node.querySelector(".radio-title").textContent = item.title || item.key;
+          node.querySelector(".radio-hint").textContent = item.subtitle || "";
+        });
+
+        var confirm = modal.querySelector(".modal-actions .button.is-primary");
+        var nameInput = modal.querySelector("#wizard-name");
+        var parentInput = modal.querySelector("#wizard-parent");
+
+        function syncConfirmState() {
+          if (!confirm) return;
+          confirm.disabled = !(nameInput.value.trim() && parentInput.value.trim());
+        }
+
+        nameInput.addEventListener("input", syncConfirmState);
+        parentInput.addEventListener("input", syncConfirmState);
+        syncConfirmState();
+      },
+      onConfirm: function (modal) {
+        var name = modal.querySelector("#wizard-name").value.trim();
+        var parent = modal.querySelector("#wizard-parent").value.trim();
+        var checked = modal.querySelector('input[name="wizard-template"]:checked');
+        var template = checked ? checked.value : "standard";
+        var deps = modal.querySelector("#wizard-deps").checked;
+
+        api("createSite", name, parent, template, deps).then(function (result) {
+          if (!result || !result.ok) {
+            toast((result && result.message) || t("common.error"), "error");
+            return;
+          }
+          toast(tf("siteWizard.success", { path: result.path }));
+          if (result.dependencyFailed) {
+            toast(t("siteWizard.dependencyFailed"), "error");
+          }
+          state.siteSettingGroups = [];
+          state.siteSettingsLoaded = false;
+          refreshSitesFromBackend(refreshPosts);
+        });
+      },
+    });
+  }
+
   function renderSites(host) {
     var html = "";
 
@@ -941,6 +1081,12 @@
       '<button class="button" id="add-site-choose"></button>' +
       '<button class="button is-primary" id="add-site-confirm"></button>' +
       "</div>";
+
+    html += '<div class="button-row" style="margin-top:10px">';
+    html += '<button class="button" id="sites-create">' + icon("plus", 14) + "<span></span></button>";
+    html +=
+      '<button class="button" id="sites-install-deps">' + icon("package", 14) + "<span></span></button>";
+    html += "</div>";
 
     html += "</div>";
     host.innerHTML = html;
@@ -970,6 +1116,18 @@
       confirmBtn.addEventListener("click", function () {
         addSiteByPath(input ? input.value : "");
       });
+    }
+
+    var createBtn = host.querySelector("#sites-create");
+    if (createBtn) {
+      createBtn.querySelector("span").textContent = t("siteWizard.title");
+      createBtn.addEventListener("click", openSiteWizard);
+    }
+
+    var depsBtn = host.querySelector("#sites-install-deps");
+    if (depsBtn) {
+      depsBtn.querySelector("span").textContent = t("siteWizard.installDependenciesNow");
+      depsBtn.addEventListener("click", installCurrentSiteDependencies);
     }
 
     if (input) {
@@ -2371,10 +2529,122 @@
 
   // ------------------------------------------------------------ 主题
 
+  /**
+   * 从 npm 装主题并切过去。
+   *
+   * 装完之后如果后端给出迁移清单，直接接着弹清单 —— 用户刚换主题，
+   * 正是最需要「旧主题配过的值要不要搬过来」的时候。
+   */
+  function openThemeInstaller() {
+    customDialog({
+      title: t("themeMigration.installTitle"),
+      html:
+        '<label class="field"><span class="field-label" data-label="package"></span>' +
+        '<input class="input" id="theme-package" type="text" placeholder="hexo-theme-landscape" /></label>' +
+        '<p class="modal-hint" data-hint></p>',
+      confirmLabel: t("themeMigration.install"),
+      onMount: function (modal) {
+        modal.querySelector('[data-label="package"]').textContent = t(
+          "themeMigration.installPackage"
+        );
+        modal.querySelector("[data-hint]").textContent = t("themeMigration.installHint");
+
+        var input = modal.querySelector("#theme-package");
+        var confirm = modal.querySelector(".modal-actions .button.is-primary");
+
+        function sync() {
+          if (confirm) confirm.disabled = !input.value.trim();
+        }
+
+        input.addEventListener("input", sync);
+        sync();
+      },
+      onConfirm: function (modal) {
+        var name = modal.querySelector("#theme-package").value.trim();
+        toast(t("themeMigration.installing"));
+
+        api("applyTheme", name).then(function (result) {
+          if (!result || !result.ok) {
+            toast((result && result.message) || t("common.error"), "error");
+            return;
+          }
+          toast(tf("themeMigration.installed", { name: result.activeTheme || name }));
+          refreshThemes();
+          if (result.migration && result.migration.hasItems) {
+            showThemeMigration(result.migration);
+          } else {
+            toast(t("themeMigration.empty"));
+          }
+        });
+      },
+    });
+  }
+
+  function showThemeMigration(plan) {
+    var entries = (plan && plan.entries) || [];
+    if (!entries.length) {
+      toast(t("themeMigration.empty"));
+      return;
+    }
+
+    var html = '<p class="modal-hint" data-hint></p><div class="migration-list">';
+    entries.forEach(function (entry, index) {
+      html +=
+        '<label class="option checkbox"><input type="checkbox" class="migration-item" data-index="' +
+        index +
+        '" checked /><span class="migration-label"></span></label>';
+    });
+    html += "</div>";
+
+    customDialog({
+      title: t("themeMigration.title"),
+      html: html,
+      confirmLabel: t("themeMigration.apply"),
+      onMount: function (modal) {
+        modal.querySelector("[data-hint]").textContent = tf("themeMigration.hint", {
+          from: plan.fromTheme || "",
+          to: plan.toTheme || "",
+        });
+
+        var labels = modal.querySelectorAll(".migration-label");
+        entries.forEach(function (entry, index) {
+          if (!labels[index]) return;
+          var value =
+            entry.currentValue === null || entry.currentValue === undefined
+              ? ""
+              : String(entry.currentValue);
+          labels[index].textContent = (entry.label || entry.key) + "：" + value;
+        });
+      },
+      onConfirm: function (modal) {
+        var picked = [];
+        var nodes = modal.querySelectorAll(".migration-item");
+        for (var i = 0; i < nodes.length; i += 1) {
+          if (!nodes[i].checked) continue;
+          var entry = entries[Number(nodes[i].getAttribute("data-index"))];
+          if (entry) picked.push(entry.key);
+        }
+        if (!picked.length) return;
+
+        api("applyThemeMigration", picked).then(function (result) {
+          if (!result || !result.ok) {
+            toast((result && result.message) || t("common.error"), "error");
+            return;
+          }
+          toast(tf("themeMigration.applied", { count: result.applied || picked.length }));
+          refreshThemes();
+        });
+      },
+    });
+  }
+
   function renderTheme(host, actionsHost) {
     actionsHost.innerHTML =
+      '<button class="button" id="theme-install">' + icon("package", 13) + "<span></span></button>" +
       '<button class="button" id="theme-reload">' + icon("refresh", 13) + "<span></span></button>";
-    actionsHost.querySelector("span").textContent = t("common.refresh");
+    actionsHost.querySelector("#theme-install span").textContent = t("themeMigration.installTitle");
+    actionsHost.querySelector("#theme-install").addEventListener("click", openThemeInstaller);
+    actionsHost.querySelector("#theme-reload span").textContent = t("common.refresh");
     actionsHost.querySelector("#theme-reload").addEventListener("click", function () {
       refreshThemes();
       searchThemes(state.themeQuery);
@@ -2789,6 +3059,41 @@
     });
   }
 
+  /** 单文件的暂存 / 取消暂存 / 对比。 */
+  function bindGitFileAction(button) {
+    var action = button.getAttribute("data-action");
+    var path = button.getAttribute("data-path") || "";
+
+    if (action === "stage") {
+      button.textContent = t("git.stageFile");
+    } else if (action === "unstage") {
+      button.textContent = t("git.unstageFile");
+    } else {
+      button.textContent = t("git.diffFile");
+    }
+
+    button.addEventListener("click", function () {
+      var method =
+        action === "stage"
+          ? "stageGitFile"
+          : action === "unstage"
+            ? "unstageGitFile"
+            : "diffGitFile";
+
+      api(method, path).then(function (result) {
+        if (!result || !result.ok) {
+          toast((result && result.message) || t("common.error"), "error");
+          return;
+        }
+        if (action === "diff") {
+          toast(t("git.diffOpened"));
+          return;
+        }
+        refreshGitPage();
+      });
+    });
+  }
+
   function renderGitBody() {
     var root = el("git-root");
     if (!root) return;
@@ -2797,7 +3102,7 @@
     var status = state.gitStatus;
 
     html += '<div class="section"><div class="card">';
-    html += '<div class="card-title">' + icon("branch", 15) + "<span></span></div>";
+    html += '<div class="card-title">' + icon("branch", 15) + '<span data-title="status"></span></div>';
     if (!status) {
       html += '<div class="detail-value"></div>';
     } else {
@@ -2827,9 +3132,55 @@
     html += "</div>";
     html += "</div></div>";
 
+    var fileGroups = [
+      { key: "staged", labelKey: "git.stagedFiles", action: "unstage" },
+      { key: "modified", labelKey: "git.modifiedFiles", action: "stage" },
+      { key: "untracked", labelKey: "git.untrackedFiles", action: "stage" },
+      { key: "conflicted", labelKey: "git.conflictedFiles", action: "" },
+    ];
+    var hasFiles = false;
+    if (status) {
+      fileGroups.forEach(function (group) {
+        if ((status[group.key] || []).length) hasFiles = true;
+      });
+    }
+
+    if (hasFiles) {
+      html += '<div class="section"><div class="card">';
+      html += '<div class="card-title">' + icon("file", 15) + '<span data-title="files"></span></div>';
+      fileGroups.forEach(function (group) {
+        var files = status[group.key] || [];
+        if (!files.length) return;
+        html += '<div class="git-group" data-group="' + group.key + '">';
+        html += '<div class="git-group-label"></div>';
+        html += '<div class="git-file-list">';
+        files.forEach(function (file) {
+          html +=
+            '<div class="git-file-row"><span class="git-file-path">' +
+            escapeHtml(file) +
+            '</span><span class="git-file-actions">';
+          if (group.action) {
+            html +=
+              '<button class="button is-small git-file-action" data-action="' +
+              group.action +
+              '" data-path="' +
+              escapeHtml(file) +
+              '"></button>';
+          }
+          html +=
+            '<button class="button is-small git-file-action" data-action="diff" data-path="' +
+            escapeHtml(file) +
+            '"></button>';
+          html += "</span></div>";
+        });
+        html += "</div></div>";
+      });
+      html += "</div></div>";
+    }
+
     if (state.commits.length) {
       html += '<div class="section"><div class="card">';
-      html += '<div class="card-title">' + icon("clock", 15) + "<span></span></div>";
+      html += '<div class="card-title">' + icon("clock", 15) + '<span data-title="commits"></span></div>';
       html += '<div class="commit-list">';
       state.commits.forEach(function (commit) {
         html +=
@@ -2846,9 +3197,28 @@
 
     root.innerHTML = html;
 
-    var titles = root.querySelectorAll(".card-title span");
-    if (titles[0]) titles[0].textContent = t("git.status");
-    if (titles[1]) titles[1].textContent = t("git.commits");
+    var statusTitle = root.querySelector('[data-title="status"]');
+    if (statusTitle) statusTitle.textContent = t("git.status");
+    var filesTitle = root.querySelector('[data-title="files"]');
+    if (filesTitle) filesTitle.textContent = t("git.files");
+    var commitsTitle = root.querySelector('[data-title="commits"]');
+    if (commitsTitle) commitsTitle.textContent = t("git.commits");
+
+    var groupNodes = root.querySelectorAll(".git-group");
+    for (var g = 0; g < groupNodes.length; g += 1) {
+      var groupKey = groupNodes[g].getAttribute("data-group");
+      var labelNode = groupNodes[g].querySelector(".git-group-label");
+      if (!labelNode) continue;
+      var matched = fileGroups.filter(function (item) {
+        return item.key === groupKey;
+      })[0];
+      if (matched) labelNode.textContent = t(matched.labelKey);
+    }
+
+    var fileButtons = root.querySelectorAll(".git-file-action");
+    for (var b = 0; b < fileButtons.length; b += 1) {
+      bindGitFileAction(fileButtons[b]);
+    }
 
     if (!status) {
       var value = root.querySelector(".detail-value");
@@ -2945,6 +3315,9 @@
       case "sites":
         renderSites(body);
         break;
+      case "settings":
+        renderSiteSettings(body, actionsHost);
+        break;
       case "overview":
         renderOverview(body, actionsHost);
         break;
@@ -2975,6 +3348,186 @@
       default:
         renderPlaceholder(body, state.page);
         break;
+    }
+  }
+
+  // ------------------------------------------------------------ 站点设置
+
+  function renderSiteSettings(host, actionsHost) {
+    actionsHost.innerHTML =
+      '<button class="button" id="settings-reload">' + icon("refresh", 13) + "<span></span></button>";
+    actionsHost.querySelector("span").textContent = t("common.refresh");
+    actionsHost.querySelector("#settings-reload").addEventListener("click", function () {
+      loadSiteSettings();
+    });
+
+    host.innerHTML = '<div id="settings-root"></div>';
+
+    if (!hasSite()) {
+      renderSiteSettingsBody();
+      return;
+    }
+    if (!state.siteSettingsLoaded) {
+      loadSiteSettings();
+      return;
+    }
+    renderSiteSettingsBody();
+  }
+
+  function loadSiteSettings() {
+    api("getSiteSettings", "").then(function (result) {
+      if (!result || !result.ok) {
+        state.siteSettingGroups = [];
+        state.siteSettingsLoaded = true;
+        renderSiteSettingsBody(result && result.error);
+        return;
+      }
+      state.siteSettingGroups = result.groups || [];
+      state.siteSettingsLoaded = true;
+      renderSiteSettingsBody();
+    });
+  }
+
+  /**
+   * 常用配置项的表单。
+   *
+   * 字段是数据不是模板串 —— 文案一律在节点建好之后按 i18n 填进去，
+   * 语言切换时才不会留下上一轮的旧字。
+   */
+  function renderSiteSettingsBody(error) {
+    var root = el("settings-root");
+    if (!root) return;
+
+    if (!hasSite()) {
+      root.innerHTML =
+        '<div class="empty-state"><span class="empty-state-icon">' +
+        icon("cog", 21) +
+        '</span><div class="empty-state-title"></div><div class="empty-state-hint"></div></div>';
+      root.querySelector(".empty-state-title").textContent = t("overview.noSite");
+      root.querySelector(".empty-state-hint").textContent = t("overview.noSiteHint");
+      return;
+    }
+
+    if (!state.siteSettingGroups.length) {
+      root.innerHTML =
+        '<div class="empty-state"><span class="empty-state-icon">' +
+        icon("cog", 21) +
+        '</span><div class="empty-state-title"></div></div>';
+      root.querySelector(".empty-state-title").textContent = error
+        ? t("siteSettings.noConfig")
+        : t("common.loading");
+      return;
+    }
+
+    var html = "";
+    state.siteSettingGroups.forEach(function (group) {
+      html += '<div class="section"><div class="card">';
+      html += '<div class="card-title">' + icon("cog", 15) + "<span></span></div>";
+      html += '<div class="form-grid">';
+      group.fields.forEach(function (field) {
+        html += '<div class="field">';
+        html += '<div class="field-label"></div>';
+        if (field.isNestedBlock) {
+          html += '<div class="detail-value" data-hint></div>';
+        } else if (field.kind === "boolean") {
+          html +=
+            '<label class="switch"><input type="checkbox" class="setting-field" data-key="' +
+            escapeHtml(field.key) +
+            '"' +
+            (String(field.value).toLowerCase() === "true" ? " checked" : "") +
+            " /><span></span></label>";
+        } else if (field.kind === "choice" && field.options && field.options.length) {
+          html += '<select class="select setting-field" data-key="' + escapeHtml(field.key) + '">';
+          field.options.forEach(function (option) {
+            html +=
+              '<option value="' +
+              escapeHtml(option.value) +
+              '"' +
+              (option.value === field.value ? " selected" : "") +
+              "></option>";
+          });
+          html += "</select>";
+        } else {
+          html +=
+            '<input class="input setting-field" type="text" data-key="' +
+            escapeHtml(field.key) +
+            '" />';
+        }
+        html += "</div>";
+      });
+      html += "</div></div></div>";
+    });
+
+    root.innerHTML = html;
+
+    var cards = root.querySelectorAll(".section .card");
+    state.siteSettingGroups.forEach(function (group, index) {
+      var card = cards[index];
+      if (!card) return;
+      card.querySelector(".card-title span").textContent = group.label;
+
+      var fieldNodes = card.querySelectorAll(".field");
+      group.fields.forEach(function (field, fieldIndex) {
+        var node = fieldNodes[fieldIndex];
+        if (!node) return;
+        node.querySelector(".field-label").textContent = field.label;
+
+        if (field.isNestedBlock) {
+          var hint = node.querySelector("[data-hint]");
+          if (hint) hint.textContent = t("siteSettings.nestedBlockShort");
+          return;
+        }
+
+        var control = node.querySelector(".setting-field");
+        if (!control) return;
+        control.title = field.hint || "";
+
+        if (control.tagName === "SELECT") {
+          var options = control.querySelectorAll("option");
+          (field.options || []).forEach(function (option, optionIndex) {
+            if (options[optionIndex]) {
+              options[optionIndex].textContent = option.label || option.value;
+            }
+          });
+        } else if (control.type === "text") {
+          control.value = field.value || "";
+          control.placeholder = field.hint || "";
+        }
+      });
+    });
+
+    var controls = root.querySelectorAll(".setting-field");
+    for (var i = 0; i < controls.length; i += 1) {
+      bindSiteSetting(controls[i]);
+    }
+  }
+
+  function bindSiteSetting(control) {
+    var key = control.getAttribute("data-key");
+    if (!key) return;
+
+    function commit() {
+      var value =
+        control.type === "checkbox" ? (control.checked ? "true" : "false") : control.value;
+      api("updateSiteSetting", "", key, value).then(function (result) {
+        if (result && result.ok) {
+          toast(t("common.saved"));
+          return;
+        }
+        var message = (result && result.message) || t("common.error");
+        toast(message, "error");
+        // 写不进去就把界面拉回真值 —— 停在用户刚敲的值上，等于骗他说改成了。
+        loadSiteSettings();
+      });
+    }
+
+    control.addEventListener("change", commit);
+    if (control.type === "text") {
+      control.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        commit();
+      });
     }
   }
 

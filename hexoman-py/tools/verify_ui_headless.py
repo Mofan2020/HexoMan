@@ -114,7 +114,68 @@ def build_mock_script() -> str:
     startPreview: function () { state.serverRunning = true; return respond({ ok: true }); },
     stopPreview: function () { state.serverRunning = false; return respond({ ok: true }); },
     openPreviewPage: function () { return respond({ ok: true }); },
-    refreshGit: function () { return respond({ ok: true, gitStatus: null, commits: overview.commits }); },
+    refreshGit: function () {
+      return respond({
+        ok: true,
+        gitStatus: {
+          branch: "main", upstream: "origin/main", ahead: 0, behind: 0,
+          staged: ["source/_posts/a.md"],
+          modified: ["_config.yml"],
+          untracked: ["source/_posts/new.md"],
+          conflicted: [],
+          isClean: false,
+          changeCount: 3,
+        },
+        commits: overview.commits,
+      });
+    },
+    getSiteSettings: function () {
+      return respond({
+        ok: true,
+        path: "/tmp/blog/_config.yml",
+        groups: [
+          {
+            key: "basic",
+            label: "站点信息",
+            fields: [
+              { id: "title", key: "title", label: "站点标题", hint: "显示在标签页的名字", group: "basic", kind: "text", options: [], value: "我的博客", isNestedBlock: false },
+              { id: "rss", key: "rss", label: "生成 RSS", hint: "", group: "basic", kind: "boolean", options: [], value: "true", isNestedBlock: false },
+              { id: "menu", key: "menu", label: "菜单", hint: "", group: "basic", kind: "text", options: [], value: "", isNestedBlock: true },
+            ],
+          },
+        ],
+      });
+    },
+    updateSiteSetting: function (path, key, value) {
+      return respond({ ok: true, key: key, value: value });
+    },
+    listSiteTemplates: function () {
+      return respond({
+        ok: true,
+        templates: [
+          { key: "standard", title: "hexo（默认空白模板）", subtitle: "只生成骨架目录" },
+          { key: "starter", title: "hexo-starter（示例模板）", subtitle: "含示例文章" },
+        ],
+      });
+    },
+    createSite: function (name, parent) {
+      return respond({ ok: true, path: parent + "/" + name, dependencyFailed: false });
+    },
+    installDependencies: function () { return respond({ ok: true, path: "/tmp/blog" }); },
+    applyTheme: function (pkg) {
+      return respond({
+        ok: true, installed: true, packageName: "hexo-theme-" + pkg, activeTheme: pkg,
+        migration: {
+          fromTheme: "yun", toTheme: pkg, hasItems: true,
+          entries: [{ id: "title", key: "title", label: "站点标题", currentValue: "旧标题" }],
+        },
+      });
+    },
+    getThemeMigration: function () { return respond({ ok: true, migration: null }); },
+    applyThemeMigration: function (keys) { return respond({ ok: true, applied: keys.length }); },
+    stageGitFile: function (p) { return respond({ ok: true, path: p }); },
+    unstageGitFile: function (p) { return respond({ ok: true, path: p }); },
+    diffGitFile: function (p) { return respond({ ok: true, path: p }); },
     openPath: function () { return respond({ ok: true }); },
 
     // -- 第二阶段：页面 / 配置 / 主题 / 备份 / 环境 ----------------
@@ -472,6 +533,57 @@ def main() -> int:
             open_page("环境")
             results["env tool rows"] = page.locator("#env-root .detail-row").count()
             results["env doc cards"] = page.locator("#env-root .card").count()
+
+            open_page("站点设置")
+            results["settings cards"] = page.locator("#settings-root .section .card").count()
+            results["settings fields"] = page.locator("#settings-root .field").count()
+            results["settings text inputs"] = page.locator(
+                "#settings-root .field input[type=text]"
+            ).count()
+            results["settings nested hints"] = page.locator(
+                "#settings-root .field [data-hint]"
+            ).count()
+            results["settings title value"] = page.evaluate(
+                "(() => { const n = document.querySelector('#settings-root input[type=text]');"
+                " return n ? n.value : null; })()"
+            )
+
+            open_page("Git")
+            results["git file rows"] = page.locator("#git-root .git-file-row").count()
+            results["git file buttons"] = page.locator("#git-root .git-file-action").count()
+            results["git group labels"] = page.locator("#git-root .git-group-label").count()
+            results["git first button text"] = page.evaluate(
+                "(() => { const n = document.querySelector('#git-root .git-file-action');"
+                " return n ? n.textContent.trim() : null; })()"
+            )
+
+            open_page("主题")
+            results["theme install button"] = page.locator("#theme-install").count()
+
+            # 新建站点向导：能弹出来、模板有渲染、名称为空时「创建」是禁用的、能关掉
+            open_page("站点管理")
+            page.locator("#sites-create").click()
+            page.wait_for_timeout(400)
+            results["wizard open"] = page.locator(".modal-backdrop .modal").count()
+            results["wizard name input"] = page.locator("#wizard-name").count()
+            results["wizard template radios"] = page.locator(".radio-item").count()
+            results["wizard confirm disabled when empty"] = page.evaluate(
+                "(() => { const b = document.querySelector('.modal-actions .button.is-primary');"
+                " return b ? b.disabled : null; })()"
+            )
+            page.locator("#wizard-name").fill("my-blog")
+            page.locator("#wizard-parent").fill("/tmp")
+            page.wait_for_timeout(200)
+            results["wizard confirm enabled after fill"] = page.evaluate(
+                "(() => { const b = document.querySelector('.modal-actions .button.is-primary');"
+                " return b ? b.disabled : null; })()"
+            )
+            page.evaluate(
+                "(() => { const b = document.querySelector('.modal-actions .button:not(.is-primary)');"
+                " if (b) b.click(); })()"
+            )
+            page.wait_for_timeout(300)
+            results["wizard closed"] = page.locator(".modal-backdrop").count()
 
             # 回到文章页，后面还有语言切换检查
             open_page("文章")

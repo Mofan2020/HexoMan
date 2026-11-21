@@ -990,9 +990,13 @@ class HexoManAPI:
             }
 
         short_name = theme_manager_module.ThemeManager.short_name(full_package)
-        theme_installer_module.ThemeInstaller.write_theme(site, short_name)
 
+        # 顺序不能反：compute_migration 靠「站点配置里的 theme 与目标不同」
+        # 去找旧主题的配置文件，所以必须在写新 theme 之前算。先写再算的话
+        # 两者已经同名，它会认定没有旧主题可比，永远返回 None。
         migration = theme_installer_module.ThemeInstaller.compute_migration(site, short_name)
+
+        theme_installer_module.ThemeInstaller.write_theme(site, short_name)
 
         return {
             "ok": True,

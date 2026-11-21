@@ -1521,6 +1521,142 @@ button {
   margin-bottom: 16px;
 }
 
+/* ------------------------------------------------------------ 站点设置 / 新建站点 / 主题迁移 */
+
+.modal-hint {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+
+.radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.radio-item:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.radio-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.radio-title {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.radio-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.option.checkbox {
+  justify-content: flex-start;
+  padding: 8px 0;
+}
+
+.option.checkbox span {
+  flex: 1;
+  min-width: 0;
+}
+
+.migration-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.migration-label {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ Git 改动文件 */
+
+.git-group {
+  margin-top: 12px;
+}
+
+.git-group-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.git-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.git-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.git-file-row:hover {
+  background: var(--bg-sunken);
+}
+
+.git-file-path {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-file-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.button.is-small {
+  padding: 3px 9px;
+  font-size: 11.5px;
+  min-height: 0;
+}
+
 /* ------------------------------------------------------------ 响应式 */
 
 @media (max-width: 1000px) {
