@@ -603,3 +603,53 @@ Hexo 8 里 `after_generate` 的 data 是 null。而且不同版本传字符串�
   Swift 版记录过 152MB 站点的遍历时间，Python 版没实测过同等规模
 - **HEIC 转 PNG**：Pillow 是可选的，没装时按 Swift 版「转不动也照写」的行为
   处理（扩展名给 png、内容原样）。真机上要确认装了 Pillow 时的转换质量
+
+## 2026-11-21 · Python + PyWebView 重构：第三阶段
+
+### 做了什么
+
+补齐 Swift `Core/` 里剩下的部分，并给「配置 / 主题 / Git / 站点」四块装上真实的写操作。
+
+| 模块 | 文件 | 负责什么 |
+|---|---|---|
+| SiteSettings | `hexoman/site_settings.py` | 站点常用配置项的读写、分组、双语标签 |
+| HexoCLIBootstrap | `hexoman/hexo_bootstrap.py` | 定位 hexo，找不到时用用户的 npm 装一份到站点里 |
+| 站点创建 | `hexoman/site_creator.py` | 模板列表、`hexo init`、`npm install` |
+| 主题安装与迁移 | `hexoman/theme_installer.py` | 装主题、算出「换主题后哪些键要搬」 |
+| Git 单文件操作 | `hexoman/git_service.py` | 暂存/取消暂存单个文件、看单个文件的 diff |
+| 图片入库 | `hexoman/api.py` | 把拖进来或选进来的图片拷进 `source/images` 并按日期分目录 |
+
+界面侧把原来六个 `SOON` 占位页换成真实现：页面、构建与预览、配置、主题、Git、备份、环境。
+
+### 一个改掉的行为：换主题不再往配置里塞第二个 `theme` 键
+
+`_config.yml` 里 `theme` 写成嵌套结构（映射或序列）时，换主题会在文件末尾再
+追加一行 `theme: <名字>`，文件里因此出现两个同名顶层键。YAML 解析时后者覆盖
+前者，用户原来配的嵌套结构被悄悄废掉，界面上只表现为「换完主题配置就没了」。
+
+原因是 `switch_theme` 在 `document.set()` 返回 `None` 时无条件调用
+`_append_top_level`，而后者的注释写的是「只在 `theme` 键不存在时用」，代码却
+没检查键到底在不在。`config_sync` 里有一份同名副本，同样的毛病。
+
+两处都在追加前先查顶层键，已存在就返回 `None`，调用方据此报 `switchFailed`
+而不是写出坏配置。
+
+### 验证
+
+- `python -m pytest -q`：**596 passed**
+- `python tools/mutate_hexoman.py`：11 条变异，抓住 10、已知行为等价 1、漏网 0
+  （等价的那条是 `PageStore.scan` 里跳过隐藏目录的剪枝——正确性由
+  `_make_page_file` 的二次过滤守着，剪枝只为不去 stat `.git` 里的对象）
+- 换主题的五种输入手工过了一遍：正常标量替换、嵌套映射报错、序列报错、
+  无 `theme` 键追加、空文件报错，文件都没有被写坏
+
+### 已知未实测
+
+同第二阶段，另外补两条：
+
+- **`chooseFile` 没有对应实现**。Swift 版用它选 zsh 配置文件和 hexo 可执行
+  文件（`BuildView`），Python 版只有 `choose_directory`。这两个入口目前在
+  Python 版里没有等价交互。
+- **主题迁移清单**只在构造出来的配置上验过，没在真装了 next / fluid / matery
+  的站点上确认搬迁结果不影响渲染。
+
