@@ -66,6 +66,21 @@ def test_scan_sorts_posts_first(site: Site):
     assert pages[0].is_post is True
 
 
+def test_scan_sorts_posts_first_even_when_a_page_is_newer(site: Site):
+    """文章排在前面靠的是 is_post，不是修改时间。
+
+    fixture 里文章本来就是最后写的、mtime 最新，所以只断言「第一个是文章」
+    两种实现都能过。这里把文章改老、页面改新，只有 is_post 这一项还能让它排第一。
+    """
+    root = Path(site.path) / "source"
+    os.utime(root / "_posts" / "hello.md", (1_000_000, 1_000_000))
+    os.utime(root / "about" / "index.md", (2_000_000, 2_000_000))
+
+    pages = PageStore.scan(site)
+    assert pages[0].is_post is True
+    assert pages[0].relative_path == "_posts/hello.md"
+
+
 def test_kind_detection(site: Site):
     pages = {page.relative_path: page for page in PageStore.scan(site)}
     assert pages["about/index.md"].kind == PageKind.INDEXED

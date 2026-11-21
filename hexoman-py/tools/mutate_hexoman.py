@@ -27,6 +27,12 @@ ORIG_PYTHON = SRC / ".venv" / "bin" / "python"
 if not ORIG_PYTHON.exists():
     ORIG_PYTHON = Path(sys.executable)
 
+# 已知行为等价的变异：改了不影响输出，所以测试抓不住是正确的。
+# 和「漏网」分开报，避免把这类当成测试漏洞去补假测试。
+BEHAVIOUR_EQUIVALENT = {
+    "pages:扫描时不跳过隐藏目录",
+}
+
 # (名称, 相对路径, 原片段, 替换片段)
 MUTATIONS: list[tuple[str, str, str, str]] = [
     (
@@ -194,6 +200,8 @@ def main() -> int:
 
     caught = 0
     skipped = 0
+    equivalent = 0
+    missed: list[str] = []
     for name, relpath, old, new in MUTATIONS:
         with tempfile.TemporaryDirectory(prefix="hexoman-mut-") as tmp:
             work = make_copy(Path(tmp), source)
@@ -224,13 +232,22 @@ def main() -> int:
                 summary = lines[-1] if lines else ""
                 print(f"[抓住] {name}  |  {summary[:120]}")
             elif rc == 0:
-                print(f"[漏网] {name} —— 测试没抓住")
+                if name in BEHAVIOUR_EQUIVALENT:
+                    equivalent += 1
+                    print(f"[等价] {name} —— 已知行为等价，抓不住是对的")
+                else:
+                    missed.append(name)
+                    print(f"[漏网] {name} —— 测试没抓住")
             else:
                 print(f"[量具坏] {name} —— pytest 退出码 {rc}，不是「抓住」")
                 print(out[-600:])
 
-    print(f"\n共 {len(MUTATIONS)} 条变异：抓住 {caught}，跳过 {skipped}")
-    return 0 if caught + skipped == len(MUTATIONS) else 1
+    print(f"\n共 {len(MUTATIONS)} 条变异：抓住 {caught}，已知等价 {equivalent}，漏网 {len(missed)}")
+    if missed:
+        print("漏网的：")
+        for name in missed:
+            print(f"  - {name}")
+    return 0 if caught + equivalent + skipped == len(MUTATIONS) else 1
 
 
 if __name__ == "__main__":

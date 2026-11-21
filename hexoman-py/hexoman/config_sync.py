@@ -313,6 +313,11 @@ def _write_nested(text: str, key: str, value: str) -> str | None:
 
 
 def _append_top_level(text: str, key: str, value: str) -> str | None:
+    # 顶层已经有这个键，无论它是什么类型，都不追加：追加会留下第二个同名键，
+    # YAML 里后者覆盖前者，用户原来写的结构被悄悄废掉。
+    if key in YamlDocument(text).top_level_keys():
+        return None
+
     lines = text.split("\n")
     while lines and not lines[-1].strip():
         lines.pop()

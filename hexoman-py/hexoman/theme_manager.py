@@ -440,10 +440,15 @@ class ThemeManager:
 def _append_top_level(text: str, key: str, value: str) -> str | None:
     """在文件末尾追加一行顶层 ``key: value``。
 
-    只在 ``theme`` 键**不存在**时用。已存在但不是标量的情况不能覆盖——
-    那说明用户写的是个嵌套结构，替用户决定它的含义太危险。
+    只在 ``key`` **不存在**时用。已存在但不是标量时（用户写的是嵌套结构）
+    绝不能追加——追加会在文件里留下第二个同名键，YAML 解析时后者覆盖前者，
+    用户原来写的结构被悄悄废掉，而且看不出是哪一步坏的。
     """
     from .yamlutil import format_scalar
+
+    # 顶层已经有这个键，无论它是什么类型，都不追加。
+    if key in YamlDocument(text).top_level_keys():
+        return None
 
     lines = text.split("\n")
     while lines and not lines[-1].strip():

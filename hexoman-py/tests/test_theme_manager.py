@@ -159,6 +159,39 @@ def test_switch_theme_appends_when_missing(tmp_path: Path):
     assert "title: x" in text
 
 
+def test_append_top_level_strips_trailing_blank_lines():
+    """末尾有空行时，追加的键要贴着最后一个键，不能被空行隔开。"""
+    from hexoman.theme_manager import _append_top_level
+
+    assert _append_top_level("title: x\n\n\n", "theme", "yun") == "title: x\ntheme: yun\n"
+
+
+def test_append_top_level_refuses_existing_key():
+    """顶层已经有这个键就不能追加，否则文件里会出现两个同名键。"""
+    from hexoman.theme_manager import _append_top_level
+
+    # 键已存在且是标量：追加会产出重复键
+    assert _append_top_level("theme: yun\n", "theme", "landscape") is None
+    # 键已存在且是嵌套结构：同样不能追加
+    assert _append_top_level("theme:\n  name: yun\n", "theme", "landscape") is None
+
+
+def test_switch_theme_does_not_duplicate_nested_theme(tmp_path: Path):
+    """theme 写成嵌套结构时，换主题要明确报错，不能悄悄追加第二个 theme 键。"""
+    root = tmp_path / "s"
+    root.mkdir()
+    (root / "_config.yml").write_text("title: x\ntheme:\n  name: yun\n", encoding="utf-8")
+    site = Site(path=str(root), last_opened=0.0)
+
+    theme = InstalledTheme(name="landscape", package_name="hexo-theme-landscape", version="1")
+    with pytest.raises(ThemeManagerError):
+        ThemeManager.switch_theme(site, theme)
+
+    text = (root / "_config.yml").read_text(encoding="utf-8")
+    # 文件里主题键还是一个，没有被追加出第二个
+    assert text.count("theme:") == 1
+
+
 def test_switch_theme_missing_config_raises(tmp_path: Path):
     site = Site(path=str(tmp_path / "nope"), last_opened=0.0)
     theme = InstalledTheme(name="yun", package_name="hexo-theme-yun")

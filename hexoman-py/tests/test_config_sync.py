@@ -127,6 +127,17 @@ def test_apply_to_site_appends_missing_top_level_key():
     assert YamlDocument(updated).get("favicon") == "/images/fav.png"
 
 
+def test_apply_to_site_refuses_when_top_level_key_is_not_a_scalar():
+    """顶层键已存在且是嵌套结构时，不能追加第二个同名键。
+
+    追加会让文件里出现两个 ``avatar:``，YAML 解析时后者覆盖前者，
+    用户原本配的结构就被悄悄废掉了。
+    """
+    site_config = "title: x\navatar:\n  url: /old.png\n"
+
+    assert ConfigSync.apply_to_site("avatar", "/new.png", site_config) is None
+
+
 def test_apply_to_site_creates_missing_parent_block():
     """站点配置里连 avatar: 那行都没有时也要能写进去。
 
