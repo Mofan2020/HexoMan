@@ -1,0 +1,22 @@
+# HexoMan（Python 版）运行时依赖
+#
+# 版本下限按「能用就行」定，不追最新：
+# - pywebview 4.x 起 JS API 的行为稳定了
+# - markdown 3.x 的 API 是稳的
+# - pygments 2.x
+
+pywebview>=4.0
+markdown>=3.4
+pygments>=2.15
+PyYAML>=6.0
+
+# 开发依赖
+pytest>=7.4
+
+# 可选：插图时把 HEIC/HEIF（iPhone 截图默认格式）转成 PNG。
+# 不装也能跑——只是 HEIC 会原样写入（扩展名给 png，浏览器仍然不认）。
+# Pillow>=10.0
+
+# 无头界面验证用（tools/verify_ui_headless.py）。不是运行应用的必需依赖，
+# 装不装都能跑应用本身。
+# playwright>=1.40

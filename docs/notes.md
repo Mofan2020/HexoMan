@@ -455,3 +455,151 @@ JP 语言档（`AppLanguage.ja`）已经在枚举里声明，但 `Localizable.xc
   页面数量通常 < 50，没问题）
 - front-matter 表格中长 key（如 hexo-next 的 social_icons）的可读性
 - PageReferenceIndex 对中英文混合 front-matter 的解析正确性
+## 2026-11-20 · Python + PyWebView 重构：第一阶段
+
+### 做了什么
+
+新增 `hexoman-py/`：Python + PyWebView 实现，Windows 与 macOS 通用，
+明确不支持 Linux（本机没有 Linux 设备用于实测，写上去也验不了）。
+
+已实现并有测试覆盖的模块：
+
+| Python | 对应 Swift |
+|---|---|
+| `sites.py` | `HexoSite` |
+| `posts.py` | `BlogPost` |
+| `frontmatter.py` | `FrontMatter` |
+| `git_service.py` | `GitService` |
+| `system_integration.py` | `SystemIntegration` |
+| `settings.py` | `SiteSettings`（+ `SettingsStore`） |
+| `hexo_cli.py` | `HexoCLIBootstrap` |
+| `model.py` | `HexoManModel` |
+| `markdown_render.py` | 无对应（Python 侧新增，Markdown 预览用） |
+| `yamlutil.py` | `YAMLDocument` / `YAMLScalars`（部分） |
+
+界面：站点与文章管理、Markdown 预览、总览、中英即时切换、深浅主题。
+`tools/verify_ui_headless.py` 无头验证界面，不开窗口。
+
+### 没做的
+
+Swift 版 `HexoMan/Core/` 共 30 个模块，下面这些**还没有对应实现**：
+
+`BackupManager` `ConfigDocs` `ConfigFile` `ConfigSchema` `ConfigSync`
+`CustomContent` `EnvironmentDocs` `HexoEnvironment` `HexoService`
+`PageAssets` `PageReferenceIndex` `PageStore` `SettingsStore`
+`ShellEnvironment` `ShellRunner` `SiteMedia` `SnippetLibrary`
+`ThemeManager` `ThemeRegistry`
+
+其中 `PageStore`、`ConfigFile`、`ThemeManager`、`HexoService` 是核心 ——
+页面管理、配置文件读写、主题安装、hexo 服务启停都还没有。
+
+Swift 原代码一行未改，也没有提交。`hexoman-py/` 目前是未跟踪目录。
+
+### 验证
+
+- `python -m pytest tests/ -v`：199 passed
+- 测试入口用 ServBay 的 Python 3.13
+
+### 已知未实测
+
+- Windows 与 macOS 上的真机启动（PyWebView 在两平台上的窗口行为、
+  文件对话框、菜单栏差异都没在真机上跑过）
+- Markdown 预览在真实 hexo 站点上的渲染效果
+- 上述 22 个未迁移模块的行为对齐
+
+
+## 2026-11-21 · Python + PyWebView 重构：第二阶段
+
+### 做了什么
+
+把第一阶段剩下的 Core 模块全部补上，界面上那六个带 `SOON` 标记的页面
+换成真页面。
+
+新模块（均有测试）：
+
+| Python | 对应 Swift |
+|---|---|
+| `yaml_path.py` | `YAMLDocument` / `YAMLPathEngine` |
+| `pages.py` | `PageStore` / `BlogPage` / `PageField` |
+| `page_assets.py` | `PageAssets` |
+| `page_reference.py` | `PageReferenceIndex` |
+| `config_file.py` | `ConfigFile` / `ConfigStore` |
+| `config_schema.py` | `ConfigSchema` / `ConfigKnowledge` |
+| `config_docs.py` | `ConfigDocs` |
+| `config_sync.py` | `ConfigSync` |
+| `theme_manager.py` | `ThemeManager` / `ThemeCatalog` |
+| `theme_registry.py` | `ThemeRegistry` |
+| `shell_environment.py` | `ShellEnvironment` / `ShellEnvironmentResolver` |
+| `shell_runner.py` | `ShellRunner`（日志面板 + 长驻任务） |
+| `hexo_environment.py` | `HexoEnvironment` / `ToolchainInfo` |
+| `site_media.py` | `SiteMedia` |
+| `snippet_library.py` | `SnippetLibrary` |
+| `custom_content.py` | `CustomContent` / `CustomContentStore` |
+| `backup.py` | `BackupManager` |
+| `environment_docs.py` | `EnvironmentDocs` |
+
+`settings.py`（`SettingsStore`）和 `yamlutil.py`（`YAMLScalars`）第一阶段已有，
+这次只补了 `format_scalar`。
+
+界面新增：页面（列表 + front-matter 表单 + 关联资源 + 被引用）、
+构建与预览、配置（表单 / 原文 / 站点→主题同步）、主题（已安装 + 市场）、
+Git、备份、环境（工具链体检 + 安装说明）。
+
+### 三个和 Swift 版不一样的地方（都是有意的）
+
+**1. YAML 改写用源码坐标做外科手术，而不是自研解析器。**
+Swift 版自己写了 1200 多行 YAML 解析器。Python 版用 PyYAML 的
+`compose()` 拿节点树——每个节点都带 `start_mark` / `end_mark`（精确到字符下标），
+于是「改一个值」可以只替换那一段文本，注释、引号风格、键顺序一个字节不动。
+
+代价是**不合法的 YAML 拒绝写入**（`set` 返回 `None`），退化成只读。这个取舍
+是有意的：配置改坏了很难恢复，而「读不到某个键」只是界面上少显示一项。
+
+**2. 备份用标准库 `zipfile`，不 shell 出 `zip` / `unzip`。**
+Windows 默认没有这两个命令。Swift 版用外部命令还踩过两个坑（`-x` 排除
+不生效、管道缓冲互相等待），标准库一次绕开。
+
+**3. Windows 不跑 shell bootstrap。**
+macOS 上要从 Dock 启动的进程不读 `.zshrc`，所以得起一个登录 shell 抓真实
+PATH。Windows 图形进程拿到的 PATH 已经包含用户级和系统级路径，额外跑一遍
+反而可能把环境弄坏。`ShellEnvironmentResolver.resolve()` 在 Windows 上
+直接返回继承环境。
+
+### 两个照原样保留的「反直觉」行为
+
+**`ConfigSync.theme_only_entries` 不是差异，是提示。**
+很多人把头像直接写在主题配置里，站点配置压根没这个键。按「站点配置是权威源」
+去清掉主题的值，等于用户配好的头像当场消失。所以这类单独列出、只告知，
+由用户点「搬到站点配置」。
+
+**`custom_content` 的注入脚本必须用 `_after_html_render`。**
+Hexo 8 里 `after_generate` 的 data 是 null。而且不同版本传字符串还是
+`{path, content}` 对象不一致，脚本里先归一化，**任何分支都保证返回值非空**
+——返回空等于把整站渲染成 0 字节。测试里盯着这两条。
+
+### 验证
+
+- `python -m pytest tests/ -q`：**472 passed**（第一阶段 199 条，新增 273 条）
+- `python tools/verify_ui_headless.py`：无 JS 报错，六个新页面都能渲染
+  （页面 2 条 / 表单 4 个控件、配置 3 个字段 + 同步按钮、主题 4 行 + 搜索框、
+  备份 1 行、环境 10 行工具链 + 4 张文档卡），切语言仍不重载页面
+- 跑完清理：无残留 chromium / playwright 进程
+
+### 已知未实测
+
+机器上能验的都验了（pytest + 无头 chromium），下面这些**必须真机确认**：
+
+- **Windows**：从来没在这台机器上跑过。具体风险点：
+  - `node_modules/.bin/hexo` 是 `.cmd` 脚本，`is_executable` 靠扩展名判断，
+    没在真 Windows 上验证过
+  - `explorer.exe /select,` 的路径引号规则（含空格的目录）
+  - `%APPDATA%/HexoManPy` 目录创建与权限
+  - pywebview 在 Windows 上的窗口 / 文件对话框外观
+- **macOS 真机**：PyWebView 窗口需要手动激活一次才上前台（从终端启动时）；
+  `hexo server` 预览页在真实站点上的渲染
+- **真实站点上的主题切换**：只验过「注释和键顺序保留」，没在装了
+  next / fluid / matery 的站点上验过切换后的实际渲染
+- **备份恢复在真实大站点上的耗时**：单测用的是几十个文件的假站点；
+  Swift 版记录过 152MB 站点的遍历时间，Python 版没实测过同等规模
+- **HEIC 转 PNG**：Pillow 是可选的，没装时按 Swift 版「转不动也照写」的行为
+  处理（扩展名给 png、内容原样）。真机上要确认装了 Pillow 时的转换质量
