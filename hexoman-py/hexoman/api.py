@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import os
 import threading
+from pathlib import Path
 from typing import Any
 
 from . import (
@@ -50,6 +51,7 @@ from . import (
 )
 from . import posts as posts_module
 from . import sites as sites_module
+from .asset_server import AssetServer
 from .config_file import ConfigFile, ConfigStore
 from .config_schema import ConfigSchema
 from .config_sync import ConfigSync
@@ -67,6 +69,7 @@ from .site_media import SiteMedia
 from .snippet_library import SnippetLibrary
 from .system_integration import (
     choose_directory,
+    choose_images,
     open_path,
     open_url,
     platform_name,
@@ -112,6 +115,10 @@ class HexoManAPI:
 
         self._theme_registry = ThemeRegistry()
         self._config_drafts: dict[str, ConfigFile] = {}
+
+        #: 预览用的本地静态资源服务。文章里的图片是站点内的相对路径，
+        #: 界面从 ``file://`` 打开时加载不到，得靠它转成可访问的地址。
+        self._assets = AssetServer()
 
     # -- 状态 ---------------------------------------------------------
 
@@ -337,13 +344,79 @@ class HexoManAPI:
 
     # -- Markdown -----------------------------------------------------
 
-    def renderMarkdown(self, text: str) -> dict[str, Any]:
+    def renderMarkdown(self, text: str, path: str = "") -> dict[str, Any]:
         """渲染 Markdown，返回 HTML。
 
         front matter 会被切掉再渲染——它是 YAML 头部，不是正文。
+        ``path`` 是文章文件路径，用来定位同目录下的图片。
         """
-        result = markdown_render.render_markdown_document(text or "")
+        result = markdown_render.render_markdown_document(
+            text or "", resolver=self._asset_resolver(path)
+        )
         return {"ok": True, **result.to_dict()}
+
+    def _asset_resolver(self, path: str = ""):
+        """做一个「图片地址 → 预览能加载的地址」的解析函数。
+
+        文章里写的是站点内的相对路径（``/images/2026/11/a.png``）。界面从
+        ``file://`` 打开，这种地址指不到站点目录，必然裂图——所以要换成
+        本地资源服务的地址。
+
+        找不到文件的地址原样返回：预览里显示裂图，比悄悄换成别的东西
+        诚实。
+        """
+        site = self._site_list.current
+        if site is None:
+            return None
+
+        root = Path(site.path).resolve()
+        post_dir: Path | None = None
+        if path:
+            try:
+                post_dir = Path(path).resolve().parent
+            except OSError:
+                post_dir = None
+
+        self._assets.set_root(root)
+        self._assets.start()
+
+        def resolve(src: str) -> str | None:
+            if not src:
+                return None
+            if src.startswith(("http://", "https://", "data:")):
+                return src
+
+            clean = src.split("#")[0].split("?")[0]
+            if not clean:
+                return None
+
+            candidates: list[Path] = []
+            if clean.startswith("/"):
+                candidates.append(root / "source" / clean.lstrip("/"))
+                candidates.append(root / "public" / clean.lstrip("/"))
+            else:
+                if post_dir is not None:
+                    candidates.append(post_dir / clean)
+                candidates.append(root / "source" / clean)
+                candidates.append(root / "public" / clean)
+
+            for candidate in candidates:
+                try:
+                    resolved = candidate.resolve()
+                    relative = resolved.relative_to(root)
+                except (OSError, ValueError):
+                    continue
+                if not relative.parts:
+                    continue
+                if relative.parts[0] not in ("source", "public"):
+                    continue
+                if not resolved.is_file():
+                    continue
+                return self._assets.url_for(str(relative).replace("\\", "/"))
+
+            return None
+
+        return resolve
 
     # -- 总览 ---------------------------------------------------------
 
@@ -493,7 +566,7 @@ class HexoManAPI:
         return {"ok": True}
 
     def shutdown(self) -> dict[str, Any]:
-        """退出前清理：停预览、落盘设置。"""
+        """退出前清理：停预览、停资源服务、落盘设置。"""
         with self._lock:
             process = self._server_process
             self._server_process = None
@@ -508,6 +581,7 @@ class HexoManAPI:
                 except OSError:
                     pass
 
+        self._assets.stop()
         self._persist()
         return {"ok": True}
 
@@ -1470,6 +1544,13 @@ class HexoManAPI:
         }
 
     # -- 插图 ---------------------------------------------------------
+
+    def chooseImages(self) -> dict[str, Any]:
+        """让用户挑几张图片，返回选中的文件路径。
+
+        没有窗口时（无头环境、单元测试）返回空列表，界面据此什么都不做。
+        """
+        return {"ok": True, "paths": choose_images()}
 
     def storeImages(self, paths: list[str], base: str = "") -> dict[str, Any]:
         """把磁盘上的几张图存进当前站点，返回能直接插进正文的 Markdown。

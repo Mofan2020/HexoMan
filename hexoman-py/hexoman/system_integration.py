@@ -20,6 +20,7 @@ __all__ = [
     "reveal_in_file_manager",
     "open_url",
     "choose_directory",
+    "choose_images",
     "copy_to_clipboard",
 ]
 
@@ -102,6 +103,41 @@ def choose_directory(title: str = "选择站点目录") -> str:
             root.destroy()
         except Exception:
             pass
+
+
+def choose_images(title: str = "选择图片") -> list[str]:
+    """弹图片选择框（可多选），返回选中的文件路径。
+
+    用 pywebview 自己的原生文件对话框：macOS 上是 NSOpenPanel，
+    Windows 上是系统的打开对话框。没有窗口时（无头环境、单元测试）
+    返回空列表，让调用方安静地什么都不做。
+    """
+    try:
+        import webview
+    except ImportError:
+        return []
+
+    try:
+        window = webview.active_window()
+    except Exception:
+        return []
+
+    if window is None:
+        return []
+
+    try:
+        selected = window.create_file_dialog(
+            allow_multiple=True,
+            file_types=(
+                "图片 (*.png;*.jpg;*.jpeg;*.gif;*.webp;*.bmp;*.heic;*.heif)",
+            ),
+        )
+    except Exception:
+        return []
+
+    if not selected:
+        return []
+    return [str(item) for item in selected]
 
 
 def copy_to_clipboard(text: str) -> bool:

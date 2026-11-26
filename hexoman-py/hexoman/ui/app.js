@@ -31,6 +31,8 @@
     postFilter: "all",
     postSearch: "",
     editorMode: "split", // split | write | read
+    pageEditorMode: "split", // split | write | read
+    previewOutline: false,
     serverPort: 4000,
     serverRunning: false,
     platform: "",
@@ -175,6 +177,14 @@
     tag: '<path d="M3.8 11.4 11.4 3.8H20v8.6l-7.6 7.6z"/><circle cx="16.2" cy="7.8" r="1.3"/>',
     file:
       '<path d="M6 3.5h7.5L18 8v12.5H6z"/><path d="M13 3.5V8h5"/>',
+    image:
+      '<rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle cx="8.8" cy="9.6" r="1.5"/><path d="m4.6 17.2 4.5-4.5a1.6 1.6 0 0 1 2.2 0l2.6 2.6"/><path d="m13.4 15.3 2.3-2.3a1.6 1.6 0 0 1 2.2 0l1.9 1.9"/>',
+    link:
+      '<path d="M10.2 13.8a3.6 3.6 0 0 0 5.1 0l2.4-2.4a3.6 3.6 0 0 0-5.1-5.1l-1.1 1.1"/><path d="M13.8 10.2a3.6 3.6 0 0 0-5.1 0l-2.4 2.4a3.6 3.6 0 0 0 5.1 5.1l1.1-1.1"/>',
+    code:
+      '<path d="m8.5 8.5-4 3.5 4 3.5"/><path d="m15.5 8.5 4 3.5-4 3.5"/><path d="m13.6 5.2-3.2 13.6"/>',
+    outline:
+      '<path d="M4 6h16M4 12h11M4 18h7"/>',
   };
 
   function icon(name, size) {
@@ -1445,20 +1455,26 @@
       '<label class="switch"><input type="checkbox" id="post-draft" /><span></span></label></div>';
     html += "</div>";
 
-    html += '<div class="editor-body" id="editor-body">';
+    html +=
+      '<div class="editor-body' +
+      (state.editorMode === "split" ? "" : " is-single") +
+      '" id="editor-body">';
     if (state.editorMode !== "read") {
       html +=
         '<div class="editor-pane">' +
-        '<div class="editor-pane-label"></div>' +
+        '<div class="editor-pane-head">' +
+        '<span class="editor-pane-label"></span>' +
+        '<span class="editor-pane-tools">' +
+        '<button class="icon-button" id="insert-image" type="button"></button>' +
+        '<button class="icon-button" id="insert-link" type="button"></button>' +
+        '<button class="icon-button" id="insert-code" type="button"></button>' +
+        "</span>" +
+        "</div>" +
         '<textarea class="editor-textarea" id="post-body" spellcheck="false"></textarea>' +
         "</div>";
     }
     if (state.editorMode !== "write") {
-      html +=
-        '<div class="editor-pane">' +
-        '<div class="editor-pane-label"></div>' +
-        '<div class="markdown-preview" id="post-preview"></div>' +
-        "</div>";
+      html += '<div class="editor-pane preview-pane" id="post-preview-pane"></div>';
     }
     html += "</div>";
 
@@ -1515,7 +1531,6 @@
 
     var paneLabels = host.querySelectorAll(".editor-pane-label");
     if (paneLabels[0]) paneLabels[0].textContent = t("posts.body");
-    if (paneLabels[1]) paneLabels[1].textContent = t("posts.preview");
 
     var revealBtn = host.querySelector("#post-reveal");
     if (revealBtn) {
@@ -1574,7 +1589,7 @@
       bodyInput.addEventListener("input", function () {
         state.dirty = true;
         updateCounts();
-        updatePreview();
+        if (preview) preview.update();
       });
     }
 
@@ -1594,21 +1609,283 @@
       updateCounts();
     });
 
-    // 预览渲染（后端渲染，front matter 不进正文）
-    function updatePreview() {
-      var preview = host.querySelector("#post-preview");
-      if (!preview) return;
-      var source = bodyInput ? bodyInput.value : post.body || "";
-      api("renderMarkdown", source).then(function (result) {
-        if (!result || !result.ok) {
-          preview.textContent = "";
-          return;
-        }
-        preview.innerHTML = result.html || "";
+    // -- 插入助手 ----------------------------------------------------
+
+    /** 在光标处插入文本。插完把光标放到插入内容后面。 */
+    function insertIntoBody(text) {
+      if (!bodyInput) return;
+      var start = bodyInput.selectionStart;
+      var end = bodyInput.selectionEnd;
+      var value = bodyInput.value;
+      bodyInput.value = value.slice(0, start) + text + value.slice(end);
+      var caret = start + text.length;
+      bodyInput.focus();
+      bodyInput.setSelectionRange(caret, caret);
+      bodyInput.dispatchEvent(new Event("input"));
+    }
+
+    var insertImageBtn = host.querySelector("#insert-image");
+    if (insertImageBtn) {
+      insertImageBtn.innerHTML = icon("image", 14);
+      insertImageBtn.title = t("posts.insertImage");
+      insertImageBtn.addEventListener("click", function () {
+        api("chooseImages").then(function (picked) {
+          if (!picked || !picked.ok || !picked.paths || !picked.paths.length) return;
+          api("storeImages", picked.paths, post.slug || "").then(function (stored) {
+            if (!stored || !stored.ok) {
+              toast(t("posts.imageFailed"), "error");
+              return;
+            }
+            if (stored.markdown && stored.markdown.length) {
+              insertIntoBody("\n" + stored.markdown.join("\n\n") + "\n");
+              toast(t("posts.imageAdded"));
+            }
+            if (stored.failed) {
+              toast(tf("preview.imageFailed", { count: stored.failed }), "error");
+            }
+          });
+        });
       });
     }
 
-    updatePreview();
+    var insertLinkBtn = host.querySelector("#insert-link");
+    if (insertLinkBtn) {
+      insertLinkBtn.innerHTML = icon("link", 14);
+      insertLinkBtn.title = t("posts.insertLink");
+      insertLinkBtn.addEventListener("click", function () {
+        insertIntoBody("[链接文字](https://)");
+      });
+    }
+
+    var insertCodeBtn = host.querySelector("#insert-code");
+    if (insertCodeBtn) {
+      insertCodeBtn.innerHTML = icon("code", 14);
+      insertCodeBtn.title = t("posts.insertCode");
+      insertCodeBtn.addEventListener("click", function () {
+        insertIntoBody("\n```\n\n```\n");
+      });
+    }
+
+    // -- 预览 --------------------------------------------------------
+
+    var preview = null;
+    var previewPane = host.querySelector("#post-preview-pane");
+    if (previewPane) {
+      preview = mountPreview(previewPane, {
+        docId: "post-preview",
+        source: function () {
+          return bodyInput ? bodyInput.value : post.body || "";
+        },
+        path: post.path,
+        outline: state.previewOutline,
+      });
+    }
+  }
+
+  /**
+   * 装一个预览面板。
+   *
+   * 文章和页面共用这一套：面板结构、渲染、代码复制按钮、标题大纲都一样。
+   *
+   * ``options``：
+   * - ``docId``：正文容器的 id
+   * - ``source()``：取当前正文的函数
+   * - ``path``：文件路径（解析文章里的图片要用）
+   * - ``outline``：初始是否显示大纲
+   */
+  function mountPreview(host, options) {
+    host.innerHTML =
+      '<div class="preview-bar">' +
+      '<button class="icon-button" id="preview-outline-toggle" type="button"></button>' +
+      '<span class="preview-title" id="preview-title"></span>' +
+      '<span class="preview-bar-spacer"></span>' +
+      '<span class="preview-meta" id="preview-meta"></span>' +
+      "</div>" +
+      '<div class="preview-body">' +
+      '<nav class="preview-outline" id="preview-outline" hidden></nav>' +
+      '<article class="preview-doc" id="' + options.docId + '"></article>' +
+      "</div>";
+
+    var outlineItems = [];
+    var seq = 0;
+    var timer = null;
+    var outlineOn = !!options.outline;
+
+    var toggle = host.querySelector("#preview-outline-toggle");
+    var nav = host.querySelector("#preview-outline");
+    var doc = host.querySelector("#" + options.docId);
+    var titleNode = host.querySelector("#preview-title");
+    var metaNode = host.querySelector("#preview-meta");
+
+    toggle.innerHTML = icon("outline", 14);
+    toggle.title = t("preview.outline");
+    toggle.className = "icon-button" + (outlineOn ? " is-active" : "");
+    toggle.addEventListener("click", function () {
+      outlineOn = !outlineOn;
+      toggle.className = "icon-button" + (outlineOn ? " is-active" : "");
+      paintOutline();
+    });
+
+    function paintOutline() {
+      nav.innerHTML = "";
+      nav.hidden = !outlineOn || !outlineItems.length;
+      outlineItems.forEach(function (item) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "preview-outline-item";
+        button.style.paddingLeft = 8 + (item.level - 1) * 12 + "px";
+        button.textContent = item.text;
+        button.addEventListener("click", function () {
+          var target = findById(doc, item.id);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+        nav.appendChild(button);
+      });
+    }
+
+    function updateMeta(result) {
+      if (titleNode) {
+        titleNode.textContent =
+          result.title || options.title || t("common.untitled");
+      }
+      if (!metaNode) return;
+      var parts = [];
+      if (result.draft) parts.push(t("posts.draft"));
+      if (result.wordCount) {
+        parts.push(tf("common.wordCount", { count: result.wordCount }));
+      }
+      if (result.readingMinutes) {
+        parts.push(tf("preview.readingTime", { minutes: result.readingMinutes }));
+      }
+      metaNode.textContent = parts.join(" · ");
+    }
+
+    function render() {
+      var source = options.source() || "";
+      var current = ++seq;
+
+      api("renderMarkdown", source, options.path || "").then(function (result) {
+        // 打字很快时会有多个请求在飞，回来得晚的那次要丢掉，
+        // 否则预览会跳回旧内容。
+        if (current !== seq) return;
+        if (!result || !result.ok) {
+          doc.innerHTML = "";
+          return;
+        }
+        doc.innerHTML = result.html || "";
+        enhanceCodeBlocks(doc);
+        updateMeta(result);
+        outlineItems = result.outline || [];
+        paintOutline();
+      });
+    }
+
+    /** 打字时别每次都往返后端，攒一下再渲染。 */
+    function update() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(render, 180);
+    }
+
+    render();
+
+    return { render: render, update: update };
+  }
+
+  /** 在一个子树里按 id 找元素。标题 id 可能是中文，不能直接进选择器。 */
+  function findById(root, id) {
+    if (!root || !id) return null;
+    var nodes = root.querySelectorAll("[id]");
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].getAttribute("id") === id) return nodes[i];
+    }
+    return null;
+  }
+
+  /**
+   * 给代码块加语言标签和复制按钮。
+   *
+   * 语言标签从 ``code.language-xxx`` 的 class 上取——那是渲染器写进去的。
+   */
+  function enhanceCodeBlocks(doc) {
+    var blocks = doc.querySelectorAll("pre.code");
+    Array.prototype.forEach.call(blocks, function (pre) {
+      if (pre.parentNode && pre.parentNode.classList.contains("code-block")) return;
+
+      var code = pre.querySelector("code");
+      var language = "";
+      if (code) {
+        var match = /language-([\w+#.-]+)/.exec(code.className || "");
+        if (match) language = match[1];
+      }
+
+      var wrap = document.createElement("div");
+      wrap.className = "code-block";
+
+      var head = document.createElement("div");
+      head.className = "code-block-head";
+
+      var label = document.createElement("span");
+      label.className = "code-block-lang";
+      label.textContent = language;
+
+      var copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "code-block-copy";
+      copy.textContent = t("preview.copy");
+      copy.addEventListener("click", function () {
+        var text = code ? code.textContent : "";
+        copyText(text).then(
+          function () {
+            copy.textContent = t("preview.copied");
+            setTimeout(function () {
+              copy.textContent = t("preview.copy");
+            }, 1400);
+          },
+          function () {
+            toast(t("preview.copyFailed"), "error");
+          }
+        );
+      });
+
+      head.appendChild(label);
+      head.appendChild(copy);
+      wrap.appendChild(head);
+
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+    });
+  }
+
+  /**
+   * 复制文本。
+   *
+   * ``navigator.clipboard`` 在 ``file://`` 页面里不一定能用，退回
+   * 「临时 textarea + execCommand」的老办法。
+   */
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var area = document.createElement("textarea");
+      area.value = text;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.left = "-9999px";
+      document.body.appendChild(area);
+      area.select();
+      var ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch (error) {
+        ok = false;
+      }
+      document.body.removeChild(area);
+      if (ok) resolve();
+      else reject(new Error("copy failed"));
+    });
   }
 
   /**
@@ -1616,13 +1893,26 @@
    *
    * 与后端的 `hexoman.model.word_count` 保持一致：中文按字算、西文按词算。
    * 前端先算一遍是为了实时反馈（打字时不必往返后端），最终保存时以文件为准。
+   *
+   * **front matter 不算字数**——它是 YAML 头部，不是文章内容。后端算的
+   * 就是这个口径，两边不一致的话，同一篇文章在底栏和预览头部会显示两个
+   * 不同的字数。
    */
   function countWords(text) {
     if (!text) return 0;
-    var withoutCode = text.replace(/```[\s\S]*?```/g, "").replace(/`/g, "");
+    var withoutCode = stripFrontMatter(text)
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`/g, "");
     var cjk = (withoutCode.match(/[一-鿿぀-ヿ가-힯]/g) || []).length;
     var latin = (withoutCode.match(/[0-9A-Za-z]+/g) || []).length;
     return cjk + latin;
+  }
+
+  /** 去掉开头的 front matter。 */
+  function stripFrontMatter(text) {
+    if (!text) return "";
+    var match = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(\r?\n|$)/.exec(text);
+    return match ? text.slice(match[0].length) : text;
   }
 
   function confirmDeletePost(post) {
@@ -1995,8 +2285,27 @@
     html += "</div>";
 
     html += '<div class="section" style="padding:0 14px">';
-    html += '<div class="card-title">' + icon("pencil", 15) + "<span></span></div>";
-    html += '<textarea class="textarea editor-textarea" id="page-body" spellcheck="false"></textarea>';
+    html += '<div class="card-title">' + icon("pencil", 15) + "<span></span>";
+    html += '<div class="segmented" id="page-editor-mode">';
+    ["write", "split", "read"].forEach(function (mode) {
+      html += '<button class="segmented-button" data-mode="' + mode + '"></button>';
+    });
+    html += "</div></div>";
+    html +=
+      '<div class="editor-body' +
+      (state.pageEditorMode === "split" ? "" : " is-single") +
+      '">';
+    if (state.pageEditorMode !== "read") {
+      html +=
+        '<div class="editor-pane">' +
+        '<div class="editor-pane-head"><span class="editor-pane-label"></span></div>' +
+        '<textarea class="textarea editor-textarea" id="page-body" spellcheck="false"></textarea>' +
+        "</div>";
+    }
+    if (state.pageEditorMode !== "write") {
+      html += '<div class="editor-pane preview-pane" id="page-preview-pane"></div>';
+    }
+    html += "</div>";
     html += "</div>";
 
     if (state.pageAssets.length) {
@@ -2043,11 +2352,42 @@
     if (badge) badge.textContent = "?";
 
     var body = editor.querySelector("#page-body");
-    body.value = state.pageBody;
-    body.addEventListener("input", function () {
-      state.pageBody = body.value;
-      state.pageDirty = true;
+    if (body) {
+      body.value = state.pageBody;
+      body.addEventListener("input", function () {
+        state.pageBody = body.value;
+        state.pageDirty = true;
+        if (preview) preview.update();
+      });
+    }
+
+    var bodyLabel = editor.querySelector(".editor-pane-label");
+    if (bodyLabel) bodyLabel.textContent = t("pages.body");
+
+    editor.querySelectorAll("#page-editor-mode .segmented-button").forEach(function (btn) {
+      var mode = btn.getAttribute("data-mode");
+      btn.textContent = t(EDITOR_MODE_KEYS[mode] || "posts.write");
+      btn.className =
+        "segmented-button" + (state.pageEditorMode === mode ? " is-active" : "");
+      btn.addEventListener("click", function () {
+        state.pageEditorMode = mode;
+        renderPageEditor();
+      });
     });
+
+    var preview = null;
+    var previewPane = editor.querySelector("#page-preview-pane");
+    if (previewPane) {
+      preview = mountPreview(previewPane, {
+        docId: "page-preview",
+        source: function () {
+          return state.pageBody;
+        },
+        path: page.path,
+        title: page.title,
+        outline: false,
+      });
+    }
 
     var save = editor.querySelector("#save-page");
     save.querySelector("span").textContent = t("pages.save");

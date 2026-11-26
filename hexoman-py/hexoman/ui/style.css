@@ -19,9 +19,11 @@
   --text: #1c1b1a;
   --text-secondary: #6b6865;
   --text-tertiary: #9a9693;
-  --accent: #2f6fd0;
-  --accent-soft: rgba(47, 111, 208, 0.12);
+  --accent: #007aff;
+  --accent-soft: rgba(0, 122, 255, 0.12);
   --accent-text: #ffffff;
+  --hover-bg: rgba(0, 0, 0, 0.05);
+  --bar-bg: rgba(255, 255, 255, 0.72);
   --success: #2f8a4c;
   --success-soft: rgba(47, 138, 76, 0.12);
   --warning: #b26a12;
@@ -53,9 +55,11 @@
     --text: #eceae8;
     --text-secondary: #a5a09b;
     --text-tertiary: #78736e;
-    --accent: #6f9de8;
-    --accent-soft: rgba(111, 157, 232, 0.18);
-    --accent-text: #14181f;
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, 0.2);
+    --accent-text: #0b1119;
+    --hover-bg: rgba(255, 255, 255, 0.07);
+    --bar-bg: rgba(38, 37, 35, 0.72);
     --success: #63bd85;
     --success-soft: rgba(99, 189, 133, 0.16);
     --warning: #e0a458;
@@ -524,6 +528,11 @@ button {
   width: 15px;
   height: 15px;
   color: var(--text-secondary);
+}
+
+/* 卡片标题右边的分段控件（页面的编辑/预览切换）。 */
+.card-title .segmented {
+  margin-left: auto;
 }
 
 .section {
@@ -1141,226 +1150,458 @@ button {
 
 /* ------------------------------------------------------------ 预览面板 */
 
-.markdown-preview {
-  flex: 1;
-  min-height: 220px;
-  overflow: auto;
-  padding: 14px 18px;
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  line-height: 1.72;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 顶部那一条是 macOS 那种「半透明材质」：背景能透出一点内容，
+   底下滚动时有种玻璃的感觉。 */
+.preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  min-height: 38px;
+  padding: 6px 10px 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bar-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.preview-bar-spacer {
+  flex: 1;
+}
+
+.preview-title {
   font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  max-width: 46%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-meta {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.preview-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.preview-outline {
+  flex: none;
+  width: 196px;
+  overflow: auto;
+  padding: 12px 8px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+
+.preview-outline-item {
+  display: block;
+  width: 100%;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.preview-outline-item:hover {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+
+/* 正文区。行宽控制在 46em 上下——再宽眼睛就要来回扫了。 */
+.preview-doc {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 26px 32px 64px;
+  font-size: 14.5px;
+  line-height: 1.78;
+  color: var(--text);
   overflow-wrap: break-word;
 }
 
-.markdown-preview > *:first-child {
+.preview-doc > *:first-child {
   margin-top: 0;
 }
 
-.markdown-preview h1,
-.markdown-preview h2,
-.markdown-preview h3,
-.markdown-preview h4 {
-  margin: 1.35em 0 0.5em;
+.preview-doc h1,
+.preview-doc h2,
+.preview-doc h3,
+.preview-doc h4 {
+  margin: 1.5em 0 0.55em;
   font-weight: 650;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  line-height: 1.32;
+  letter-spacing: -0.015em;
 }
 
-.markdown-preview h1 {
-  font-size: 1.5em;
+.preview-doc h1 {
+  font-size: 1.72em;
+  font-weight: 700;
 }
-.markdown-preview h2 {
-  font-size: 1.3em;
+.preview-doc h2 {
+  font-size: 1.38em;
 }
-.markdown-preview h3 {
-  font-size: 1.12em;
+.preview-doc h3 {
+  font-size: 1.14em;
 }
-.markdown-preview h4 {
+.preview-doc h4 {
   font-size: 1em;
+  color: var(--text-secondary);
 }
 
-.markdown-preview p {
-  margin: 0.7em 0;
+.preview-doc p {
+  margin: 0.85em 0;
 }
 
-.markdown-preview ul,
-.markdown-preview ol {
-  margin: 0.7em 0;
-  padding-left: 1.5em;
+.preview-doc ul,
+.preview-doc ol {
+  margin: 0.85em 0;
+  padding-left: 1.6em;
 }
 
-.markdown-preview li {
-  margin: 0.25em 0;
+.preview-doc li {
+  margin: 0.3em 0;
 }
 
-.markdown-preview blockquote {
-  margin: 0.9em 0;
-  padding: 2px 0 2px 14px;
+.preview-doc li > ul,
+.preview-doc li > ol {
+  margin: 0.3em 0;
+}
+
+.preview-doc blockquote {
+  margin: 1.1em 0;
+  padding: 0.15em 0 0.15em 16px;
   border-left: 3px solid var(--border-strong);
   color: var(--text-secondary);
 }
 
-.markdown-preview hr {
-  margin: 1.6em 0;
+.preview-doc hr {
+  width: 36%;
+  margin: 2.2em auto;
   border: 0;
   border-top: 1px solid var(--border);
 }
 
-.markdown-preview a {
+.preview-doc a {
   color: var(--accent);
   text-decoration: none;
 }
 
-.markdown-preview a:hover {
+.preview-doc a:hover {
   text-decoration: underline;
 }
 
-.markdown-preview code {
+.preview-doc code {
   font-family: var(--font-mono);
-  font-size: 0.88em;
-  background: var(--code-bg);
+  font-size: 0.86em;
   padding: 1.5px 5px;
-  border-radius: 4px;
-}
-
-.markdown-preview pre.code {
-  margin: 1em 0;
-  padding: 12px 14px;
+  border-radius: 5px;
   background: var(--code-bg);
-  border-radius: var(--radius);
-  overflow-x: auto;
-  line-height: 1.6;
+  word-break: break-word;
 }
 
-.markdown-preview pre.code code {
-  background: none;
-  padding: 0;
-  font-size: 12px;
-}
-
-.markdown-preview table {
-  width: 100%;
-  margin: 1em 0;
-  border-collapse: collapse;
-  font-size: 12.5px;
-}
-
-.markdown-preview th,
-.markdown-preview td {
-  padding: 6px 10px;
+/* 代码块：上面一条是语言和复制按钮，下面是代码。 */
+.code-block {
+  margin: 1.1em 0;
   border: 1px solid var(--border);
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--code-bg);
+}
+
+.code-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 7px 4px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+
+.code-block-lang {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.code-block-copy {
+  padding: 2px 7px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.code-block-copy:hover {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+
+.preview-doc pre.code {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 0;
+  background: none;
+  overflow-x: auto;
+  line-height: 1.62;
+}
+
+.preview-doc pre.code code {
+  padding: 0;
+  background: none;
+  font-size: 12.2px;
+}
+
+.preview-doc table {
+  width: 100%;
+  margin: 1.1em 0;
+  border: 1px solid var(--border);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.92em;
+}
+
+.preview-doc th,
+.preview-doc td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
   text-align: left;
 }
 
-.markdown-preview th {
+.preview-doc th {
   background: var(--bg-sunken);
   font-weight: 600;
 }
 
-.markdown-preview img.markdown-image {
+.preview-doc tr:last-child td {
+  border-bottom: 0;
+}
+
+.preview-doc img {
   max-width: 100%;
-  border-radius: var(--radius-sm);
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 任务列表的小方块。预览里是静态的，点不动是故意的。 */
+.task-box {
+  display: inline-block;
+  position: relative;
+  width: 14px;
+  height: 14px;
+  margin-right: 7px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  vertical-align: -2px;
+}
+
+.task-box.is-done {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.task-box.is-done::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 3.5px;
+  height: 7.5px;
+  border: solid #ffffff;
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(42deg);
+}
+
+/* iframe 不能在预览里跑，渲染器把它换成了这样一条提示。 */
+.preview-doc .embed-note {
+  margin: 1em 0;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 9px;
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+/* 不认识的 Hexo 标签：标出来，别让它冒充正文。 */
+.preview-doc code.hexo-tag {
+  font-size: 0.82em;
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+/* ------------------------------------------------------------ 编辑器小工具 */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.icon-button:hover {
+  background: var(--hover-bg);
+  color: var(--text);
+}
+
+.icon-button.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.editor-pane-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.editor-pane-tools {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
 }
 
 /* pygments token 配色：浅色深色各一套，跟随系统切换 */
-.markdown-preview .k,
-.markdown-preview .kd,
-.markdown-preview .kn,
-.markdown-preview .kp,
-.markdown-preview .kr {
+.preview-doc .k,
+.preview-doc .kd,
+.preview-doc .kn,
+.preview-doc .kp,
+.preview-doc .kr {
   color: #a626a4;
 }
-.markdown-preview .s,
-.markdown-preview .s1,
-.markdown-preview .s2,
-.markdown-preview .sb,
-.markdown-preview .sc,
-.markdown-preview .sd,
-.markdown-preview .se,
-.markdown-preview .sh,
-.markdown-preview .si,
-.markdown-preview .sx {
+.preview-doc .s,
+.preview-doc .s1,
+.preview-doc .s2,
+.preview-doc .sb,
+.preview-doc .sc,
+.preview-doc .sd,
+.preview-doc .se,
+.preview-doc .sh,
+.preview-doc .si,
+.preview-doc .sx {
   color: #50a14f;
 }
-.markdown-preview .c,
-.markdown-preview .c1,
-.markdown-preview .cm,
-.markdown-preview .cp,
-.markdown-preview .cs {
+.preview-doc .c,
+.preview-doc .c1,
+.preview-doc .cm,
+.preview-doc .cp,
+.preview-doc .cs {
   color: #9a9a97;
   font-style: italic;
 }
-.markdown-preview .nf {
+.preview-doc .nf {
   color: #4078f2;
 }
-.markdown-preview .nc,
-.markdown-preview .nn {
+.preview-doc .nc,
+.preview-doc .nn {
   color: #c18401;
 }
-.markdown-preview .m,
-.markdown-preview .mi,
-.markdown-preview .mf,
-.markdown-preview .mh {
+.preview-doc .m,
+.preview-doc .mi,
+.preview-doc .mf,
+.preview-doc .mh {
   color: #986801;
 }
-.markdown-preview .o,
-.markdown-preview .p {
+.preview-doc .o,
+.preview-doc .p {
   color: #383a42;
 }
-.markdown-preview .n {
+.preview-doc .n {
   color: inherit;
 }
-.markdown-preview .err {
+.preview-doc .err {
   color: #e45649;
 }
 
 @media (prefers-color-scheme: dark) {
-  .markdown-preview .k,
-  .markdown-preview .kd,
-  .markdown-preview .kn,
-  .markdown-preview .kp,
-  .markdown-preview .kr {
+  .preview-doc .k,
+  .preview-doc .kd,
+  .preview-doc .kn,
+  .preview-doc .kp,
+  .preview-doc .kr {
     color: #c678dd;
   }
-  .markdown-preview .s,
-  .markdown-preview .s1,
-  .markdown-preview .s2,
-  .markdown-preview .sb,
-  .markdown-preview .sc,
-  .markdown-preview .sd,
-  .markdown-preview .se,
-  .markdown-preview .sh,
-  .markdown-preview .si,
-  .markdown-preview .sx {
+  .preview-doc .s,
+  .preview-doc .s1,
+  .preview-doc .s2,
+  .preview-doc .sb,
+  .preview-doc .sc,
+  .preview-doc .sd,
+  .preview-doc .se,
+  .preview-doc .sh,
+  .preview-doc .si,
+  .preview-doc .sx {
     color: #98c379;
   }
-  .markdown-preview .c,
-  .markdown-preview .c1,
-  .markdown-preview .cm,
-  .markdown-preview .cp,
-  .markdown-preview .cs {
+  .preview-doc .c,
+  .preview-doc .c1,
+  .preview-doc .cm,
+  .preview-doc .cp,
+  .preview-doc .cs {
     color: #7f848e;
   }
-  .markdown-preview .nf {
+  .preview-doc .nf {
     color: #61afef;
   }
-  .markdown-preview .nc,
-  .markdown-preview .nn {
+  .preview-doc .nc,
+  .preview-doc .nn {
     color: #e5c07b;
   }
-  .markdown-preview .m,
-  .markdown-preview .mi,
-  .markdown-preview .mf,
-  .markdown-preview .mh {
+  .preview-doc .m,
+  .preview-doc .mi,
+  .preview-doc .mf,
+  .preview-doc .mh {
     color: #d19a66;
   }
-  .markdown-preview .o,
-  .markdown-preview .p {
+  .preview-doc .o,
+  .preview-doc .p {
     color: #abb2bf;
   }
-  .markdown-preview .err {
+  .preview-doc .err {
     color: #e06c75;
   }
 }

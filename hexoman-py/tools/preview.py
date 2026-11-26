@@ -38,6 +38,12 @@ DEMO_POSTS = [
         "categories": ["技术"],
         "draft": False,
         "body": (
+            "---\n"
+            "title: 用 PyWebView 重写 HexoMan\n"
+            "tags:\n"
+            "  - python\n"
+            "  - hexo\n"
+            "---\n\n"
             "这是一篇用来演示预览的示例文章。\n\n"
             "## 为什么重写\n\n"
             "原来的 SwiftUI 版本只支持 macOS 26+，现在要同时支持 Windows。\n\n"
@@ -205,12 +211,13 @@ MOCK_SCRIPT = """
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          return respond({
-            ok: true, html: data.html, title: data.title,
-            tags: data.tags, categories: data.categories, draft: data.draft
-          });
+          // 整个 payload 一起给过去：预览头部要用字数、阅读时长和标题大纲
+          data.ok = true;
+          return respond(data);
         });
     },
+    chooseImages: function () { return respond({ ok: true, paths: [] }); },
+    storeImages: function () { return respond({ ok: true, markdown: [], failed: 0 }); },
     getOverview: function () { return respond(overview); },
     runGenerate: function () { return respond({ ok: true, exitCode: 0, output: "INFO  Generated 42 files" }); },
     runClean: function () { return respond({ ok: true, exitCode: 0, output: "INFO  Deleted db.json" }); },

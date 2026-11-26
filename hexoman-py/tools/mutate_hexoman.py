@@ -136,6 +136,63 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
         "            return None",
         "        current = (document.get(key) or \"\").strip()",
     ),
+    (
+        "markdown:front matter 不切掉",
+        "hexoman/markdown_render.py",
+        "    _, body = frontmatter.split(text)\n"
+        "    return _render_body(body, resolver)",
+        "    _, body = text, text\n"
+        "    return _render_body(body, resolver)",
+    ),
+    (
+        "markdown:script 标签不再整个丢掉",
+        "hexoman/markdown_render.py",
+        '        "script", "style", "iframe", "object", "embed", "applet",',
+        '        "style", "iframe", "object", "embed", "applet",',
+    ),
+    (
+        "markdown:白名单里放进事件属性",
+        "hexoman/markdown_render.py",
+        '_GLOBAL_ATTRS = frozenset({"id", "title", "class", "dir", "lang"})',
+        '_GLOBAL_ATTRS = frozenset({"id", "title", "class", "dir", "lang", "onclick"})',
+    ),
+    (
+        "markdown:白名单里放进 style 属性",
+        "hexoman/markdown_render.py",
+        '_GLOBAL_ATTRS = frozenset({"id", "title", "class", "dir", "lang"})',
+        '_GLOBAL_ATTRS = frozenset({"id", "title", "class", "dir", "lang", "style"})',
+    ),
+    (
+        "markdown:图片地址不交给 resolver 重写",
+        "hexoman/markdown_render.py",
+        "            if name == \"src\" and tag == \"img\" and self._resolver is not None:\n"
+        "                resolved = self._resolver(url)\n"
+        "                if resolved:\n"
+        "                    url = resolved",
+        "            if name == \"src\" and tag == \"img\" and self._resolver is not None:\n"
+        "                self._resolver(url)",
+    ),
+    (
+        "markdown:不取标题大纲",
+        "hexoman/markdown_render.py",
+        "        outline = _flatten_toc(getattr(engine, \"toc_tokens\", []))",
+        "        outline = []",
+    ),
+    (
+        "markdown:删除线不转换",
+        "hexoman/markdown_render.py",
+        '    return re.sub(r"~~(?=\\S)(.+?)(?<=\\S)~~", r"<del>\\1</del>", text)',
+        "    return text",
+    ),
+    (
+        "asset_server:路径越界不检查",
+        "hexoman/asset_server.py",
+        "        base = (root / parts[0]).resolve()\n"
+        "        target = (base / Path(*parts[1:])).resolve()\n"
+        "        target.relative_to(base)",
+        "        base = (root / parts[0]).resolve()\n"
+        "        target = (base / Path(*parts[1:])).resolve()",
+    ),
 ]
 
 

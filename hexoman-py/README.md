@@ -29,22 +29,22 @@ Swift 版还在仓库根目录的 `HexoMan/` 下（macOS 26+ / SwiftUI）。
 - **备份**：遍历时按目录名剪枝（不碰 `node_modules` / `.git` / `public`）、
   备份前预估范围、创建 / 列出 / 恢复 / 删除
 - **环境**：node / npm / npx / hexo / git 体检 + 人话诊断 + 内置安装说明
-- **Markdown 预览**：编辑器旁边实时渲染，带 pygments 语法高亮。
+- **Markdown 预览**：编辑器旁边实时渲染。带 pygments 语法高亮、
+  标题大纲（点一下跳到对应小节）、代码块语言标签与一键复制、
+  任务列表方块、表格与图片的排版。文章和页面都能预览。
   front matter 是 YAML 头部，**不会渲染进正文**
+- **文章插图**：编辑器工具栏可以挑图片，存进 `source/images/<年>/`，
+  插进光标处。预览里能直接看到这张图
 - **总览**：站点路径、Hexo 版本、主题及版本、文章数、依赖是否已安装、最近 5 条提交
 - **界面**：左侧站点切换器 + 功能栏，右侧内容区；深浅色跟随系统；
   中英双语，**切换立即生效**（不重启、不重载页面）
 
 **刻意没做**
 
-- **创建新站点**：Swift 版也没有。创建站点要装依赖、跑 `hexo init`，
-  属于另一条产品线。
-- **装 / 卸主题**：市场里只做搜索和「装好后切换」，不代跑 `npm install`——
-  在别人的仓库里执行包管理器是很容易出事的操作，交给用户自己在终端里做。
 - **主题预览网页**：Swift 版用 WKWebView 内嵌预览，需要一个真实的站点地址；
   Python 版还没做，市场里只显示描述和主页链接。
-- **文章插图**：`SiteMedia` 的逻辑都迁过来了（存 `source/images/<年>/`、
-  同名不覆盖、HEIC 转 PNG），但界面还没接「粘贴/拖拽插图」的入口。
+- **粘贴 / 拖拽插图**：现在只有工具栏里的「插入图片」（走系统文件选择框）。
+  监听剪贴板和拖放要在 WebView 里另外处理，还没做。
 
 ## 跑起来
 
@@ -88,11 +88,16 @@ hexoman-py/
     shell_runner.py       子进程执行 + 日志面板
     hexo_environment.py   node/npm/hexo/git 工具链体检
     site_media.py         插图：存 source/images/<年>/，同名不覆盖
-    markdown_render.py    Markdown 渲染 + 代码高亮
+    site_settings.py      站点常用配置项（分组、读写）
+    site_creator.py       新建站点（模板、hexo init、npm install）
+    hexo_bootstrap.py     找不到 hexo 时用用户的 npm 装一份到站点里
+    theme_installer.py    安装主题、算出「换主题后哪些键要搬」
+    markdown_render.py    Markdown 渲染 + 代码高亮 + HTML 白名单消毒
+    asset_server.py       预览用的本地静态资源服务（只读、带 token）
     hexo_cli.py           定位 hexo 可执行文件、组装命令
     git_service.py        git status / log / commit / push / pull
     process.py            子进程执行（平台差异集中处之一）
-    system_integration.py 平台差异集中处：打开文件/目录/浏览器、剪贴板
+    system_integration.py 平台差异集中处：打开文件/目录/浏览器、剪贴板、选图
     settings.py           settings.json 读写
     i18n.py               中英文案
     ui/
@@ -103,6 +108,7 @@ hexoman-py/
   tools/
     preview.py            本地预览服务器（假后端，开浏览器就能看界面）
     verify_ui_headless.py 无头界面验证（playwright，不开窗口）
+    mutate_hexoman.py     变异测试（改副本，不动源码树）
 ```
 
 ## 设计要点
@@ -157,6 +163,34 @@ theme: yun          →   theme: landscape
 按 zsh 的加载顺序 source 一遍，抓下真实的 PATH，缓存一次给所有子进程用。
 Windows 不需要这一步（图形进程已经拿到用户级和系统级 PATH）。
 
+### 预览里的 HTML 要过白名单
+
+预览页面带着 JS 桥接——`deletePost`、`storeImages` 这些方法都能调。
+一篇从网上抄来的文章里藏一段 `<script>`，就能直接调后端改文件。
+
+所以渲染完的 HTML 要过一遍白名单（`markdown_render.sanitize_html`）：
+
+- `script` / `style` / `iframe` 连内容一起丢掉；
+- 事件属性（`on*`）和 `style` 属性不在白名单里，天然被挡掉；
+- `javascript:` 这类地址一律拒绝；
+- 白名单外的普通标签（比如 `<center>`）只拆标签，**保留里面的字**。
+
+Hexo 文章里常见的 `<b>`、`<img align="right">` 都留着——预览要跟真实
+站点长得一样。`iframe` 换成一条带地址的提示，不在预览里跑。
+
+### 预览里的图片要靠本地静态服务
+
+文章里的图片写的是站点内的相对路径（`/images/2026/a.png`）。界面是从
+`file://` 打开的，这种地址会指到文件系统根目录，必然裂图。
+
+`asset_server.py` 起一个只读的本地服务来翻译这些地址：
+
+- 只绑 `127.0.0.1`，URL 里带一个随机 token；
+- 只服务 `<站点>/source` 与 `<站点>/public`；
+- 路径越界（`..`，含百分号编码的）一律 404。
+
+找不到的文件**原样保留地址**：预览里显示裂图，比悄悄换成别的东西诚实。
+
 ### 平台差异集中
 
 `system_integration.py` 和 `process.py` 是仅有的两处碰平台差异的地方：
@@ -180,7 +214,7 @@ Windows 不需要这一步（图形进程已经拿到用户级和系统级 PATH�
 python3 -m pytest -q
 ```
 
-当前 **472 条**，覆盖全部业务模块。规矩：
+当前 **641 条**，覆盖全部业务模块。规矩：
 
 - **单元测试不联网、不跑真 hexo / git 命令。**
   `process.NullCommandRunner` 是个假 runner，记录调用、返回假结果；
@@ -202,7 +236,7 @@ python3 tools/verify_ui_headless.py
 ```
 
 用 playwright 的 headless chromium 跑一遍界面，检查：页面能加载、没有 JS 报错、
-各页面能渲染、预览有高亮、切语言立刻生效且不重载页面。
+各页面能渲染、预览有高亮和大纲、切语言立刻生效且不重载页面。
 跑完就退出，不留进程、不占端口。
 
 产出两张截图到 `docs/`。

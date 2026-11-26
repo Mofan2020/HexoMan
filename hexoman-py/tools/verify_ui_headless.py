@@ -104,10 +104,13 @@ def build_mock_script() -> str:
       })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          return respond({ ok: true, html: d.html, title: d.title,
-            tags: d.tags, categories: d.categories, draft: d.draft });
+          // 整个 payload 一起给过去：预览头部要用字数、阅读时长和标题大纲
+          d.ok = true;
+          return respond(d);
         });
     },
+    chooseImages: function () { return respond({ ok: true, paths: [] }); },
+    storeImages: function () { return respond({ ok: true, markdown: [], failed: 0 }); },
     getOverview: function () { return respond(overview); },
     runGenerate: function () { return respond({ ok: true, exitCode: 0, output: "INFO  Generated 42 files" }); },
     runClean: function () { return respond({ ok: true, exitCode: 0, output: "INFO  Deleted db.json" }); },
@@ -489,6 +492,46 @@ def main() -> int:
             )
             results["word count text"] = page.locator("#post-wordcount").inner_text()
 
+            # 预览头部与大纲
+            results["preview title"] = page.locator("#preview-title").inner_text()
+            results["preview meta"] = page.locator("#preview-meta").inner_text()
+            results["preview code block wrappers"] = page.locator(
+                "#post-preview .code-block"
+            ).count()
+            results["preview code lang labels"] = page.locator(
+                "#post-preview .code-block-lang"
+            ).inner_text()
+            results["preview copy buttons"] = page.locator(
+                "#post-preview .code-block-copy"
+            ).count()
+            results["preview heading ids"] = page.evaluate(
+                "document.querySelectorAll('#post-preview h2[id], "
+                "#post-preview h3[id]').length"
+            )
+            results["insert tool buttons"] = page.locator(
+                ".editor-pane-tools .icon-button"
+            ).count()
+
+            page.locator("#preview-outline-toggle").click()
+            page.wait_for_timeout(250)
+            results["outline item count"] = page.locator(
+                ".preview-outline-item"
+            ).count()
+            results["outline visible"] = page.locator("#preview-outline").is_visible()
+
+            # 阅读模式：预览要占满整个宽度，不能挤在左半边
+            page.get_by_role("button", name="阅读").first.click()
+            page.wait_for_timeout(500)
+            results["read mode single column"] = page.evaluate(
+                "document.querySelector('#editor-body').classList.contains('is-single')"
+            )
+            results["read mode preview width"] = page.evaluate(
+                "Math.round(document.querySelector('.preview-pane')"
+                ".getBoundingClientRect().width)"
+            )
+            page.get_by_role("button", name="分栏").first.click()
+            page.wait_for_timeout(400)
+
             # 搜索
             page.locator("#post-search").fill("草稿")
             page.wait_for_timeout(300)
@@ -514,6 +557,14 @@ def main() -> int:
             page.wait_for_timeout(600)
             results["page field controls"] = page.locator("#page-editor .page-field").count()
             results["page body shown"] = page.locator("#page-body").count()
+            results["page preview doc"] = page.locator("#page-preview").count()
+            results["page preview html length"] = page.evaluate(
+                "document.querySelector('#page-preview')"
+                "? document.querySelector('#page-preview').innerHTML.length : -1"
+            )
+            results["page preview title"] = page.locator(
+                "#page-editor #preview-title"
+            ).inner_text()
 
             open_page("构建与预览")
             results["build buttons"] = page.locator("#build-generate, #build-clean").count()

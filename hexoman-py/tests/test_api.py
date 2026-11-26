@@ -185,7 +185,8 @@ class TestMarkdown:
         result = api.renderMarkdown("---\ntitle: 不该出现\n---\n# 标题\n")
 
         assert result["ok"] is True
-        assert "<h1>标题</h1>" in result["html"]
+        assert "<h1" in result["html"]
+        assert "标题" in result["html"]
         assert "不该出现" not in result["html"]
 
     def test_render_markdown_returns_metadata(self, api):
