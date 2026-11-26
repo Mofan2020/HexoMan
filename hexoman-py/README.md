@@ -108,7 +108,6 @@ hexoman-py/
   tools/
     preview.py            本地预览服务器（假后端，开浏览器就能看界面）
     verify_ui_headless.py 无头界面验证（playwright，不开窗口）
-    mutate_hexoman.py     变异测试（改副本，不动源码树）
 ```
 
 ## 设计要点
